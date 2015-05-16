@@ -1,0 +1,1633 @@
+#+TITLE: Emacs Configuration
+#+AUTHOR: Mario Long
+#+EMAIL: mariolong5782@gmail.com
+#+STARTUP: overview showstars
+#+BABEL: :cache yes
+#+OPTIONS: ^:nil
+
+* 初始化設定
+
+** load prefer newer
+
+since emacs 24.4, new option `load-prefer-newer' has been
+introduce, which make me never accidentally using outdated compiled files.
+
+#+BEGIN_SRC emacs-lisp
+  (setq load-prefer-newer t)
+#+END_SRC
+
+** cleanup
+
+*** 直接開啟全螢幕
+
+在 init.el 的開始部份加上，
+#+begin_src emacs-lisp :tangle no
+  (modify-all-frames-parameters '((fullscreen . maximized)))
+#+end_src
+
+*** 不必顯示功能表、工具列和捲軸
+
+在 init.el 的開始部份加上下列 3 行：
+如果要用功能表，可以按 <F10> 。
+
+#+begin_src emacs-lisp :tangle no
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+#+end_src
+
+*** 不顯示啟始畫面
+
+#+begin_src emacs-lisp :tangle no
+  (setq inhibit-startup-message t
+        inhibit-startup-echo-area-message t)
+#+end_src
+
+*** 清除 redefinition 訊息
+
+#+BEGIN_SRC emacs-lisp
+  (setq ad-redefinition-action 'accept)
+#+END_SRC
+
+** 設定字型
+
+重要的是設定中文字型
+
+#+begin_src emacs-lisp
+  (set-face-attribute 'default nil :font "Source Code Pro 16")
+
+  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+    (set-fontset-font (frame-parameter nil 'font) charset
+                      (font-spec :family "Source Han Sans" :size 26)))
+#+end_src
+
+** Define user-cache-directory variable
+
+user-emacs-directory 定義於 init.el 中
+
+#+BEGIN_SRC emacs-lisp
+  (defconst user-cache-directory
+    (file-name-as-directory (concat user-emacs-directory ".cache"))
+    "My emacs storage area for persistent files.")
+#+END_SRC
+
+* Package 管理
+
+用過 quelpa，因為啟動時會自動抓原始碼，啟動速度真的很慢。
+試用過 Cask 和 pallet，實在是看不出來有何優勢，也不能自動刪除不需要的 package，所以先不用。
+
+經過一番找尋，發現 req-package 真的不錯。
+首先安裝還是透過 =package.el= ，成功之後，就可以用 =req-package= 安裝其它的套件。
+
+** Initalize =package=
+
+用 =package.el= 要先加來源庫：
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
+  (add-to-list 'package-archives '("elpa" . "http://tromey.com/elpa/"))
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
+
+  (eval-when-compile (package-initialize))
+#+END_SRC
+
+** 安裝 =req-package=
+
+#+BEGIN_SRC emacs-lisp
+  (if (not (package-installed-p 'req-package))
+      (progn
+        (package-refresh-contents)
+        (package-install 'req-package)))
+
+  (require 'req-package)
+#+END_SRC
+
+** 安裝 =diminish= 和 =bind-key=
+
+使用 =req-package= 時，會用到 =:diminish= 和 =:bind= ，故安裝以下 2 個套件。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package diminish)
+  (req-package bind-key)
+#+END_SRC
+
+** 更新所有已安裝的套件
+
+用 =M-x upgrade-all-installed-packages= 更新所有已安裝的套件
+因為用了 jedi.el，所以要更新一下 jedi server
+
+#+BEGIN_SRC emacs-lisp
+  (defun upgrade-all-installed-packages ()
+    "Upgrade all installed packages."
+    (interactive)
+    (save-window-excursion
+      (package-list-packages)
+      (package-menu-mark-upgrades)
+      (package-menu-execute t)
+      )
+    (jedi:install-server))
+#+END_SRC
+
+** 刪除不需要的套件
+
+用 =M-x package-list-packages= 找到不需要的套件，並刪除之。
+
+** 載入自定檔
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (load (concat user-emacs-directory "custom.el"))
+#+END_SRC
+
+** 自定功能
+
+#+BEGIN_SRC emacs-lisp
+  (defun reload-emacs ()
+    "reload my emacs settings"
+
+    (interactive)
+    (load-file (concat user-emacs-directory "init.el"))
+    (delete-other-windows))
+
+  (defun eval-buffer-until-error ()
+    "Evaluate emacs buffer until error occured."
+
+    (interactive)
+    (goto-char (point-min))
+    (while t (eval (read (current-buffer)))))
+#+END_SRC
+
+* 外觀
+** Theme
+
+#+begin_src emacs-lisp
+  (req-package color-theme-sanityinc-tomorrow
+    :init (load-theme 'sanityinc-tomorrow-eighties :no-confirm))
+#+end_src
+
+** Change cursor color according to mode
+
+#+BEGIN_SRC emacs-lisp
+  ;; Change cursor color according to mode
+  (defvar hcz-set-cursor-color-color "")
+  (defvar hcz-set-cursor-color-buffer "")
+  (defun hcz-set-cursor-color-according-to-mode ()
+    "change cursor color according to some minor modes."
+    ;; set-cursor-color is somewhat costly, so we only call it when needed:
+    (let ((color
+           (if buffer-read-only "white"
+             (if overwrite-mode "#5599aa"
+               "#f99157"))))
+      (unless (and
+               (string= color hcz-set-cursor-color-color)
+               (string= (buffer-name) hcz-set-cursor-color-buffer))
+        (set-cursor-color (setq hcz-set-cursor-color-color color))
+        (setq hcz-set-cursor-color-buffer (buffer-name)))))
+  (add-hook 'post-command-hook 'hcz-set-cursor-color-according-to-mode)
+#+END_SRC
+
+** smart-mode-line
+
+#+BEGIN_SRC emacs-lisp
+  (req-package smart-mode-line
+    :require smart-mode-line-powerline-theme
+    :init
+    (progn
+      (setq sml/vc-mode-show-backend t)
+      (setq sml/no-confirm-load-theme t)
+      (sml/setup)))
+#+END_SRC
+
+*** diminish some mode
+
+#+BEGIN_SRC emacs-lisp
+  (diminish 'overwrite-mode)
+#+END_SRC
+
+** 指示欄
+
+改得細一點，預設值是 8 pixel
+
+#+BEGIN_SRC emacs-lisp
+  (fringe-mode 4)
+#+END_SRC
+
+* 一般設定
+** 內定編碼為 utf-8
+
+Since current Emacs default run on UTF-8, it's no need to setup the
+encoding.
+
+For language, though Traditional Chinese is my mothertone, I still
+prefer use =en_US= to display time info.
+
+#+BEGIN_SRC emacs-lisp
+  (prefer-coding-system 'utf-8)
+  (setq system-time-locale "en_US" )
+#+END_SRC
+
+** Turn on syntax highlighting for all buffers:
+#+BEGIN_SRC emacs-lisp
+  (global-font-lock-mode t)
+#+END_SRC
+
+** transient mark
+If you change buffer, or focus, disable the current buffer's mark:
+
+#+BEGIN_SRC emacs-lisp
+(transient-mark-mode t)
+#+END_SRC
+
+** whitespaces and tabs
+#+BEGIN_SRC emacs-lisp
+  (setq c-basic-offset 4)
+  (setq python-indent-offset 4)
+  (setq tab-width 4)
+  (setq indent-tabs-mode nil)
+#+END_SRC
+
+*** ethan-wspace
+
+Takes care of trailing whitespaces (removal, highlighting)
+https://github.com/glasserc/ethan-wspace
+
+#+BEGIN_SRC emacs-lisp
+  (req-package ethan-wspace
+    :config
+    (progn
+      ;; Turn off `mode-require-final-newline' since ethan-wspace
+      ;; supersedes `require-final-newline'.
+      (setq mode-require-final-newline nil)
+
+      ;; Enable ethan-wspace globally
+      (global-ethan-wspace-mode 1)
+
+      ;; Prevent etha-wspace touch my TAB on makefile mode
+      (add-hook 'makefile-mode-hook
+                '(lambda()
+                   (setq ethan-wspace-errors (remove 'tabs ethan-wspace-errors))))
+
+      ;; Ignore no trailing newline error
+      (setq-default ethan-wspace-errors (remove 'no-nl-eof ethan-wspace-errors))))
+#+END_SRC
+
+*** 不指示空白行及行尾空白
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq-default indicate-empty-lines nil)
+  (setq-default indicate-buffer-boundaries nil)
+#+END_SRC
+
+*** 存檔前清除多餘的空白
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'before-save-hook 'delete-trailing-whitespace)
+#+end_src
+** bell off
+#+BEGIN_SRC emacs-lisp
+  (setq visible-bell t)
+#+END_SRC
+
+** shorten answer
+#+BEGIN_SRC emacs-lisp
+  (defalias 'yes-or-no-p 'y-or-n-p)
+#+END_SRC
+
+** clipboard
+#+BEGIN_SRC emacs-lisp
+  (setq x-select-enable-clipboard t
+        x-select-enable-primary t)
+#+END_SRC
+
+** exit emacs
+
+*** save files and this session
+
+=C-x C-c= save-buffers-kill-emacs
+
+#+begin_src emacs-lisp
+  (bind-key "C-x k"   'kill-this-buffer)
+#+END_SRC
+
+*** Don't ask me when close emacs with process is running
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+    "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+    (flet ((process-list ())) ad-do-it))
+#+END_SRC
+
+*** Don't ask me when kill process buffer
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq kill-buffer-query-functions
+        (remq 'process-kill-buffer-query-function
+              kill-buffer-query-functions))
+#+END_SRC
+
+** Show keystrokes in progress
+#+begin_src emacs-lisp
+  (setq echo-keystrokes 0.1)
+#+END_SRC
+
+** Show active region
+#+BEGIN_SRC emacs-lisp
+  (make-variable-buffer-local 'transient-mark-mode)
+  (put 'transient-mark-mode 'permanent-local t)
+  (setq-default transient-mark-mode t)
+#+END_SRC
+
+** Remove text in active region if inserting text
+#+BEGIN_SRC
+  (delete-selection-mode 1)
+#+END_SRC
+
+** Save minibuffer history
+
+#+BEGIN_SRC emacs-lisp
+  (savehist-mode 1)
+  (setq history-length 1000)
+#+END_SRC
+
+** unbind-key
+
+#+BEGIN_SRC emacs-lisp
+  (unbind-key "C-\\")
+  (unbind-key "C-z")
+  (unbind-key "C-x C-z")
+  (unbind-key "C-x m")
+#+END_SRC
+
+** guide-key
+
+#+BEGIN_SRC emacs-lisp
+  (req-package guide-key
+    :require popwin
+    :diminish guide-key-mode
+    :init (progn
+            (setq guide-key/guide-key-sequence `("C-c" "C-h" "C-x r")
+                  guide-key/recursive-key-sequence-flag t
+                  guide-key/highlight-command-regexp "projectile"
+                  guide-key/text-scale-amount 1
+                  guide-key/idle-delay 0.5))
+    :config (guide-key-mode t))
+#+END_SRC
+
+* 視窗管理
+** winner-mode
+
+Undo/redo window configuration with C-c <left>/<right>
+
+#+BEGIN_SRC emacs-lisp
+  (winner-mode 1)
+#+END_SRC
+
+** switch-window
+
+#+BEGIN_SRC emacs-lisp
+(req-package switch-window
+  :bind ("C-x o" . switch-window))
+#+END_SRC
+
+* 檔案管理
+** 以 root 許可權修改目前正在編輯的檔案
+
+#+BEGIN_SRC emacs-lisp
+  (defun edit-current-file-as-root ()
+    "Edit the file that is associated with the current buffer as root"
+    (interactive)
+    (if (buffer-file-name)
+        (progn
+          (setq file (concat "/sudo:root@localhost:" (buffer-file-name)))
+          (find-file file))
+      (message "Current buffer does not have an associated file.")))
+#+END_SRC
+
+** Delete current buffer file
+
+#+BEGIN_SRC emacs-lisp
+  (defun delete-current-buffer-file ()
+    "Removes file connected to current buffer and kills buffer."
+    (interactive)
+    (let ((filename (buffer-file-name))
+          (buffer (current-buffer))
+          (name (buffer-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (ido-kill-buffer)
+        (when (yes-or-no-p "Are you sure you want to remove this file? ")
+          (delete-file filename)
+          (kill-buffer buffer)
+          (message "File '%s' successfully removed" filename)))))
+#+END_SRC
+
+** Rename current Buffer and file
+
+#+BEGIN_SRC emacs-lisp
+  (defun rename-current-buffer-file ()
+    "Renames current buffer and file it is visiting."
+    (interactive)
+    (let ((name (buffer-name))
+          (filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (error "Buffer '%s' is not visiting a file!" name)
+        (let ((new-name (read-file-name "New name: " filename)))
+          (if (get-buffer new-name)
+              (error "A buffer named '%s' already exists!" new-name)
+            (rename-file filename new-name 1)
+            (rename-buffer new-name)
+            (set-visited-file-name new-name)
+            (set-buffer-modified-p nil)
+            (message "File '%s' successfully renamed to '%s'"
+                     name (file-name-nondirectory new-name)))))))
+#+END_SRC
+
+** auto revert
+
+#+BEGIN_SRC emacs-lisp
+  (global-auto-revert-mode 1)
+  (setq global-auto-revert-non-file-buffers t)
+  (setq auto-revert-verbose nil)
+  (setq revert-without-query '(".*")) ;; disable revert query
+#+END_SRC
+
+** ibuffer
+
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (autoload 'ibuffer "ibuffer" "List buffers." t)
+#+END_SRC
+
+** fasd
+這個相當好用，按下 C-h C-\，輸入部份檔名或目錄名稱，即可直接開啟想要的檔案或目錄。
+
+先在 OS 中安裝 =fasd=
+
+#+BEGIN_SRC emacs-lisp
+  (req-package fasd
+    :require grizzl
+    :config (global-fasd-mode 1)
+    :bind ("C-h C-\\" . fasd-find-file))
+#+END_SRC
+
+** Dired
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(req-package dired
+  :commands dired
+  :require (helm-swoop autorevert diff-hl)
+;  :init (add-hook 'dired-load-hook (lambda () (load "dired-x")
+;                                     ;; Set global variables here.  For example:
+;                                     ;; (setq dired-guess-shell-gnutar "gtar")
+;                                    ))
+  :config (progn (define-key dired-mode-map (kbd "M-i") 'helm-swoop)
+                 (define-key dired-mode-map (kbd "M-RET") 'dired-find-file-other-window)
+                 (add-hook 'dired-mode-hook (lambda () (auto-revert-mode 1)))
+                 (add-hook 'dired-mode-hook (lambda () (diff-hl-dired-mode 1)))
+                 ))
+#+END_SRC
+
+** Dired+
+
+#+BEGIN_SRC emacs-lisp
+  (req-package dired+
+    :init (progn
+            (diredp-toggle-find-file-reuse-dir 1)))
+#+END_SRC
+
+** openwith
+
+#+BEGIN_SRC emacs-lisp
+  (req-package openwith
+    :config
+    (progn
+      (openwith-mode t)
+      (setq openwith-associations
+            (list (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a"))
+                        "mpv" '(file))
+                  (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts"
+                                                          "mpeg" "mpg" "ogg" "wmv" "mkv"))
+                        "mpv" '(file))
+                  ))))
+
+#+END_SRC
+
+** Eshell
+eshell is not really a system shell, it's written in pure lisp. What I
+like is it fully integrated with emacs.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(req-package eshell
+  :init
+  ;; move eshell cache dir to ~/.emacs.d/.cache
+  (setq eshell-directory-name (concat user-cache-directory "eshell"))
+  :bind ("C-!" . eshell))
+#+END_SRC
+
+*** Use bash like prompt with color
+#+BEGIN_SRC emacs-lisp  :tangle no
+  (eval-after-load 'eshell
+    '(progn
+       ;; Make eshell prompt look likes default bash prompt
+       (setq eshell-prompt-function
+             '(lambda ()
+                (concat
+                 user-login-name "@" system-name " "
+                 (if (search (directory-file-name (expand-file-name (getenv "HOME"))) (eshell/pwd))
+                     (replace-regexp-in-string (expand-file-name (getenv "HOME")) "~" (eshell/pwd))
+                   (eshell/pwd))
+                 (if (= (user-uid) 0) " # " " $ "))))
+       ;; Add color for eshell prompt like Gentoo does
+       (defun colorfy-eshell-prompt ()
+         (let* ((mpoint)
+                (user-string-regexp (concat "^" user-login-name "@" system-name)))
+           (save-excursion
+             (goto-char (point-min))
+             (while (re-search-forward (concat user-string-regexp ".*[$#]") (point-max) t)
+               (setq mpoint (point))
+               (overlay-put (make-overlay (point-at-bol) mpoint) 'face '(:foreground "dodger blue")))
+             (goto-char (point-min))
+             (while (re-search-forward user-string-regexp (point-max) t)
+               (setq mpoint (point))
+               (overlay-put (make-overlay (point-at-bol) mpoint) 'face '(:foreground "green3"))))))
+       ;; Make eshell prompt more colorful
+       (add-hook 'eshell-output-filter-functions 'colorfy-eshell-prompt)))
+#+END_SRC
+
+*** Use ansi-term to render visual commands
+#+BEGIN_SRC emacs-lisp :tangle no
+  (eval-after-load 'eshell
+    '(progn
+      (setq eshell-visual-commands
+            '("less" "tmux" "htop" "top" "bash" "zsh" "fish"))
+
+      (setq eshell-visual-subcommands
+            '(("git" "log" "diff" "show")))
+      ))
+#+END_SRC
+
+*** Support for multi-eshell instance
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package multi-eshell
+    :require eshell
+    :config
+    (progn
+      (setq multi-eshell-shell-function '(eshell))
+      (setq multi-eshell-name "*eshell*")))
+#+END_SRC
+
+*** Add autojump command
+
+[[http://www.emacswiki.org/emacs/EshellAutojump][Eshell Autojump]] is an [[https://github.com/joelthelion/autojump][autojump]] like command written in pure elisp,
+which add a =j= command to let you jump to folder you has been access.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package eshell-autojump :require eshell)
+#+END_SRC
+
+*** Eshell commands setup
+
+**** ..
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun eshell/.. (&optional level)
+    "Go up LEVEL directories"
+    (interactive)
+    (let ((level (or level 1)))
+      (eshell/cd (make-string (1+ level) ?.))
+      (eshell/ls)))
+#+END_SRC
+
+**** clear
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun eshell/clear ()
+    "Clears the shell buffer ala Unix's clear or DOS' cls"
+    ;; the shell prompts are read-only, so clear that for the duration
+    (let ((inhibit-read-only t))
+      ;; simply delete the region
+      (delete-region (point-min) (point-max))))
+#+END_SRC
+
+**** emacs
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun eshell/emacs (&rest args)
+    "Open a file in emacs. Some habits die hard."
+    (if (null args)
+        ;; If I just ran "emacs", I probably expect to be launching
+        ;; Emacs, which is rather silly since I'm already in Emacs.
+        ;; So just pretend to do what I ask.
+        (bury-buffer)
+      ;; We have to expand the file names or else naming a directory in an
+      ;; argument causes later arguments to be looked for in that directory,
+      ;; not the starting directory
+      (mapc #'find-file (mapcar #'expand-file-name (eshell-flatten-list (reverse args))))))
+
+  (defalias 'eshell/e 'eshell/emacs)
+#+END_SRC
+
+** Multi-term
+
+這個比 eshell 好用。原因很簡單…習慣！
+
+參考：
+http://rawsyntax.com/blog/learn-emacs-zsh-and-multi-term/
+http://blog.jobbole.com/51598/
+
+將 shell 設為 zsh，呼叫 shell 的快捷鍵設為 <F4>。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package multi-term
+    :init (setq multi-term-program "/bin/zsh")
+    :bind ("C-x t" . multi-term)
+    :config
+    (progn (add-hook 'term-mode-hook
+                     (lambda ()
+                       (add-to-list 'term-bind-key-alist '("M-[" . multi-term-prev))
+                       (add-to-list 'term-bind-key-alist '("M-]" . multi-term-next))))
+           (add-hook 'term-mode-hook
+                     (lambda ()
+                       (setq term-buffer-maximum-size 10000)))
+           (add-hook 'term-mode-hook
+                     (lambda ()
+                       (define-key term-raw-map (kbd "C-y") 'term-paste)))))
+#+END_SRC
+
+*** popup multi-term
+
+#+BEGIN_SRC emacs-lisp
+  (defun popwin-term:multi-term ()
+    (interactive)
+    (popwin:display-buffer-1
+     (or (get-buffer "*terminal*")
+         (save-window-excursion
+           (call-interactively 'multi-term)))
+     :default-config-keywords '(:position :bottom :height 12 :stick t)))
+
+  (bind-key "<f4>" 'popwin-term:multi-term)
+#+END_SRC
+
+** Create *scratch* automatically
+
+Sometimes I'll kill the =*scratch*= buffer to make it clean, just use
+following function to let emacs re-create it automatically.
+
+#+BEGIN_SRC emacs-lisp
+  (run-with-idle-timer 1 t
+                       '(lambda ()
+                          (unless (get-buffer "*scratch*")
+                            (with-current-buffer (get-buffer-create "*scratch*")
+                              (lisp-interaction-mode)))))
+#+END_SRC
+
+** recentf
+
+#+BEGIN_SRC emacs-lisp
+(req-package recentf
+  :config
+  (progn
+    (setq recentf-save-file (concat user-emacs-directory "recentf"))
+    (recentf-mode 1)
+    (setq recentf-max-saved-items 500
+          recentf-max-menu-items 10)))
+#+end_src
+
+** save-place
+自動記錄每一個檔案，遊標所在的位置，下次再開啟這個檔案時，遊標會自動到上次看的地方。
+
+#+BEGIN_SRC emacs-lisp
+(req-package saveplace
+             :config
+               (progn
+                 (setq save-place-file (concat user-emacs-directory "places"))
+                 (setq-default save-place t)))
+#+end_src
+
+** uniquift
+Add parts of each file's directory to the buffer name if not unique
+
+#+BEGIN_SRC emacs-lisp
+(req-package uniquify
+  :config
+    (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+#+END_SRC
+
+** backup
+
+#+begin_src emacs-lisp
+  (setq backup-directory-alist `(("." . ,(concat user-emacs-directory
+                                                 "backups"))))
+  (setq backup-by-copying-when-linked t)
+  (setq delete-old-versions t
+        kept-new-versions 6
+        kept-old-versions 2
+        version-control t)
+#+end_src
+
+*** 不要再產生 “backup~” 或 “#autosave#” 檔案
+
+#+begin_src emacs-lisp
+  (setq make-backup-files nil) ; stop creating those backup~ files
+  (setq auto-save-default nil) ; stop creating those #autosave# files
+#+end_src
+
+** opencc
+將簡體字轉成符合臺灣習慣的用語。
+
+執行 =M-x chinese-convert-buffer=
+
+#+BEGIN_SRC emacs-lisp
+  (defvar opencc-conv-temp-file (expand-file-name
+                                 (concat user-emacs-directory "opencc.tmp")))
+  (defvar opencc-conv-config "s2twp.json")
+
+  (defun opencc-conv-command ()
+    (concat "opencc"
+            " -i " opencc-conv-temp-file
+            " -c " opencc-conv-config))
+
+  (defun opencc-buffer ()
+    "Convert chinese from simplified to variants and phrases of Taiwan"
+
+    (interactive)
+
+    (set-buffer-file-coding-system 'utf-8-unix)
+    (let ((str (buffer-substring-no-properties (point-max) 1)))
+      (with-temp-file opencc-conv-temp-file
+        (insert str "\n")))
+
+    (let ((result
+           (shell-command-to-string
+            (opencc-conv-command))))
+
+      (erase-buffer)
+      (insert result)
+      (goto-char (point-min))))
+#+END_SRC
+
+* 編輯功能
+** subword mode
+
+#+BEGIN_SRC emacs-lisp
+  (global-subword-mode 1)
+#+END_SRC
+
+** 括弧
+
+#+BEGIN_SRC emacs-lisp
+  (show-paren-mode 1)
+  (setq show-paren-style 'parenthesis)
+#+END_SRC
+
+*** smartparens
+#+BEGIN_SRC emacs-lisp
+  (req-package smartparens-config
+    :ensure smartparens
+    :diminish (smartparens-mode)
+    :init (smartparens-global-mode t))
+#+END_SRC
+
+*** rainbow-delimiters
+#+BEGIN_SRC emacs-lisp
+  (req-package rainbow-delimiters
+    :config
+    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+    (add-hook 'org-mode-hook 'rainbow-delimiters-mode))
+#+END_SRC
+
+** Line Numbers
+
+In most case, I'll make line numers display globally by =linum=.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package linum
+    :config
+    (add-hook 'prog-mode-hook
+              '(lambda () (linum-mode 1))))
+
+  (setq column-number-mode t)
+#+END_SRC
+
+*** Relative Line Numbers
+
+#+BEGIN_SRC emacs-lisp
+  (req-package linum-relative
+    :init
+    (progn
+      (setq linum-relative-current-symbol "")
+      (setq linum-relative-format "%4s")))
+#+END_SRC
+
+** Highlight numbers
+
+[[https://github.com/Fanael/highlight-numbers][highlight-numbers]]
+
+#+BEGIN_SRC emacs-lisp
+  (req-package highlight-numbers
+    :require (parent-mode)
+    :config
+    ;; json-mode has it's own highlight numbers method
+    (add-hook 'prog-mode-hook '(lambda()
+                                 (if (not (derived-mode-p 'json-mode))
+                                     (highlight-numbers-mode)))))
+#+END_SRC
+
+** Highlight escape charset
+
+https://github.com/dgutov/highlight-escape-sequences
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package highlight-escape-sequences
+    :config
+    (progn
+      ;; Make face the same as builtin face
+      (put 'font-lock-regexp-grouping-backslash 'face-alias 'font-lock-builtin-face)
+
+      ;; Add extra modes
+      (add-to-list 'hes-simple-modes 'c-mode)
+      (add-to-list 'hes-simple-modes 'c-mode)
+      (add-to-list 'hes-simple-modes 'python-mode)
+
+      ;; Enable globally
+      (hes-mode 1)))
+#+END_SRC
+
+** Highlight FIXME, TODO
+
+#+begin_src emacs-lisp
+  (defun font-lock-comment-annotations ()
+    "Highlight a bunch of well known comment annotations.
+  This functions should be added to the hooks of major modes for programming."
+
+    (font-lock-add-keywords
+     nil
+     '(("\\<\\(FIX\\(ME\\)?\\|BUG\\|HACK\\):" 1 font-lock-warning-face t)
+       ("\\<\\(NOTE\\):" 1 'org-level-2 t)
+       ("\\<\\(TODO\\):" 1 'org-todo t)
+       ("\\<\\(DONE\\):" 1 'org-done t))
+     ))
+
+  (add-hook 'prog-mode-hook 'font-lock-comment-annotations)
+#+end_src
+
+** find symbol at point
+
+Source: http://blog.jorgenschaefer.de/2012/11/emacs-search-for-symbol-at-point.html
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-d" 'fc/isearch-yank-symbol isearch-mode-map)
+
+  ;; (define-key isearch-mode-map (kbd "C-d")
+  ;; 'fc/isearch-yank-symbol)
+
+  (defun fc/isearch-yank-symbol ()
+    "Yank the symbol at point into the isearch minibuffer.
+
+  C-w does something similar in isearch, but it only looks for
+  the rest of the word. I want to look for the whole string. And
+  symbol, not word, as I need this for programming the most."
+
+    (interactive)
+    (isearch-yank-string
+     (save-excursion
+       (when (and (not isearch-forward)
+                  isearch-other-end)
+         (goto-char isearch-other-end))
+       (thing-at-point 'symbol))))
+#+END_SRC
+
+** Smart home
+按 home 鍵，可讓遊標回到行首或第一個非空字元
+
+#+BEGIN_SRC emacs-lisp
+  (defun smart-beginning-of-line ()
+    "Move point to first non-whitespace character or beginning-of-line.
+
+  Move point to the first non-whitespace character on this line.
+  If point was already at that position, move point to beginning of line."
+
+    (interactive)
+    (let ((oldpos (point)))
+      (back-to-indentation)
+      (and (= oldpos (point))
+           (beginning-of-line))))
+
+  (bind-key [home] 'smart-beginning-of-line)
+  (bind-key* "C-a" 'smart-beginning-of-line)
+#+END_SRC
+** 刪除整行或多行
+
+來源：http://endlessparentheses.com/kill-entire-line-with-prefix-argument.html
+
+C-1 C-k 刪去整行
+C-3 C-k 刪去 3 行
+
+#+BEGIN_SRC emacs-lisp
+  (defmacro bol-with-prefix (function)
+    "Define a new function which calls FUNCTION.
+  Except it moves to beginning of line before calling FUNCTION when
+  called with a prefix argument. The FUNCTION still receives the
+  prefix argument."
+    (let ((name (intern (format "endless/%s-BOL" function))))
+      `(progn
+         (defun ,name (p)
+           ,(format
+             "Call `%s', but move to BOL when called with a prefix argument."
+             function)
+           (interactive "P")
+           (when p
+             (forward-line 0))
+           (call-interactively ',function))
+         ',name)))
+
+  (global-set-key [remap paredit-kill] (bol-with-prefix paredit-kill))
+  (global-set-key [remap org-kill-line] (bol-with-prefix org-kill-line))
+  (global-set-key [remap kill-line] (bol-with-prefix kill-line))
+#+END_SRC
+
+** move-text
+
+用 M-up, M-down 移動當行或 region
+
+來源：http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up-doesnt-move-point
+
+#+BEGIN_SRC emacs-lisp
+  ;move line up down
+  (defun move-text-internal (arg)
+    (cond
+     ((and mark-active transient-mark-mode)
+      (let ((column (current-column))
+            (pos (< (point) (mark)))
+            (text (delete-and-extract-region (point) (mark))))
+        (forward-line arg)
+        (move-to-column column t)
+        (set-mark (point))
+        (insert text)
+        (and pos (exchange-point-and-mark))
+        (setq deactivate-mark nil)))
+     (t
+      (let ((column (current-column)))
+        (beginning-of-line)
+        (when (or (> arg 0) (not (bobp)))
+          (forward-line)
+          (when (or (< arg 0) (not (eobp)))
+            (transpose-lines arg)
+            ;; Account for changes to transpose-lines in Emacs 24.3
+            (when (and (eval-when-compile
+                         (not (version-list-<
+                               (version-to-list emacs-version)
+                               '(24 3 50 0))))
+                       (< arg 0))
+              (forward-line -1)))
+          (forward-line -1))
+        (move-to-column column t)))))
+
+  (defun move-text-down (arg)
+    "Move region (transient-mark-mode active) or current line
+    arg lines down."
+    (interactive "*p")
+    (move-text-internal arg))
+
+  (defun move-text-up (arg)
+    "Move region (transient-mark-mode active) or current line
+    arg lines up."
+    (interactive "*p")
+    (move-text-internal (- arg)))
+
+  (bind-key "M-<up>" 'move-text-up)
+  (bind-key "M-<down>" 'move-text-down)
+#+END_SRC
+
+** iedit
+
+   [[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
+
+   #+BEGIN_SRC emacs-lisp
+  (req-package iedit
+    :init (setq iedit-unmatched-lines-invisible-default t))
+   #+END_SRC
+
+** expand-region
+
+M-SPC 設定 mark
+C-= 擴展
+C-- C-= 縮減
+C-0 C-= 還原
+
+參考：https://github.com/magnars/expand-region.el
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "M-SPC" 'set-mark-command)
+  (req-package expand-region
+    :bind ("C-=" . er/expand-region))
+#+END_SRC
+
+** hungry-delete
+
+#+BEGIN_SRC emacs-lisp
+  (req-package hungry-delete
+    :init (global-hungry-delete-mode 1))
+#+END_SRC
+
+** pangu-spacing
+
+[[https://github.com/coldnew/pangu-spacing][pangu-spcing]] is an minor-mode to auto add =space= between Chinese and
+English characters. Note that these white-space characters are not
+really added to the contents, it just like to do so.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package pangu-spacing
+    :init
+    (progn
+      (global-pangu-spacing-mode 1)
+      (add-hook 'rst-mode-hook
+                '(lambda ()
+                  (set (make-local-variable 'pangu-spacing-real-insert-separtor) t)))
+      (add-hook 'org-mode-hook
+                '(lambda ()
+                  (set (make-local-variable 'pangu-spacing-real-insert-separtor) t)))))
+#+END_SRC
+
+** undo-tree
+
+用 M-x undo-tree-visualize (C-x u) 看 undo-tree，很直覺。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package undo-tree
+    :diminish ""
+    :init
+    (progn
+      (setq undo-tree-auto-save-history t)
+      (setq undo-tree-history-directory-alist
+            `((".*" . ,(expand-file-name "undo" user-cache-directory))))
+      (global-undo-tree-mode)))
+#+END_SRC
+
+** comment/uncomment-line
+
+Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
+
+#+BEGIN_SRC emacs-lisp
+  (defun endless/comment-line (n)
+    "Comment or uncomment current line and leave point after it.
+
+  With positive prefix, apply to N lines including current one.
+  With negative prefix, apply to -N lines above."
+
+    (interactive "p")
+    (comment-or-uncomment-region
+     (line-beginning-position)
+     (goto-char (line-end-position n)))
+    (forward-line 1)
+    (back-to-indentation))
+
+  (bind-key "M-;" #'endless/comment-line)
+#+END_SRC
+
+** rainbow-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package rainbow-mode
+    :diminish rainbow-mode
+    :init
+    (add-hook 'prog-mode-hook 'rainbow-mode)
+    (add-hook 'css-mode-hook 'rainbow-mode))
+#+END_SRC
+
+** aggressive-indent
+
+來源：http://endlessparentheses.com/permanent-auto-indentation.html
+
+非文字模式下，自動縮排。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package aggressive-indent
+    :init (global-aggressive-indent-mode))
+#+END_SRC
+
+** Flyspell
+
+#+BEGIN_SRC emacs-lisp
+(req-package flyspell
+  :require (ispell)
+  :init
+    (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+    (add-hook 'text-mode-hook 'flyspell-mode)
+    (add-hook 'org-mode-hook 'flyspell-mode)
+  :config
+    (define-key flyspell-mode-map (kbd "C-;") nil))
+#+END_SRC
+
+*** Helpful Default Keybindings
+
+=C-.= corrects word at point.
+=C-,​= to jump to next misspelled word.
+
+*** helm-flyspell
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-flyspell
+    :require (flyspell helm)
+    :commands (helm-flyspell-correct)
+    :config
+    (progn
+      (bind-key "M-$" 'helm-flyspell-correct flyspell-mode-map)))
+#+END_SRC
+
+** Ispell
+
+#+BEGIN_SRC emacs-lisp
+  (req-package ispell
+    :config
+    (progn
+      (setq-default ispell-program-name "aspell")
+      (setq ispell-extra-args
+            (list "--sug-mode=normal" ;; ultra|fast|normal|bad-spellers
+                  "--lang=en_US"
+                  "--ignore=3"
+                  "--run-together"
+                  "--run-together-limit=5"
+                  "--run-together-min=2"))
+      (setq ispell-local-dictionary "en_US")
+      (setq ispell-local-dictionary-alist
+            '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil nil nil utf-8)))
+      ))
+#+END_SRC
+
+有一些內容不必 check
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE"))
+#+END_SRC
+
+** helm
+
+   Helm offers a command called =helm-mini= that opens a =helm= buffer populated
+   with recent files and currently open buffers. I want Helm everywhere, so
+   instead we'll activate =helm-mode= and work from there.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-config
+    :require (popwin async)
+    :diminish helm-mode
+    :init (progn
+            (setq helm-ff-auto-update-initial-value)
+            (setq popwin:special-display-config
+                  (append helm-popwin
+                          popwin:special-display-config))
+            (bind-key* "M-x" 'helm-M-x)
+            (bind-key* "C-x f" 'helm-recentf)
+            (bind-key* "C-x b" 'helm-mini)
+            (bind-key* "C-x C-f" 'helm-find-files))
+    :config (helm-mode 1))
+#+END_SRC
+
+*** helm-company
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-company
+    :require company
+    :commands helm-company
+    :config (progn
+              (define-key company-mode-map (kbd "C-:") 'helm-company)
+              (define-key company-active-map (kbd "C-:") 'helm-company)))
+#+END_SRC
+
+*** helm-ag
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-ag)
+#+END_SRC
+
+** popwin
+
+#+BEGIN_SRC emacs-lisp
+  (req-package popwin
+    :init
+    (progn
+      (setq helm-popwin
+            '(("*Flycheck errors*" :height 10)
+              ("*Helm Find Files*" :height 0.3)
+              ("^\*helm.+\*$" :regexp t :height 15))))
+    :config
+    (progn
+      (popwin-mode 1)
+      (push '("*helm semantic/imenu*" :width 0.382 :position left) popwin:special-display-config)
+      (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
+      ))
+#+END_SRC
+
+** Company mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package company
+    :diminish company-mode
+    :config
+    (progn
+      (global-company-mode t)
+      (setq company-idle-delay 0.1)
+      (setq company-tooltip-limit 10)
+      (setq company-minimum-prefix-length 2)
+      (setq company-echo-delay 0)
+      ;; (setq company-auto-complete nil)
+
+      (add-to-list 'company-backends 'company-ispell t)
+      ))
+#+END_SRC
+
+*** Add quickhelp in company-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package company-quickhelp
+    :require company
+    :config (company-quickhelp-mode 1))
+#+END_SRC
+
+** Flycheck
+
+#+BEGIN_SRC emacs-lisp
+  (req-package flycheck
+    :diminish (flycheck-mode . " ✓ ")
+    :config
+    (progn
+      (add-hook 'after-init-hook 'global-flycheck-mode)
+      (setq flycheck-indication-mode 'right-fringe)
+      (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+      (setq flycheck-keymap-prefix (kbd "C-c c"))
+      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
+#+END_SRC
+
+*** flycheck-pos-tip
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package flycheck-pos-tip
+    :require (flycheck popup)
+    :commands flycheck-pos-tip-error-messages
+    :init (setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages))
+#+END_SRC
+
+** semantic-mode
+
+Use for =helm-semantic-or-imenu=
+
+#+BEGIN_SRC emacs-lisp
+  (req-package semantic
+    :init (progn
+            (semantic-mode t)
+            (setq helm-semantic-fuzzy-match t
+                  helm-imenu-fuzzy-match t)))
+#+END_SRC
+
+* 專案管理
+** Magit
+
+#+BEGIN_SRC emacs-lisp
+  (req-package magit
+    :diminish magit-auto-revert-mode
+    :init
+    (progn
+      (setq magit-last-seen-setup-instructions "1.4.0")
+      (setq magit-auto-revert-mode nil)
+      (setq magit-save-some-buffers nil)
+      (setq magit-set-upstream-on-push t)
+      (setq magit-diff-refine-hunk t)
+      (setq magit-default-tracking-name-function 'magit-default-tracking-name-branch-only))
+    :bind ("C-c g" . magit-status))
+
+  (req-package magit-filenotify
+    :require magit
+    :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
+#+END_SRC
+
+*** diff-hl
+
+可以顯示出尚未 stage 的程式碼
+
+#+BEGIN_SRC emacs-lisp
+  (req-package diff-hl
+    :init (global-diff-hl-mode))
+#+END_SRC
+
+** ediff
+
+#+BEGIN_SRC emacs-lisp
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  ;; (setq ediff-split-window-function 'split-window-horizontally)
+#+END_SRC
+
+** projectile
+
+#+BEGIN_SRC emacs-lisp
+  (req-package projectile
+    :init
+    (progn (projectile-global-mode)
+           (setq projectile-completion-system 'helm)))
+#+END_SRC
+
+*** helm-projectile
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-projectile
+    :require (helm projectile)
+    :config (helm-projectile-on))
+#+END_SRC
+
+** ggtags
+
+OS 中先安裝 ctags , pygments 和 global
+
+#+BEGIN_SRC sh
+  $ yaourt -S ctags
+  $ sudo pip install pygments
+  $ yaourt -S global-pygments-plugin-git global
+#+END_SRC
+
+Copy gtags.conf to $HOME/.globalrc
+
+#+BEGIN_SRC sh
+  $ cp /usr/share/gtags/gtags.conf ~/.globalrc
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package ggtags
+    :config (progn
+              (add-hook 'prog-mode-hook
+                        '(lambda() (ggtags-mode 1))
+                        )))
+
+#+END_SRC
+
+* 程式語言
+
+** Python
+
+*** jedi
+
+Linux 中安裝 jedi
+
+#+BEGIN_SRC sh
+   $ pip install jedi
+#+END_SRC
+
+Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package jedi
+    :init
+    (progn
+      (add-hook 'python-mode-hook 'jedi:setup)
+      ;; (add-hook 'python-mode-hook 'eldoc-mode)
+
+      (setq jedi:complete-on-dot nil)
+      (setq jedi:tooltip-method nil)
+      ))
+#+END_SRC
+
+*** company-jedi
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package company-jedi
+    :init (add-to-list 'company-backends 'company-jedi))
+#+END_SRC
+
+*** anaconda
+
+這個就可以了，不必再設定 company-jedi。
+會自動呼叫 jedi
+
+#+BEGIN_SRC emacs-lisp
+  (req-package anaconda-mode
+    :require (jedi auto-complete popup)
+    :diminish anaconda-mode
+    :init (progn
+            (add-hook 'python-mode-hook 'anaconda-mode)
+            (add-hook 'python-mode-hook 'eldoc-mode)))
+
+  (req-package company-anaconda
+    :init (add-to-list 'company-backends 'company-anaconda))
+#+END_SRC
+
+** SQL
+
+在 SQL 視窗中，自動轉行，能看到所有資料
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'sql-interactive-mode-hook
+          (lambda ()
+            (toggle-truncate-lines nil)))
+#+END_SRC
+
+** Shell
+** systemd-mode
+
+會自動以 company 補全，不必再設定。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package systemd)
+#+END_SRC
+
+*** keybindings
+
+(define-key map (kbd "C-c C-d") 'systemd-doc-directives)
+(define-key map (kbd "C-c C-o") 'systemd-doc-open)
+
+** markdown-mode
+
+#+BEGIN_SRC emacs-lisp
+(req-package markdown-mode
+  :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.markdown\\'" . gfm-mode))
+      (add-to-list 'auto-mode-alist '("\\.md\\'" . gfm-mode))))
+#+END_SRC
+
+** ReStructure
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.rst\\'" . rst-mode))
+#+END_SRC
+
+** Haskell
+
+只是為了 xmonad 和 taffybar。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package haskell-mode
+    :require (flycheck flycheck-haskell)
+    :mode "\\.hs$" "\\.l?hs$"
+    :config
+    (progn (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
+           (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+
+           (defun my-haskell-hook ()
+             (setq mode-name " λ ")
+
+             (turn-on-haskell-doc)
+             (diminish 'haskell-doc-mode "")
+             (capitalized-words-mode)
+
+             (diminish 'capitalized-words-mode "")
+             (turn-on-eldoc-mode)
+
+             (diminish 'eldoc-mode "")
+             (turn-on-haskell-decl-scan)
+             (setq evil-auto-indent nil))
+
+           ;;(setq haskell-font-lock-symbols 'unicode)
+           ;;(setq haskell-literate-default 'tex)
+           ;;(setq haskell-stylish-on-save t)
+           ;;(setq haskell-tags-on-save t)
+           (add-hook 'haskell-mode-hook 'my-haskell-hook)))
+#+END_SRC
+
+*** flycheck-haskell
+
+#+BEGIN_SRC emacs-lisp
+  (req-package flycheck-haskell
+    :config (add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
+#+END_SRC
+
+** Emacs Lisp
+
+#+BEGIN_SRC emacs-lisp
+  (req-package lisp-mode
+    :init
+    (add-hook 'emacs-lisp-mode-hook
+              (lambda ()
+                (setq mode-name " ξ "))))
+#+END_SRC
+
+** Web
+
+*** web-mode
+
+目前是為了 mako 使用的 web-mode，看起來還有一些問題需要微調，不知如何下手。
+
+Homepage: http://web-mode.org/
+Source: https://github.com/fxbois/web-mode
+
+#+BEGIN_SRC emacs-lisp
+(req-package web-mode
+  :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
+      (setq web-mode-engines-alist  '(("mako" . "\\.tmpl\\'")))
+      (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))))
+
+(defun my-web-mode-hook ()
+  "Hooks for Web mode."
+  (setq web-mode-markup-indent-offset 4)
+  (setq web-mode-code-indent-offset 4)
+  (setq web-mode-css-indent-offset 2)
+)
+(add-hook 'web-mode-hook  'my-web-mode-hook)
+
+#+END_SRC
+
+*** emmet-mode
+
+類似 zencoding 的工具
+用類似 css 的語法寫 html 檔
+
+Homepage: http://emmet.io/
+Source: https://github.com/smihica/emmet-mode
+
+#+BEGIN_SRC emacs-lisp
+(req-package emmet-mode
+  :init
+    (progn
+      (add-hook 'sgml-mode-hook 'emmet-mode)
+      (add-hook 'css-mode-hook  'emmet-mode)
+      (add-hook 'emmet-mode-hook
+                (lambda () (setq emmet-indentation 4)))))
+#+END_SRC
+
+*** js2-mode
+
+Source: https://github.com/mooz/js2-mode
+
+#+BEGIN_SRC emacs-lisp
+(req-package js2-mode
+  :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+      (add-hook 'js2-mode-hook 'flycheck-mode)))
+#+END_SRC
+
+*** json-mode
+
+Source: https://github.com/joshwnj/json-mode
+
+#+BEGIN_SRC emacs-lisp
+(req-package json-mode
+  :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
+#+END_SRC
+** Org
+
+#+BEGIN_SRC emacs-lisp
+(req-package org
+  ;;:require (org-crypt org-mac-link org-magit)
+  :mode (("\\.org\\'" . org-mode)
+         ("\\.org_archive\\'" . org-mode))
+  :config
+  (progn
+    (add-hook 'org-mode-hook
+              '(lambda ()
+                 (setq mode-name " ꙮ ")))
+    ;; fontify source code
+    (setq org-src-fontify-natively t)
+    ;; Use current window when switch to source block
+    (setq org-src-window-setup 'current-window)
+    ;; Disable prompting to evaluate babel blocks
+    (setq org-confirm-babel-evaluate nil)
+    ))
+#+END_SRC
+
+*** 常用按鍵
+=C-c '= 編輯原始碼
+
+*** Extend org-mode's easy templates
+
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'org
+    '(progn
+       (add-to-list 'org-structure-template-alist
+                    '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
+       (add-to-list 'org-structure-template-alist
+                    '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))))
+#+END_SRC
+
+*** Extend babel support languages
+
+#+BEGIN_SRC emacs-lisp :tango no
+(eval-after-load 'org
+  '(progn
+     (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((emacs-lisp . t)
+        (C . t)
+        (ditaa . t)
+        (dot . t)
+        (js . t)
+        (latex . t)
+        (perl . t)
+        (python . t)
+        (ruby . t)
+        (sh . t)
+        (plantuml . t)
+        (clojure . t)
+        ))))
+#+END_SRC
+
+* 完成配置
+
+At long last we need only call the following function to send =req-package= on
+its merry way.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package-finish)
+#+END_SRC
+
+* 結語
+
+使用 emacs 會上癮的，只是要花很多時間熟悉這套工具。
+熟悉了這個工具，真的就不想用其它的編輯器。
