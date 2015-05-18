@@ -1102,6 +1102,12 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
     :init (global-aggressive-indent-mode))
 #+END_SRC
 
+** electric-indent-mode
+
+#+BEGIN_SRC emacs-lisp  :tangle no
+  (electric-indent-mode t)
+#+END_SRC
+
 ** Flyspell
 
 #+BEGIN_SRC emacs-lisp
@@ -1242,6 +1248,17 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
     :config (company-quickhelp-mode 1))
 #+END_SRC
 
+*** keybindings
+
+M-n/p select up/down
+<return> to complete
+<Tab> complete the common part
+C-s
+C-r
+C-o
+<f1> to dispaly the documentation
+<C-w> to see its source
+
 ** Flycheck
 
 #+BEGIN_SRC emacs-lisp
@@ -1298,7 +1315,7 @@ Use for =helm-semantic-or-imenu=
     :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
 #+END_SRC
 
-*** diff-hl
+** diff-hl
 
 可以顯示出尚未 stage 的程式碼
 
@@ -1311,7 +1328,9 @@ Use for =helm-semantic-or-imenu=
 
 #+BEGIN_SRC emacs-lisp
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
-  ;; (setq ediff-split-window-function 'split-window-horizontally)
+  (setq ediff-split-window-function 'split-window-vertically)
+  (setq ediff-merge-split-window-function 'split-window-vertically)
+  (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
 #+END_SRC
 
 ** projectile
@@ -1360,6 +1379,23 @@ Copy gtags.conf to $HOME/.globalrc
 
 ** Python
 
+*** anaconda
+
+這個就可以了，不必再設定 company-jedi。
+會自動呼叫 jedi
+
+#+BEGIN_SRC emacs-lisp
+  (req-package anaconda-mode
+    :require (jedi auto-complete popup)
+    :diminish anaconda-mode
+    :init (progn
+            (add-hook 'python-mode-hook 'anaconda-mode)
+            (add-hook 'python-mode-hook 'eldoc-mode)))
+
+  (req-package company-anaconda
+    :init (add-to-list 'company-backends 'company-anaconda))
+#+END_SRC
+
 *** jedi
 
 Linux 中安裝 jedi
@@ -1387,23 +1423,6 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
 #+BEGIN_SRC emacs-lisp :tangle no
   (req-package company-jedi
     :init (add-to-list 'company-backends 'company-jedi))
-#+END_SRC
-
-*** anaconda
-
-這個就可以了，不必再設定 company-jedi。
-會自動呼叫 jedi
-
-#+BEGIN_SRC emacs-lisp
-  (req-package anaconda-mode
-    :require (jedi auto-complete popup)
-    :diminish anaconda-mode
-    :init (progn
-            (add-hook 'python-mode-hook 'anaconda-mode)
-            (add-hook 'python-mode-hook 'eldoc-mode)))
-
-  (req-package company-anaconda
-    :init (add-to-list 'company-backends 'company-anaconda))
 #+END_SRC
 
 ** SQL
@@ -1457,6 +1476,7 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
     :config
     (progn (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
            (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
+           (add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
 
            (defun my-haskell-hook ()
              (setq mode-name " λ ")
