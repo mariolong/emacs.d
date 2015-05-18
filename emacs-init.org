@@ -1091,6 +1091,19 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
     (add-hook 'css-mode-hook 'rainbow-mode))
 #+END_SRC
 
+** color-identifiers-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package color-identifiers-mode
+    :diminish (color-identifiers-mode . "")
+    :init
+    (setq color-identifiers:num-colors 10)
+    :config
+    (progn
+      (add-hook 'prog-mode-hook 'color-identifiers-mode)
+      ))
+#+END_SRC
+
 ** aggressive-indent
 
 來源：http://endlessparentheses.com/permanent-auto-indentation.html
