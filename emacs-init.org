@@ -49,6 +49,12 @@ introduce, which make me never accidentally using outdated compiled files.
   (setq ad-redefinition-action 'accept)
 #+END_SRC
 
+*** 清除 scratch message
+
+#+BEGIN_SRC emacs-lisp
+  (setq initial-scratch-message "")
+#+END_SRC
+
 ** 設定字型
 
 重要的是設定中文字型
@@ -673,8 +679,10 @@ following function to let emacs re-create it automatically.
   (run-with-idle-timer 1 t
                        '(lambda ()
                           (unless (get-buffer "*scratch*")
-                            (with-current-buffer (get-buffer-create "*scratch*")
-                              (lisp-interaction-mode)))))
+                            (with-current-buffer
+                                (get-buffer-create "*scratch*")
+                              (lisp-interaction-mode)
+                              ))))
 #+END_SRC
 
 ** recentf
@@ -1299,15 +1307,14 @@ C-o
 
 Use for =helm-semantic-or-imenu=
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package semantic
-    :init (progn
-            (semantic-mode t)
-            (setq helm-semantic-fuzzy-match t
-                  helm-imenu-fuzzy-match t)))
+    :init
+    (progn (add-hook 'prog-mode-hook 'semantic-mode)))
 #+END_SRC
 
 * 專案管理
+
 ** Magit
 
 #+BEGIN_SRC emacs-lisp
