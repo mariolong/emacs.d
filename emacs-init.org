@@ -667,7 +667,7 @@ http://blog.jobbole.com/51598/
            (call-interactively 'multi-term)))
      :default-config-keywords '(:position :bottom :height 12 :stick t)))
 
-  (bind-key "<f4>" 'popwin-term:multi-term)
+  (bind-key "C-!" 'popwin-term:multi-term)
 #+END_SRC
 
 ** Create *scratch* automatically
@@ -1101,7 +1101,9 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
 
 ** color-identifiers-mode
 
-#+BEGIN_SRC emacs-lisp
+太花俏了
+
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package color-identifiers-mode
     :diminish (color-identifiers-mode . "")
     :init
@@ -1412,8 +1414,9 @@ Copy gtags.conf to $HOME/.globalrc
             (add-hook 'python-mode-hook 'anaconda-mode)
             (add-hook 'python-mode-hook 'eldoc-mode)))
 
-  (req-package company-anaconda
-    :init (add-to-list 'company-backends 'company-anaconda))
+    (req-package company-anaconda
+      :init (add-to-list 'company-backends 'company-anaconda))
+
 #+END_SRC
 
 *** jedi
@@ -1656,6 +1659,12 @@ Source: https://github.com/joshwnj/json-mode
         (plantuml . t)
         (clojure . t)
         ))))
+#+END_SRC
+
+** nginx-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package nginx-mode)
 #+END_SRC
 
 * 完成配置
