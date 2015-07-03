@@ -1321,7 +1321,6 @@ Use for =helm-semantic-or-imenu=
 
 #+BEGIN_SRC emacs-lisp
   (req-package magit
-    :diminish magit-auto-revert-mode
     :init
     (progn
       (setq magit-last-seen-setup-instructions "1.4.0")
@@ -1336,6 +1335,8 @@ Use for =helm-semantic-or-imenu=
     :require magit
     :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
 #+END_SRC
+
+#+RESULTS:
 
 ** diff-hl
 
