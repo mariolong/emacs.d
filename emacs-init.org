@@ -286,7 +286,7 @@ https://github.com/glasserc/ethan-wspace
 #+BEGIN_SRC emacs-lisp
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
-** defalut truncate lines
+** default truncate lines
 
 #+BEGIN_SRC emacs-lisp
   (toggle-truncate-lines t)
