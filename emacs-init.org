@@ -609,7 +609,7 @@ ref: [[https://github.com/dgutov/highlight-escape-sequences]]
 #+BEGIN_SRC emacs-lisp
   (mouse-avoidance-mode 'banish)
 #+END_SRC
-* Winddown Management
+* Windown Management
 ** winner-mode
 
 Undo/redo window configuration with C-c <left>/<right>
@@ -913,6 +913,7 @@ Add parts of each file's directory to the buffer name if not unique
 
 * 編輯功能
 ** Smooth-scrolling
+
 #+BEGIN_SRC emacs-lisp
   (req-package smooth-scrolling
     :commands (smooth-scrolling-mode)
@@ -1092,7 +1093,6 @@ ref: http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up
 #+END_SRC
 
 ** undo-tree
-
 用 M-x undo-tree-visualize (C-x u) 看 undo-tree，很直覺。
 
 #+BEGIN_SRC emacs-lisp
@@ -1104,6 +1104,21 @@ ref: http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up
       (setq undo-tree-history-directory-alist
             `((".*" . ,(expand-file-name "undo" user-cache-directory))))
       (global-undo-tree-mode)))
+#+END_SRC
+
+** expand-region
+
+M-SPC 設定 mark
+C-= 擴展
+C-- C-= 縮減
+C-0 C-= 還原
+
+ref: https://github.com/magnars/expand-region.el
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "M-SPC" 'set-mark-command)
+  (req-package expand-region
+    :bind ("C-=" . er/expand-region))
 #+END_SRC
 ** smartparens
 ref: https://github.com/Fuco1/smartparens
@@ -1171,6 +1186,43 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
     :init (global-aggressive-indent-mode))
 #+END_SRC
 
+** Company mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package company
+    :diminish company-mode
+    :init (add-hook 'after-init-hook 'global-company-mode)
+    :config
+    (progn
+      (global-company-mode t)
+
+      (setq company-idle-delay 0.1)
+      (setq company-tooltip-limit 10)
+      (setq company-minimum-prefix-length 2)
+      (setq company-echo-delay 0)
+
+      (add-to-list 'company-backends 'company-ispell t)
+      ))
+#+END_SRC
+
+*** Add quickhelp in company-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package company-quickhelp
+    :require company
+    :config (company-quickhelp-mode 1))
+#+END_SRC
+
+*** keybindings
+
+M-n/p select up/down
+<return> to complete
+<Tab> complete the common part
+C-s
+C-r
+C-o
+<f1> to dispaly the documentation
+<C-w> to see its source
 ** Flycheck
 
 #+BEGIN_SRC emacs-lisp
@@ -1241,99 +1293,6 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
   (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE"))
 #+END_SRC
 
-** expand-region
-
-M-SPC 設定 mark
-C-= 擴展
-C-- C-= 縮減
-C-0 C-= 還原
-
-ref: https://github.com/magnars/expand-region.el
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "M-SPC" 'set-mark-command)
-  (req-package expand-region
-    :bind ("C-=" . er/expand-region))
-#+END_SRC
-
-** helm
-
-Helm offers a command called =helm-mini= that opens a =helm= buffer
-populated with recent files and currently open buffers. I want Helm
-everywhere, so instead we'll activate =helm-mode= and work from there.
-
-#+BEGIN_SRC emacs-lisp
-  (req-package helm-config
-    :require (popwin async)
-    :diminish helm-mode
-    :init (progn
-            (setq helm-ff-auto-update-initial-value)
-            (setq popwin:special-display-config
-                  (append helm-popwin
-                          popwin:special-display-config))
-            ;;(bind-key* "M-x" 'helm-M-x)
-            ;;(bind-key* "C-x f" 'helm-recentf)
-            ;; (bind-key* "C-x b" 'helm-mini)
-            ;; (bind-key* "C-x C-f" 'helm-find-files)
-            )
-    ;; :config (helm-mode 1)
-    )
-#+END_SRC
-
-*** helm-company
-
-#+BEGIN_SRC emacs-lisp
-  (req-package helm-company
-    :require company
-    :commands helm-company
-    :config (progn
-              (define-key company-mode-map (kbd "C-:") 'helm-company)
-              (define-key company-active-map (kbd "C-:") 'helm-company)))
-#+END_SRC
-
-*** helm-ag
-
-#+BEGIN_SRC emacs-lisp
-  (req-package helm-ag)
-#+END_SRC
-
-** Company mode
-
-#+BEGIN_SRC emacs-lisp
-  (req-package company
-    :diminish company-mode
-    :config
-    (progn
-      (global-company-mode t)
-      (setq company-idle-delay 0.1)
-      (setq company-tooltip-limit 10)
-      (setq company-minimum-prefix-length 2)
-      (setq company-echo-delay 0)
-      ;; (setq company-auto-complete nil)
-
-      (add-to-list 'company-backends 'company-ispell t)
-      ))
-#+END_SRC
-
-*** Add quickhelp in company-mode
-
-#+BEGIN_SRC emacs-lisp
-  (req-package company-quickhelp
-    :require company
-    :config (company-quickhelp-mode 1))
-#+END_SRC
-
-*** keybindings
-
-M-n/p select up/down
-<return> to complete
-<Tab> complete the common part
-C-s
-C-r
-C-o
-<f1> to dispaly the documentation
-<C-w> to see its source
-
 ** popwin
 
 #+BEGIN_SRC emacs-lisp
@@ -1383,6 +1342,47 @@ GitHub: https://github.com/steckerhalter/discover-my-major
   (req-package discover-my-major
     :bind ("C-h C-m" . discover-my-major)
     :bind ("C-h M-m" . discover-my-mode))
+#+END_SRC
+
+* helm
+
+Helm offers a command called =helm-mini= that opens a =helm= buffer
+populated with recent files and currently open buffers. I want Helm
+everywhere, so instead we'll activate =helm-mode= and work from there.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-config
+    :require (popwin async)
+    :diminish helm-mode
+    :init (progn
+            (setq helm-ff-auto-update-initial-value)
+            (setq popwin:special-display-config
+                  (append helm-popwin
+                          popwin:special-display-config))
+            ;;(bind-key* "M-x" 'helm-M-x)
+            ;;(bind-key* "C-x f" 'helm-recentf)
+            ;; (bind-key* "C-x b" 'helm-mini)
+            ;; (bind-key* "C-x C-f" 'helm-find-files)
+            )
+    ;; :config (helm-mode 1)
+    )
+#+END_SRC
+
+*** helm-company
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-company
+    :require company
+    :commands helm-company
+    :config (progn
+              (define-key company-mode-map (kbd "C-:") 'helm-company)
+              (define-key company-active-map (kbd "C-:") 'helm-company)))
+#+END_SRC
+
+*** helm-ag
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-ag)
 #+END_SRC
 
 * ivy
@@ -1438,13 +1438,11 @@ GitHub: https://github.com/steckerhalter/discover-my-major
       (setq magit-diff-refine-hunk t)
       (setq magit-default-tracking-name-function 'magit-default-tracking-name-branch-only))
     :bind ("C-c g" . magit-status))
-.gitignore
+
   (req-package magit-filenotify
     :require magit
     :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
 #+END_SRC
-
-#+RESULTS:
 
 ** TODO diff-hl
 
@@ -1971,14 +1969,35 @@ ref: https://github.com/jtamagnan/hangups.el
 #+END_SRC
 
 ** TODO erc
-* TODO Python
-*** TODO elpy
+* Python
+*** elpy
+ref: https://github.com/jorgenschaefer/elpy
+
+#+BEGIN_SRC emacs-lisp
+  (req-package elpy
+    :require (flycheck company yasnippet)
+    :defer 2
+    :config
+    (progn
+      (elpy-enable)
+      (setq elpy-rpc-backend "jedi")
+
+      (eval-after-load 'flycheck
+        '(progn
+           (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
+           (add-hook 'elpy-mode-hook 'flycheck-mode)))
+
+      (add-to-list 'elpy-modules 'elpy-module-company)
+      (add-to-list 'elpy-modules 'elpy-module-yasnippet)
+      ))
+#+END_SRC
+
 *** anaconda
 
 這個就可以了，不必再設定 company-jedi。
 會自動呼叫 jedi
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package anaconda-mode
     :require (jedi auto-complete popup)
     :diminish anaconda-mode
@@ -2000,6 +2019,9 @@ Linux 中安裝 jedi
 #+END_SRC
 
 Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
+
+如果有關於 =~/.emacs.d/.python-environments/default= 的錯誤訊息，刪了
+它，重新執行 =M-x jedi:install-server=
 
 #+BEGIN_SRC emacs-lisp :tangle no
   (req-package jedi
