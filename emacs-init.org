@@ -5,8 +5,17 @@
 #+BABEL: :cache yes
 #+OPTIONS: ^:nil
 
-* 初始化設定
+* 前言
 
+2016-1-5
+用了一陣子的 spacemacs，雖然覺得不錯，但是 0.105 版出來後，許多設定又不能用了。
+算了，還是追隨 coldnew 的腳步，回到自己的 org 檔吧。
+
+2016-6-3
+我又回來了。
+實在是用不到 spacemacs 那麼多的功能，而且覺得 spacemacs 愈來愈慢，不夠快意。
+
+* Initialization
 ** load prefer newer
 
 since emacs 24.4, new option `load-prefer-newer' has been
@@ -17,14 +26,6 @@ introduce, which make me never accidentally using outdated compiled files.
 #+END_SRC
 
 ** cleanup
-
-*** 直接開啟全螢幕
-
-在 init.el 的開始部份加上，
-#+begin_src emacs-lisp :tangle no
-  (modify-all-frames-parameters '((fullscreen . maximized)))
-#+end_src
-
 *** 不必顯示功能表、工具列和捲軸
 
 在 init.el 的開始部份加上下列 3 行：
@@ -37,10 +38,18 @@ introduce, which make me never accidentally using outdated compiled files.
 #+end_src
 
 *** 不顯示啟始畫面
+在 init.el 的開始部份加上，
 
 #+begin_src emacs-lisp :tangle no
   (setq inhibit-startup-message t
         inhibit-startup-echo-area-message t)
+#+end_src
+
+*** 直接開啟全螢幕
+在 init.el 的開始部份加上，
+
+#+begin_src emacs-lisp :tangle no
+  (modify-all-frames-parameters '((fullscreen . maximized)))
 #+end_src
 
 *** 清除 redefinition 訊息
@@ -60,12 +69,17 @@ introduce, which make me never accidentally using outdated compiled files.
 重要的是設定中文字型
 
 #+begin_src emacs-lisp
-  (set-face-attribute 'default nil :font "Source Code Pro 16")
+  (set-face-attribute 'default nil :font "Source Code Pro 18")
 
-  (dolist (charset '(kana han symbol cjk-misc bopomofo))
+  (dolist (charset '(kana han cjk-misc bopomofo))
     (set-fontset-font (frame-parameter nil 'font) charset
-                      (font-spec :family "Source Han Sans" :size 26)))
+                      (font-spec :family "Source Han Sans" :size 28)))
+
+  (set-fontset-font (frame-parameter nil 'font) 'symbol (font-spec :family "Symbola" :size 32))
 #+end_src
+
+一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十
+1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
 
 ** Define user-cache-directory variable
 
@@ -77,7 +91,33 @@ user-emacs-directory 定義於 init.el 中
     "My emacs storage area for persistent files.")
 #+END_SRC
 
-* Package 管理
+** TODO add .emacs.d/lisp to load path
+ref: https://www.emacswiki.org/emacs/DotEmacsModular
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'load-path (concat user-emacs-directory "lisp/hangups.el"))
+  (add-to-list 'load-path (concat user-emacs-directory "lisp/moedict.el"))
+  (add-to-list 'load-path (concat user-emacs-directory "lisp/swiper"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (let* ((lisp-dir '("lisp/" "themes/")))
+    (dolist (lisp-path lisp-dir)
+      (when (not (file-exists-p lisp-path))
+        (make-directory (concat user-emacs-directory lisp-path) t))
+      (let* ((load-dir (concat user-emacs-directory lisp-path))
+             (default-directory load-dir))
+        (setq load-path
+              (append
+               (let ((load-path (copy-sequence load-path)))
+                 (append
+                  (copy-sequence (normal-top-level-add-to-load-path '(".")))
+                  (normal-top-level-add-subdirs-to-load-path)))
+               load-path)))))
+#+END_SRC
+
+** TODO tangle this initial file via async
+* Package Management
 
 用過 quelpa，因為啟動時會自動抓原始碼，啟動速度真的很慢。
 試用過 Cask 和 pallet，實在是看不出來有何優勢，也不能自動刪除不需要的 package，所以先不用。
@@ -86,15 +126,13 @@ user-emacs-directory 定義於 init.el 中
 首先安裝還是透過 =package.el= ，成功之後，就可以用 =req-package= 安裝其它的套件。
 
 ** Initalize =package=
+用 =package.el= 要先加來源庫，以下工作改到 init.el 中執行。
 
-用 =package.el= 要先加來源庫：
-
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
-  (add-to-list 'package-archives '("elpa" . "http://tromey.com/elpa/"))
-  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/"))
 
-  (eval-when-compile (package-initialize))
+  (package-initialize)
 #+END_SRC
 
 ** 安裝 =req-package=
@@ -102,7 +140,7 @@ user-emacs-directory 定義於 init.el 中
 #+BEGIN_SRC emacs-lisp
   (if (not (package-installed-p 'req-package))
       (progn
-        (package-refresh-contents)
+        ;; (package-refresh-contents)
         (package-install 'req-package)))
 
   (require 'req-package)
@@ -112,9 +150,9 @@ user-emacs-directory 定義於 init.el 中
 
 使用 =req-package= 時，會用到 =:diminish= 和 =:bind= ，故安裝以下 2 個套件。
 
-#+BEGIN_SRC emacs-lisp
-  (req-package diminish)
-  (req-package bind-key)
+#+BEGIN_SRC emacs-lisp :tangle no
+  ;; (req-package diminish)
+  ;; (req-package bind-key)
 #+END_SRC
 
 ** 更新所有已安裝的套件
@@ -129,9 +167,9 @@ user-emacs-directory 定義於 init.el 中
     (save-window-excursion
       (package-list-packages)
       (package-menu-mark-upgrades)
-      (package-menu-execute t)
-      )
-    (jedi:install-server))
+      (package-menu-execute t))
+    ;; (jedi:install-server)
+    )
 #+END_SRC
 
 ** 刪除不需要的套件
@@ -144,7 +182,7 @@ user-emacs-directory 定義於 init.el 中
   (load (concat user-emacs-directory "custom.el"))
 #+END_SRC
 
-** 自定功能
+** 重新載入 emacs 設定
 
 #+BEGIN_SRC emacs-lisp
   (defun reload-emacs ()
@@ -153,7 +191,10 @@ user-emacs-directory 定義於 init.el 中
     (interactive)
     (load-file (concat user-emacs-directory "init.el"))
     (delete-other-windows))
+#+END_SRC
 
+** 執行目前 buffer 到錯誤發生
+#+BEGIN_SRC emacs-lisp
   (defun eval-buffer-until-error ()
     "Evaluate emacs buffer until error occured."
 
@@ -162,12 +203,12 @@ user-emacs-directory 定義於 init.el 中
     (while t (eval (read (current-buffer)))))
 #+END_SRC
 
-* 外觀
+* Theme
 ** Theme
 
 #+begin_src emacs-lisp
   (req-package color-theme-sanityinc-tomorrow
-    :init (load-theme 'sanityinc-tomorrow-eighties :no-confirm))
+    :init (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
 
 ** Change cursor color according to mode
@@ -209,23 +250,160 @@ user-emacs-directory 定義於 init.el 中
   (diminish 'overwrite-mode)
 #+END_SRC
 
-** 指示欄
+** TODO spaceline
+from spacemacs import spaceline for nice look
 
+** fringe
 改得細一點，預設值是 8 pixel
 
 #+BEGIN_SRC emacs-lisp
   (fringe-mode 4)
 #+END_SRC
 
+** rainbow-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package rainbow-mode
+    :diminish rainbow-mode
+    :init
+    (add-hook 'prog-mode-hook 'rainbow-mode)
+    (add-hook 'css-mode-hook 'rainbow-mode))
+#+END_SRC
+
+** rainbow-delimiters
+ref: https://github.com/Fanael/rainbow-delimiters
+
+#+BEGIN_SRC emacs-lisp
+  (req-package rainbow-delimiters
+    :config
+    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+    (add-hook 'org-mode-hook 'rainbow-delimiters-mode))
+#+END_SRC
+
+** highlight-parentheses
+set color of parenttheses like spacemacs.
+
+#+BEGIN_SRC emacs-lisp
+  (req-package  highlight-parentheses
+    :init
+    (progn
+      (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
+      (setq hl-paren-delay 0.2)
+      (setq hl-paren-colors '("Springgreen3"
+                              "IndianRed1"
+                              "IndianRed3"
+                              "IndianRed4")))
+    :config
+    (progn
+      ;; (global-highlight-parentheses-mode t)
+      (set-face-attribute 'hl-paren-face nil :weight 'ultra-bold)))
+#+END_SRC
+
+* chinese setup
+** pangu-spacing
+
+自動在中英文字間加入空白，以利閱讀
+
+#+BEGIN_SRC emacs-lisp
+  (req-package pangu-spacing
+    :defer 1
+    :config
+    (progn
+      (global-pangu-spacing-mode 1)
+
+      (add-to-list 'pangu-spacing-inhibit-mode-alist 'eww-mode)
+      (add-to-list 'pangu-spacing-inhibit-mode-alist 'elfeed-search-mode)
+      (add-to-list 'pangu-spacing-inhibit-mode-alist 'elfeed-show-mode)
+
+      ;; Always insert `real' space in org-mode.
+      (dolist (m '(org-mode-hook markdown-mode-hook rst-mode-hook))
+        (add-hook m '(lambda()
+                       (set (make-local-variable 'pangu-spacing-real-insert-separtor) t))))
+      ))
+#+END_SRC
+
+** fcitx
+
+進入 normal mode 時，自動切換至英文輸入模式
+
+#+BEGIN_SRC emacs-lisp
+  (req-package fcitx
+    :defer 1
+    :config
+      (fcitx-aggressive-setup)
+    )
+#+END_SRC
+
+** set buffer to utf-8-unix
+#+BEGIN_SRC emacs-lisp
+  (defun buffer-to-utf-8-unix()
+    (interactive)
+    (set-buffer-file-coding-system 'utf-8-unix))
+
+  (bind-key "C-c fu" 'buffer-to-utf-8-unix)
+#+END_SRC
+
+** translate buffer via opencc
+
+:TODO: opencc refactor
+
+#+BEGIN_SRC emacs-lisp
+  (defvar opencc-conv-temp-file (expand-file-name
+                                 (concat user-cache-directory "opencc.tmp")))
+  ;; (defvar opencc-conv-config "s2twp.json")
+
+  (defun opencc-conv-command ()
+    (concat "opencc"
+            " -i " opencc-conv-temp-file))
+
+  (defun opencc-buffer ()
+    "Convert chinese from simplified to variants and phrases of Taiwan"
+
+    (interactive)
+
+    (set-buffer-file-coding-system 'utf-8-unix)
+    (let ((str (buffer-substring-no-properties (point-max) 1)))
+      (with-temp-file opencc-conv-temp-file
+        (insert str "\n")))
+
+    (let ((result
+           (shell-command-to-string (opencc-conv-command))))
+
+      (erase-buffer)
+      (insert result)
+      (goto-char (point-min))))
+
+  (bind-key "C-c fo" 'opencc-buffer)
+#+END_SRC
+
+** 萌典 moedict
+安裝後，需執行 =moedict-install-dictionary= ，才能開始使用萌典。
+
+#+BEGIN_SRC emacs-lisp
+  (req-package moedict
+    :require esqlite
+    :loader :path
+    :bind ("C-c am" . moedict))
+
+  (setq browse-url-chromium-program "google-chrome-stable")
+#+END_SRC
+
 * 一般設定
-** 內定編碼為 utf-8
+** Don't ask me when close emacs with process is running
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
+    "Prevent annoying \"Active processes exist\" query when you quit Emacs."
+    (flet ((process-list ())) ad-do-it))
+#+END_SRC
 
-Since current Emacs default run on UTF-8, it's no need to setup the
-encoding.
+** Don't ask me when kill process buffer
+#+BEGIN_SRC emacs-lisp
+  (setq kill-buffer-query-functions
+        (remq 'process-kill-buffer-query-function
+              kill-buffer-query-functions))
+#+END_SRC
 
-For language, though Traditional Chinese is my mothertone, I still
-prefer use =en_US= to display time info.
-
+** Set prefert coding to utf-8
 #+BEGIN_SRC emacs-lisp
   (prefer-coding-system 'utf-8)
   (setq system-time-locale "en_US" )
@@ -236,14 +414,7 @@ prefer use =en_US= to display time info.
   (global-font-lock-mode t)
 #+END_SRC
 
-** transient mark
-If you change buffer, or focus, disable the current buffer's mark:
-
-#+BEGIN_SRC emacs-lisp
-(transient-mark-mode t)
-#+END_SRC
-
-** whitespaces and tabs
+** TODO Whitespaces and tabs
 #+BEGIN_SRC emacs-lisp
   (setq c-basic-offset 4)
   (setq python-indent-offset 4)
@@ -286,52 +457,26 @@ https://github.com/glasserc/ethan-wspace
 #+BEGIN_SRC emacs-lisp
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
-** default truncate lines
 
+** Default truncate lines
 #+BEGIN_SRC emacs-lisp
   (toggle-truncate-lines t)
 #+END_SRC
 
-** bell off
+** Bell off
 #+BEGIN_SRC emacs-lisp
   (setq visible-bell t)
 #+END_SRC
 
-** shorten answer
+** Shorten answer
 #+BEGIN_SRC emacs-lisp
   (defalias 'yes-or-no-p 'y-or-n-p)
 #+END_SRC
 
-** clipboard
+** Clipboard
 #+BEGIN_SRC emacs-lisp
   (setq x-select-enable-clipboard t
         x-select-enable-primary t)
-#+END_SRC
-
-** exit emacs
-
-*** save files and this session
-
-=C-x C-c= save-buffers-kill-emacs
-
-#+begin_src emacs-lisp
-  (bind-key "C-x k"   'kill-this-buffer)
-#+END_SRC
-
-*** Don't ask me when close emacs with process is running
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
-    "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-    (flet ((process-list ())) ad-do-it))
-#+END_SRC
-
-*** Don't ask me when kill process buffer
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq kill-buffer-query-functions
-        (remq 'process-kill-buffer-query-function
-              kill-buffer-query-functions))
 #+END_SRC
 
 ** Show keystrokes in progress
@@ -339,7 +484,14 @@ https://github.com/glasserc/ethan-wspace
   (setq echo-keystrokes 0.1)
 #+END_SRC
 
-** Show active region
+** Transient mark
+If you change buffer, or focus, disable the current buffer's mark:
+
+#+BEGIN_SRC emacs-lisp
+(transient-mark-mode t)
+#+END_SRC
+
+** TODO Show active region
 #+BEGIN_SRC emacs-lisp
   (make-variable-buffer-local 'transient-mark-mode)
   (put 'transient-mark-mode 'permanent-local t)
@@ -347,42 +499,117 @@ https://github.com/glasserc/ethan-wspace
 #+END_SRC
 
 ** Remove text in active region if inserting text
-#+BEGIN_SRC
+#+BEGIN_SRC emacs-lisp
   (delete-selection-mode 1)
 #+END_SRC
 
 ** Save minibuffer history
+When Savehist mode is enabled, minibuffer history is saved
+periodically and when exiting Emacs.
 
 #+BEGIN_SRC emacs-lisp
   (savehist-mode 1)
   (setq history-length 1000)
 #+END_SRC
 
-** unbind-key
+** Subword mode
 
 #+BEGIN_SRC emacs-lisp
-  (unbind-key "C-\\")
-  (unbind-key "C-z")
-  (unbind-key "C-x C-z")
-  (unbind-key "C-x m")
+  (global-subword-mode 1)
+#+END_SRC
+** Save files and this session
+=C-x C-c= save-buffers-kill-emacs
+
+#+begin_src emacs-lisp
+  (bind-key "C-x k" 'kill-this-buffer)
 #+END_SRC
 
-** guide-key
+** Parentheses
+#+BEGIN_SRC emacs-lisp
+  (show-paren-mode 1)
+  (setq show-paren-style 'parenthesis)
+#+END_SRC
+
+** Line Numbers
+In most case, I'll make line numers display globally by =linum=.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package guide-key
-    :require popwin
-    :diminish guide-key-mode
-    :init (progn
-            (setq guide-key/guide-key-sequence `("C-c" "C-h" "C-x r")
-                  guide-key/recursive-key-sequence-flag t
-                  guide-key/highlight-command-regexp "projectile"
-                  guide-key/text-scale-amount 1
-                  guide-key/idle-delay 0.5))
-    :config (guide-key-mode t))
+  (req-package linum
+    :config
+    (add-hook 'prog-mode-hook
+              '(lambda () (linum-mode 1))))
+
+  (setq column-number-mode t)
 #+END_SRC
 
-* 視窗管理
+** Relative Line Numbers
+
+#+BEGIN_SRC emacs-lisp
+  (req-package linum-relative
+    :init
+    (progn
+      (linum-relative-mode)
+      (setq linum-relative-current-symbol "")
+      (setq linum-relative-format "%4s")))
+#+END_SRC
+
+** Highlight numbers
+
+ref: [[https://github.com/Fanael/highlight-numbers]]
+
+#+BEGIN_SRC emacs-lisp
+  (req-package highlight-numbers
+    :require (parent-mode)
+    :config
+    ;; json-mode has it's own highlight numbers method
+    (add-hook 'prog-mode-hook '(lambda()
+                                 (if (not (derived-mode-p 'json-mode))
+                                     (highlight-numbers-mode)))))
+#+END_SRC
+
+** TODO Highlight escape charset
+
+ref: [[https://github.com/dgutov/highlight-escape-sequences]]
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package highlight-escape-sequences
+    :config
+    (progn
+      ;; Make face the same as builtin face
+      (put 'font-lock-regexp-grouping-backslash 'face-alias 'font-lock-builtin-face)
+
+      ;; Add extra modes
+      (add-to-list 'hes-simple-modes 'c-mode)
+      (add-to-list 'hes-simple-modes 'c-mode)
+      (add-to-list 'hes-simple-modes 'python-mode)
+
+      ;; Enable globally
+      (hes-mode 1)))
+#+END_SRC
+
+** Highlight FIXME, TODO
+
+#+begin_src emacs-lisp
+  (defun font-lock-comment-annotations ()
+    "Highlight a bunch of well known comment annotations.
+  This functions should be added to the hooks of major modes for programming."
+
+    (font-lock-add-keywords
+     nil
+     '(("\\<\\(FIX\\(ME\\)?\\|BUG\\|HACK\\):" 1 font-lock-warning-face t)
+       ("\\<\\(NOTE\\):" 1 'org-level-2 t)
+       ("\\<\\(TODO\\):" 1 'org-todo t)
+       ("\\<\\(DONE\\):" 1 'org-done t))
+     ))
+
+  (add-hook 'prog-mode-hook 'font-lock-comment-annotations)
+#+end_src
+
+** Hind mouse point
+#+BEGIN_SRC emacs-lisp
+  (mouse-avoidance-mode 'banish)
+#+END_SRC
+* Winddown Management
 ** winner-mode
 
 Undo/redo window configuration with C-c <left>/<right>
@@ -398,8 +625,8 @@ Undo/redo window configuration with C-c <left>/<right>
   :bind ("C-x o" . switch-window))
 #+END_SRC
 
-* 檔案管理
-** 以 root 許可權修改目前正在編輯的檔案
+* Buffer Management
+** Edit current buffer as root
 
 #+BEGIN_SRC emacs-lisp
   (defun edit-current-file-as-root ()
@@ -450,7 +677,28 @@ Undo/redo window configuration with C-c <left>/<right>
                      name (file-name-nondirectory new-name)))))))
 #+END_SRC
 
-** auto revert
+** TODO Clone current Buffer and file
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun clone-current-buffer-file ()
+    "Clone current buffer and file it is visiting."
+    (interactive)
+    (let ((name (buffer-name))
+          (filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (error "Buffer '%s' is not visiting a file!" name)
+        (let ((new-name (read-file-name "New name: " filename)))
+          (if (get-buffer new-name)
+              (error "A buffer named '%s' already exists!" new-name)
+            (rename-file filename new-name 1)
+            (rename-buffer new-name)
+            (set-visited-file-name new-name)
+            (set-buffer-modified-p nil)
+            (message "File '%s' successfully renamed to '%s'"
+                     name (file-name-nondirectory new-name)))))))
+#+END_SRC
+
+** Auto revert
 
 #+BEGIN_SRC emacs-lisp
   (global-auto-revert-mode 1)
@@ -460,26 +708,34 @@ Undo/redo window configuration with C-c <left>/<right>
 #+END_SRC
 
 ** ibuffer
-
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (bind-key "C-x C-b" 'ibuffer)
   (autoload 'ibuffer "ibuffer" "List buffers." t)
 #+END_SRC
 
 ** fasd
 這個相當好用，按下 C-h C-\，輸入部份檔名或目錄名稱，即可直接開啟想要的檔案或目錄。
 
+ref: https://github.com/steckerhalter/emacs-fasd
+
 先在 OS 中安裝 =fasd=
 
-#+BEGIN_SRC emacs-lisp
+用 ivy 取代了
+
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package fasd
     :require grizzl
     :config (global-fasd-mode 1)
     :bind ("C-h C-\\" . fasd-find-file))
 #+END_SRC
 
-** Dired
+*** Calling fasd-find-file with a prefix argument of
 
+C-u lists only directories
+M-- lists only files
+
+** TODO Dired relative functions
+*** dired
 #+BEGIN_SRC emacs-lisp :tangle no
 (req-package dired
   :commands dired
@@ -495,23 +751,25 @@ Undo/redo window configuration with C-c <left>/<right>
                  ))
 #+END_SRC
 
-** Dired+
-
+*** dired+
 #+BEGIN_SRC emacs-lisp
   (req-package dired+
     :init (progn
-            (diredp-toggle-find-file-reuse-dir 1)))
+            (diredp-toggle-find-file-reuse-dir 1)
+            (autoload 'dired-async-mode "dired-async.el" nil t)
+            (dired-async-mode 1)))
 #+END_SRC
 
-** openwith
-
+*** openwith
 #+BEGIN_SRC emacs-lisp
   (req-package openwith
     :config
     (progn
       (openwith-mode t)
       (setq openwith-associations
-            (list (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a"))
+            (list (list (openwith-make-extension-regexp '("jpg" "jpeg" "png"))
+                        "feh -FY" '(file))
+                  (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
                         "mpv" '(file))
                   (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts"
                                                           "mpeg" "mpg" "ogg" "wmv" "mkv"))
@@ -520,130 +778,15 @@ Undo/redo window configuration with C-c <left>/<right>
 
 #+END_SRC
 
-** Eshell
-eshell is not really a system shell, it's written in pure lisp. What I
-like is it fully integrated with emacs.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(req-package eshell
-  :init
-  ;; move eshell cache dir to ~/.emacs.d/.cache
-  (setq eshell-directory-name (concat user-cache-directory "eshell"))
-  :bind ("C-!" . eshell))
-#+END_SRC
-
-*** Use bash like prompt with color
-#+BEGIN_SRC emacs-lisp  :tangle no
-  (eval-after-load 'eshell
-    '(progn
-       ;; Make eshell prompt look likes default bash prompt
-       (setq eshell-prompt-function
-             '(lambda ()
-                (concat
-                 user-login-name "@" system-name " "
-                 (if (search (directory-file-name (expand-file-name (getenv "HOME"))) (eshell/pwd))
-                     (replace-regexp-in-string (expand-file-name (getenv "HOME")) "~" (eshell/pwd))
-                   (eshell/pwd))
-                 (if (= (user-uid) 0) " # " " $ "))))
-       ;; Add color for eshell prompt like Gentoo does
-       (defun colorfy-eshell-prompt ()
-         (let* ((mpoint)
-                (user-string-regexp (concat "^" user-login-name "@" system-name)))
-           (save-excursion
-             (goto-char (point-min))
-             (while (re-search-forward (concat user-string-regexp ".*[$#]") (point-max) t)
-               (setq mpoint (point))
-               (overlay-put (make-overlay (point-at-bol) mpoint) 'face '(:foreground "dodger blue")))
-             (goto-char (point-min))
-             (while (re-search-forward user-string-regexp (point-max) t)
-               (setq mpoint (point))
-               (overlay-put (make-overlay (point-at-bol) mpoint) 'face '(:foreground "green3"))))))
-       ;; Make eshell prompt more colorful
-       (add-hook 'eshell-output-filter-functions 'colorfy-eshell-prompt)))
-#+END_SRC
-
-*** Use ansi-term to render visual commands
-#+BEGIN_SRC emacs-lisp :tangle no
-  (eval-after-load 'eshell
-    '(progn
-      (setq eshell-visual-commands
-            '("less" "tmux" "htop" "top" "bash" "zsh" "fish"))
-
-      (setq eshell-visual-subcommands
-            '(("git" "log" "diff" "show")))
-      ))
-#+END_SRC
-
-*** Support for multi-eshell instance
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package multi-eshell
-    :require eshell
-    :config
-    (progn
-      (setq multi-eshell-shell-function '(eshell))
-      (setq multi-eshell-name "*eshell*")))
-#+END_SRC
-
-*** Add autojump command
-
-[[http://www.emacswiki.org/emacs/EshellAutojump][Eshell Autojump]] is an [[https://github.com/joelthelion/autojump][autojump]] like command written in pure elisp,
-which add a =j= command to let you jump to folder you has been access.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package eshell-autojump :require eshell)
-#+END_SRC
-
-*** Eshell commands setup
-
-**** ..
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defun eshell/.. (&optional level)
-    "Go up LEVEL directories"
-    (interactive)
-    (let ((level (or level 1)))
-      (eshell/cd (make-string (1+ level) ?.))
-      (eshell/ls)))
-#+END_SRC
-
-**** clear
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defun eshell/clear ()
-    "Clears the shell buffer ala Unix's clear or DOS' cls"
-    ;; the shell prompts are read-only, so clear that for the duration
-    (let ((inhibit-read-only t))
-      ;; simply delete the region
-      (delete-region (point-min) (point-max))))
-#+END_SRC
-
-**** emacs
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defun eshell/emacs (&rest args)
-    "Open a file in emacs. Some habits die hard."
-    (if (null args)
-        ;; If I just ran "emacs", I probably expect to be launching
-        ;; Emacs, which is rather silly since I'm already in Emacs.
-        ;; So just pretend to do what I ask.
-        (bury-buffer)
-      ;; We have to expand the file names or else naming a directory in an
-      ;; argument causes later arguments to be looked for in that directory,
-      ;; not the starting directory
-      (mapc #'find-file (mapcar #'expand-file-name (eshell-flatten-list (reverse args))))))
-
-  (defalias 'eshell/e 'eshell/emacs)
-#+END_SRC
-
 ** Multi-term
-
 這個比 eshell 好用。原因很簡單…習慣！
 
 參考：
 http://rawsyntax.com/blog/learn-emacs-zsh-and-multi-term/
 http://blog.jobbole.com/51598/
 
-將 shell 設為 zsh，呼叫 shell 的快捷鍵設為 <F4>。
+將 shell 設為 zsh，呼叫 shell 的快捷鍵設為 <C-x  t>。
+C-! 以 popup window 的方式在下方開一個 term 視窗
 
 #+BEGIN_SRC emacs-lisp
   (req-package multi-term
@@ -697,7 +840,7 @@ following function to let emacs re-create it automatically.
 (req-package recentf
   :config
   (progn
-    (setq recentf-save-file (concat user-emacs-directory "recentf"))
+    (setq recentf-save-file (concat user-cache-directory "recentf"))
     (recentf-mode 1)
     (setq recentf-max-saved-items 500
           recentf-max-menu-items 10)))
@@ -710,7 +853,7 @@ following function to let emacs re-create it automatically.
 (req-package saveplace
              :config
                (progn
-                 (setq save-place-file (concat user-emacs-directory "places"))
+                 (setq save-place-file (concat user-cache-directory "places"))
                  (setq-default save-place t)))
 #+end_src
 
@@ -742,146 +885,97 @@ Add parts of each file's directory to the buffer name if not unique
   (setq auto-save-default nil) ; stop creating those #autosave# files
 #+end_src
 
-** opencc
-將簡體字轉成符合臺灣習慣的用語。
-
-執行 =M-x chinese-convert-buffer=
+** pdf-tools
+如果報錯：無安裝 epdfinfo，執行一次 ~(pdf-tools-install)~ 即可。
 
 #+BEGIN_SRC emacs-lisp
-  (defvar opencc-conv-temp-file (expand-file-name
-                                 (concat user-emacs-directory "opencc.tmp")))
-  (defvar opencc-conv-config "s2twp.json")
+  (req-package pdf-tools
+    ;;:commands pdf-view-mode
+    :init (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
+    :config (progn
+              (pdf-tools-install)
+              (setq pdf-view-continuous t)
 
-  (defun opencc-conv-command ()
-    (concat "opencc"
-            " -i " opencc-conv-temp-file
-            " -c " opencc-conv-config))
-
-  (defun opencc-buffer ()
-    "Convert chinese from simplified to variants and phrases of Taiwan"
-
-    (interactive)
-
-    (set-buffer-file-coding-system 'utf-8-unix)
-    (let ((str (buffer-substring-no-properties (point-max) 1)))
-      (with-temp-file opencc-conv-temp-file
-        (insert str "\n")))
-
-    (let ((result
-           (shell-command-to-string
-            (opencc-conv-command))))
-
-      (erase-buffer)
-      (insert result)
-      (goto-char (point-min))))
+              (bind-keys :map pdf-view-mode-map
+                         ("j" . pdf-view-next-line-or-next-page)
+                         ("k" . pdf-view-previous-line-or-previous-page)
+                         ("J" . pdf-view-next-page)
+                         ("e" . pdf-view-scroll-down-or-previous-page)
+                         ("K" . pdf-view-previous-page)
+                         ("d" . pdf-view-scroll-up-or-next-page)
+                         ("gg" . pdf-view-first-page)
+                         ("G" . pdf-view-last-page)
+                         ("=" . pdf-view-fit-width-to-window)
+                         ("-" . pdf-view-shrink)
+                         ("+" . pdf-view-enlarge))
+              ))
 #+END_SRC
 
 * 編輯功能
-** subword mode
-
+** Smooth-scrolling
 #+BEGIN_SRC emacs-lisp
-  (global-subword-mode 1)
-#+END_SRC
-
-** 括弧
-
-#+BEGIN_SRC emacs-lisp
-  (show-paren-mode 1)
-  (setq show-paren-style 'parenthesis)
-#+END_SRC
-
-*** smartparens
-#+BEGIN_SRC emacs-lisp
-  (req-package smartparens-config
-    :ensure smartparens
-    :diminish (smartparens-mode)
-    :init (smartparens-global-mode t))
-#+END_SRC
-
-*** rainbow-delimiters
-#+BEGIN_SRC emacs-lisp
-  (req-package rainbow-delimiters
-    :config
-    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-    (add-hook 'org-mode-hook 'rainbow-delimiters-mode))
-#+END_SRC
-
-** Line Numbers
-
-In most case, I'll make line numers display globally by =linum=.
-
-#+BEGIN_SRC emacs-lisp
-  (req-package linum
-    :config
-    (add-hook 'prog-mode-hook
-              '(lambda () (linum-mode 1))))
-
-  (setq column-number-mode t)
-#+END_SRC
-
-*** Relative Line Numbers
-
-#+BEGIN_SRC emacs-lisp
-  (req-package linum-relative
+  (req-package smooth-scrolling
+    :commands (smooth-scrolling-mode)
     :init
     (progn
-      (setq linum-relative-current-symbol "")
-      (setq linum-relative-format "%4s")))
+      (smooth-scrolling-mode 1)
+      (setq smooth-scroll-margin 5)))
 #+END_SRC
 
-** Highlight numbers
-
-[[https://github.com/Fanael/highlight-numbers][highlight-numbers]]
+** avy
+ref: https://github.com/abo-abo/avy
 
 #+BEGIN_SRC emacs-lisp
-  (req-package highlight-numbers
-    :require (parent-mode)
-    :config
-    ;; json-mode has it's own highlight numbers method
-    (add-hook 'prog-mode-hook '(lambda()
-                                 (if (not (derived-mode-p 'json-mode))
-                                     (highlight-numbers-mode)))))
+  (req-package avy
+    :commands (global-avy-mode avy-goto-char avy-goto-line)
+    :bind ("C-:" . avy-goto-char)
+    :bind ("M-g f" . avy-goto-line))
 #+END_SRC
 
-** Highlight escape charset
+** ace-pinyin
+ref: https://github.com/cute-jumper/ace-pinyin
 
-https://github.com/dgutov/highlight-escape-sequences
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package highlight-escape-sequences
+#+BEGIN_SRC emacs-lisp
+  (req-package ace-pinyin
     :config
     (progn
-      ;; Make face the same as builtin face
-      (put 'font-lock-regexp-grouping-backslash 'face-alias 'font-lock-builtin-face)
-
-      ;; Add extra modes
-      (add-to-list 'hes-simple-modes 'c-mode)
-      (add-to-list 'hes-simple-modes 'c-mode)
-      (add-to-list 'hes-simple-modes 'python-mode)
-
-      ;; Enable globally
-      (hes-mode 1)))
+      (ace-pinyin-global-mode +1)
+      (setq ace-pinyin-simplified-chinese-only-p nil)
+      ))
 #+END_SRC
 
-** Highlight FIXME, TODO
+** ace-link
+ref: https://github.com/abo-abo/ace-link
 
-#+begin_src emacs-lisp
-  (defun font-lock-comment-annotations ()
-    "Highlight a bunch of well known comment annotations.
-  This functions should be added to the hooks of major modes for programming."
+#+BEGIN_SRC emacs-lisp
+  (req-package ace-link
+    :config
+    (ace-link-setup-default))
+#+END_SRC
 
-    (font-lock-add-keywords
-     nil
-     '(("\\<\\(FIX\\(ME\\)?\\|BUG\\|HACK\\):" 1 font-lock-warning-face t)
-       ("\\<\\(NOTE\\):" 1 'org-level-2 t)
-       ("\\<\\(TODO\\):" 1 'org-todo t)
-       ("\\<\\(DONE\\):" 1 'org-done t))
-     ))
+** Smart home
+按 home 鍵，可讓遊標回到行首或第一個非空字元
 
-  (add-hook 'prog-mode-hook 'font-lock-comment-annotations)
-#+end_src
+ref: https://github.com/tjarvstrand/config-files/blob/master/.emacs.d/lib/smart-beginning-of-line.el
 
-** find symbol at point
+#+BEGIN_SRC emacs-lisp
+  (defun smart-beginning-of-line ()
+    "Move point to first non-whitespace character or beginning-of-line.
+
+  Move point to the first non-whitespace character on this line.
+  If point was already at that position, move point to beginning of line."
+
+    (interactive)
+    (let ((oldpos (point)))
+      (back-to-indentation)
+      (and (= oldpos (point))
+           (beginning-of-line))))
+
+  (bind-key [home] 'smart-beginning-of-line)
+  (bind-key* "C-a" 'smart-beginning-of-line)
+#+END_SRC
+
+** Find symbol at point
 
 Source: http://blog.jorgenschaefer.de/2012/11/emacs-search-for-symbol-at-point.html
 
@@ -907,28 +1001,9 @@ Source: http://blog.jorgenschaefer.de/2012/11/emacs-search-for-symbol-at-point.h
        (thing-at-point 'symbol))))
 #+END_SRC
 
-** Smart home
-按 home 鍵，可讓遊標回到行首或第一個非空字元
+** Delete whole line or multi-lines
 
-#+BEGIN_SRC emacs-lisp
-  (defun smart-beginning-of-line ()
-    "Move point to first non-whitespace character or beginning-of-line.
-
-  Move point to the first non-whitespace character on this line.
-  If point was already at that position, move point to beginning of line."
-
-    (interactive)
-    (let ((oldpos (point)))
-      (back-to-indentation)
-      (and (= oldpos (point))
-           (beginning-of-line))))
-
-  (bind-key [home] 'smart-beginning-of-line)
-  (bind-key* "C-a" 'smart-beginning-of-line)
-#+END_SRC
-** 刪除整行或多行
-
-來源：http://endlessparentheses.com/kill-entire-line-with-prefix-argument.html
+ref: http://endlessparentheses.com/kill-entire-line-with-prefix-argument.html
 
 C-1 C-k 刪去整行
 C-3 C-k 刪去 3 行
@@ -956,11 +1031,18 @@ C-3 C-k 刪去 3 行
   (global-set-key [remap kill-line] (bol-with-prefix kill-line))
 #+END_SRC
 
+** hungry-delete
+
+#+BEGIN_SRC emacs-lisp
+  (req-package hungry-delete
+    :init (global-hungry-delete-mode 1))
+#+END_SRC
+
 ** move-text
 
 用 M-up, M-down 移動當行或 region
 
-來源：http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up-doesnt-move-point
+ref: http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up-doesnt-move-point
 
 #+BEGIN_SRC emacs-lisp
   ;move line up down
@@ -1009,56 +1091,6 @@ C-3 C-k 刪去 3 行
   (bind-key "M-<down>" 'move-text-down)
 #+END_SRC
 
-** iedit
-
-   [[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
-
-   #+BEGIN_SRC emacs-lisp
-  (req-package iedit
-    :init (setq iedit-unmatched-lines-invisible-default t))
-   #+END_SRC
-
-** expand-region
-
-M-SPC 設定 mark
-C-= 擴展
-C-- C-= 縮減
-C-0 C-= 還原
-
-參考：https://github.com/magnars/expand-region.el
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "M-SPC" 'set-mark-command)
-  (req-package expand-region
-    :bind ("C-=" . er/expand-region))
-#+END_SRC
-
-** hungry-delete
-
-#+BEGIN_SRC emacs-lisp
-  (req-package hungry-delete
-    :init (global-hungry-delete-mode 1))
-#+END_SRC
-
-** pangu-spacing
-
-[[https://github.com/coldnew/pangu-spacing][pangu-spcing]] is an minor-mode to auto add =space= between Chinese and
-English characters. Note that these white-space characters are not
-really added to the contents, it just like to do so.
-
-#+BEGIN_SRC emacs-lisp
-  (req-package pangu-spacing
-    :init
-    (progn
-      (global-pangu-spacing-mode 1)
-      (add-hook 'rst-mode-hook
-                '(lambda ()
-                  (set (make-local-variable 'pangu-spacing-real-insert-separtor) t)))
-      (add-hook 'org-mode-hook
-                '(lambda ()
-                  (set (make-local-variable 'pangu-spacing-real-insert-separtor) t)))))
-#+END_SRC
-
 ** undo-tree
 
 用 M-x undo-tree-visualize (C-x u) 看 undo-tree，很直覺。
@@ -1072,6 +1104,40 @@ really added to the contents, it just like to do so.
       (setq undo-tree-history-directory-alist
             `((".*" . ,(expand-file-name "undo" user-cache-directory))))
       (global-undo-tree-mode)))
+#+END_SRC
+** smartparens
+ref: https://github.com/Fuco1/smartparens
+ref: https://ebzzry.github.io/emacs-pairs.html
+
+#+BEGIN_SRC emacs-lisp
+  (req-package smartparens-config
+    :ensure smartparens
+    :diminish (smartparens-mode)
+    :init
+    (progn
+      (smartparens-global-mode t)
+      (show-smartparens-global-mode t)))
+#+END_SRC
+
+** iedit
+[[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
+
+Normal scenario of Iedit mode is like:
+
+- Highlight certain contents - by press C-; (The default key binding)
+  All occurrences of a symbol, string or a rectangle in the buffer or
+  a region may be highlighted corresponding to current mark, point and
+  prefix argument.  Refer to the document of `iedit-mode’ for
+  details.
+
+- Edit one of the occurrences The change is applied to other
+  occurrences simultaneously.
+
+- Finish - by pressing C-; again
+
+#+BEGIN_SRC emacs-lisp
+  (req-package iedit
+    :init (setq iedit-unmatched-lines-invisible-default t))
 #+END_SRC
 
 ** comment/uncomment-line
@@ -1095,34 +1161,8 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
   (bind-key "M-;" #'endless/comment-line)
 #+END_SRC
 
-** rainbow-mode
-
-#+BEGIN_SRC emacs-lisp
-  (req-package rainbow-mode
-    :diminish rainbow-mode
-    :init
-    (add-hook 'prog-mode-hook 'rainbow-mode)
-    (add-hook 'css-mode-hook 'rainbow-mode))
-#+END_SRC
-
-** color-identifiers-mode
-
-太花俏了
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package color-identifiers-mode
-    :diminish (color-identifiers-mode . "")
-    :init
-    (setq color-identifiers:num-colors 10)
-    :config
-    (progn
-      (add-hook 'prog-mode-hook 'color-identifiers-mode)
-      ))
-#+END_SRC
-
 ** aggressive-indent
-
-來源：http://endlessparentheses.com/permanent-auto-indentation.html
+ref: http://endlessparentheses.com/permanent-auto-indentation.html
 
 非文字模式下，自動縮排。
 
@@ -1131,13 +1171,21 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
     :init (global-aggressive-indent-mode))
 #+END_SRC
 
-** electric-indent-mode
+** Flycheck
 
-#+BEGIN_SRC emacs-lisp  :tangle no
-  (electric-indent-mode t)
+#+BEGIN_SRC emacs-lisp
+  (req-package flycheck
+    :diminish (flycheck-mode . " ✓ ")
+    :config
+    (progn
+      (add-hook 'after-init-hook 'global-flycheck-mode)
+      (setq flycheck-indication-mode 'right-fringe)
+      (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+      (setq flycheck-keymap-prefix (kbd "C-c c"))
+      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
 
-** Flyspell
+** TODO Flyspell
 
 #+BEGIN_SRC emacs-lisp
 (req-package flyspell
@@ -1165,8 +1213,7 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
     (progn
       (bind-key "M-$" 'helm-flyspell-correct flyspell-mode-map)))
 #+END_SRC
-
-** Ispell
+** TODO Ispell
 
 #+BEGIN_SRC emacs-lisp
   (req-package ispell
@@ -1194,11 +1241,26 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
   (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE"))
 #+END_SRC
 
+** expand-region
+
+M-SPC 設定 mark
+C-= 擴展
+C-- C-= 縮減
+C-0 C-= 還原
+
+ref: https://github.com/magnars/expand-region.el
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "M-SPC" 'set-mark-command)
+  (req-package expand-region
+    :bind ("C-=" . er/expand-region))
+#+END_SRC
+
 ** helm
 
-   Helm offers a command called =helm-mini= that opens a =helm= buffer populated
-   with recent files and currently open buffers. I want Helm everywhere, so
-   instead we'll activate =helm-mode= and work from there.
+Helm offers a command called =helm-mini= that opens a =helm= buffer
+populated with recent files and currently open buffers. I want Helm
+everywhere, so instead we'll activate =helm-mode= and work from there.
 
 #+BEGIN_SRC emacs-lisp
   (req-package helm-config
@@ -1209,11 +1271,13 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
             (setq popwin:special-display-config
                   (append helm-popwin
                           popwin:special-display-config))
-            (bind-key* "M-x" 'helm-M-x)
-            (bind-key* "C-x f" 'helm-recentf)
-            (bind-key* "C-x b" 'helm-mini)
-            (bind-key* "C-x C-f" 'helm-find-files))
-    :config (helm-mode 1))
+            ;;(bind-key* "M-x" 'helm-M-x)
+            ;;(bind-key* "C-x f" 'helm-recentf)
+            ;; (bind-key* "C-x b" 'helm-mini)
+            ;; (bind-key* "C-x C-f" 'helm-find-files)
+            )
+    ;; :config (helm-mode 1)
+    )
 #+END_SRC
 
 *** helm-company
@@ -1231,24 +1295,6 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
 
 #+BEGIN_SRC emacs-lisp
   (req-package helm-ag)
-#+END_SRC
-
-** popwin
-
-#+BEGIN_SRC emacs-lisp
-  (req-package popwin
-    :init
-    (progn
-      (setq helm-popwin
-            '(("*Flycheck errors*" :height 10)
-              ("*Helm Find Files*" :height 0.3)
-              ("^\*helm.+\*$" :regexp t :height 15))))
-    :config
-    (progn
-      (popwin-mode 1)
-      (push '("*helm semantic/imenu*" :width 0.382 :position left) popwin:special-display-config)
-      (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
-      ))
 #+END_SRC
 
 ** Company mode
@@ -1288,42 +1334,98 @@ C-o
 <f1> to dispaly the documentation
 <C-w> to see its source
 
-** Flycheck
+** popwin
 
 #+BEGIN_SRC emacs-lisp
-  (req-package flycheck
-    :diminish (flycheck-mode . " ✓ ")
+  (req-package popwin
+    :init
+    (progn
+      (setq helm-popwin
+            '(("*Flycheck errors*" :height 10)
+              ("*Helm Find Files*" :height 0.3)
+              ("^\*helm.+\*$" :regexp t :height 15))))
     :config
     (progn
-      (add-hook 'after-init-hook 'global-flycheck-mode)
-      (setq flycheck-indication-mode 'right-fringe)
-      (define-key flycheck-mode-map flycheck-keymap-prefix nil)
-      (setq flycheck-keymap-prefix (kbd "C-c c"))
-      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
+      (popwin-mode 1)
+      (push '("*helm semantic/imenu*" :width 0.382 :position left) popwin:special-display-config)
+      (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
+      ))
 #+END_SRC
 
-*** flycheck-pos-tip
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package flycheck-pos-tip
-    :require (flycheck popup)
-    :commands flycheck-pos-tip-error-messages
-    :init (setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages))
+** Unbind-key
+#+BEGIN_SRC emacs-lisp
+  (unbind-key "C-\\")
+  (unbind-key "C-z")
+  (unbind-key "C-x C-z")
+  (unbind-key "C-x m")
 #+END_SRC
 
-** semantic-mode
+** Which-key
+#+BEGIN_SRC emacs-lisp
+  (req-package which-key
+    :config
+    (progn
+      (setq which-key-idle-delay 0.5)
+      (which-key-mode)
+      (which-key-setup-side-window-bottom)
+      (setq which-key-side-window-max-width 0.25)))
 
-Use for =helm-semantic-or-imenu=
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package semantic
-    :init
-    (progn (add-hook 'prog-mode-hook 'semantic-mode)))
 #+END_SRC
 
-* 專案管理
+** discover-my-major
 
-** Magit
+[[https://github.com/steckerhalter/discover-my-major][discover-my-major]] make you discover key bindings and their meaning for the
+current Emacs major mode.
+
+GitHub: https://github.com/steckerhalter/discover-my-major
+
+#+BEGIN_SRC emacs-lisp
+  (req-package discover-my-major
+    :bind ("C-h C-m" . discover-my-major)
+    :bind ("C-h M-m" . discover-my-mode))
+#+END_SRC
+
+* ivy
+看起來比 helm 好看些，且快速
+
+#+BEGIN_SRC emacs-lisp
+  (req-package swiper
+    :loader :path
+    :require (counsel ivy)
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+
+      (bind-key "C-s" 'swiper)
+      (bind-key "C-x f" 'ivy-recentf)
+      (bind-key "M-x" 'counsel-M-x)
+
+      (eval-after-load 'magit
+        '(setq magit-completing-read-function 'ivy-completing-read))
+
+      (eval-after-load 'projectile
+        '(setq projectile-completion-system 'ivy))
+
+      (defun counsel-goto-recent-directory ()
+        "Open recent directory with dired"
+
+        (interactive)
+        (unless recentf-mode (recentf-mode 1))
+        (let ((collection
+               (delete-dups
+                (append (mapcar 'file-name-directory recentf-list)
+                        ;; fasd history
+                        (if (executable-find "fasd")
+                            (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
+          (ivy-read "directories:" collection :action 'dired)))
+
+      (bind-key "C-h C-\\" 'counsel-goto-recent-directory)
+      ))
+#+END_SRC
+
+* Project relative functions
+** TODO Magit
 
 #+BEGIN_SRC emacs-lisp
   (req-package magit
@@ -1344,7 +1446,7 @@ Use for =helm-semantic-or-imenu=
 
 #+RESULTS:
 
-** diff-hl
+** TODO diff-hl
 
 可以顯示出尚未 stage 的程式碼
 
@@ -1353,7 +1455,7 @@ Use for =helm-semantic-or-imenu=
     :init (global-diff-hl-mode))
 #+END_SRC
 
-** ediff
+** TODO ediff
 
 #+BEGIN_SRC emacs-lisp
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -1362,7 +1464,7 @@ Use for =helm-semantic-or-imenu=
   (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
 #+END_SRC
 
-** projectile
+** TODO projectile
 
 #+BEGIN_SRC emacs-lisp
   (req-package projectile
@@ -1373,41 +1475,504 @@ Use for =helm-semantic-or-imenu=
 
 *** helm-projectile
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-projectile
     :require (helm projectile)
     :config (helm-projectile-on))
 #+END_SRC
 
-** ggtags
+* Interactive Commands
+** convert org, markdown, kindle file
+*** get major mode of current buffer
 
-OS 中先安裝 ctags , pygments 和 global
+#+BEGIN_SRC emacs-lisp
+  (defun current-buffer-mode()
+    "Return the major-mode associated with current buffer."
 
-#+BEGIN_SRC sh
-  $ yaourt -S ctags
-  $ sudo pip install pygments
-  $ yaourt -S global-pygments-plugin-git global
+    (with-current-buffer (buffer-name)
+      major-mode))
 #+END_SRC
 
-Copy gtags.conf to $HOME/.globalrc
+*** convert org-mode to pdf via pandoc
+#+BEGIN_SRC emacs-lisp
+  (defun org-to-pdf ()
+    "Conver org to pdf and open the pdf file."
 
-#+BEGIN_SRC sh
-  $ cp /usr/share/gtags/gtags.conf ~/.globalrc
+    (interactive)
+    (if (eq (current-buffer-mode) 'org-mode)
+        (progn
+          (let* ((pdf-name (concat (file-name-sans-extension buffer-file-name) ".pdf")))
+
+            (message "convert to %s" (file-name-nondirectory pdf-name))
+
+            (let* ((latex-engin "xelatex")
+                   (template "/home/mario/.pandoc/default.latex")
+                   (result (shell-command
+                            (format "pandoc %s --latex-engine %s --template %s -s -o %s"
+                                    buffer-file-name
+                                    latex-engin
+                                    template
+                                    pdf-name
+                                    ))))
+              (if (eq result 0)
+                  (find-file pdf-name)
+                (message result)))
+            ))
+      (message "Current buffer must be 'org-mode'!")))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package ggtags
+*** convert markdown to orgmode via pandoc
+
+#+BEGIN_SRC emacs-lisp
+  (defun md-to-org ()
+    "Convert markdown to org for edit. Especially for evernote/geeknote."
+
+    (interactive)
+    (if (eq (current-buffer-mode) 'markdown-mode)
+        (let* ((default-directory "/mnt/lvm-data/Documents/")
+               (md-buffer-name (buffer-name))
+               (md-file-name (buffer-file-name))
+               (md-org-buffer (find-file (read-file-name "" default-directory)))
+               (md-org-file-name (buffer-file-name)))
+
+          (if (not (file-exists-p md-org-file-name))
+              (progn
+                (shell-command (format "pandoc -f markdown -t org -o %s %s"
+                                       md-org-file-name
+                                       md-file-name))
+                (revert-buffer nil t)
+                (goto-char (point-min))
+                (insert "#+TITLE:\n")
+                (save-buffer)
+                (kill-buffer md-buffer-name))
+            (message "%s is already exist." md-org-file-name)))
+      (message "Current buffer must be 'markdown-mode'!")))
+#+END_SRC
+
+*** send command to wpub via async
+
+#+BEGIN_SRC emacs-lisp
+(defun async-wpub (cmd)
+    (message "%s" cmd)
+    (let ((wpub-buffer "*async-wpub*")
+          (name "async-wpub"))
+      (start-file-process-shell-command name wpub-buffer cmd)
+      ))
+#+END_SRC
+
+*** send org-mode file to kindle via wpub
+#+BEGIN_SRC emacs-lisp
+
+  ;; send .org to my kindle via wpub.py
+  (defun org-to-kindle ()
+    "Send current buffer to kindle via wpub.py"
+
+    (interactive)
+
+    (if (eq (current-buffer-mode) 'org-mode)
+        (progn
+          (message "%s is sending..." (buffer-name))
+
+          ;; (set-buffer-file-coding-system 'utf-8-unix)
+          (let* ((wpub-temp-file (expand-file-name
+                                  (concat user-cache-directory (buffer-name))))
+                 (wpub-command (format "wpub -f org %s" wpub-temp-file))
+                 (str (buffer-substring-no-properties (point-max) 1)))
+
+            (with-temp-file wpub-temp-file
+              (insert str "\n"))
+
+            (async-wpub wpub-command)))
+
+      (message "Current buffer must be 'org-mode'!")))
+
+#+END_SRC
+
+*** TODO url to kindle via wpub (add quit options)
+#+BEGIN_SRC emacs-lisp
+  (defun url-to-kindle (url)
+    (interactive)
+    (if url
+        (let* ((wpub-cmd-opencc (if (y-or-n-p "Convert to Traditional Chinese?")
+                                    "-o"
+                                  ""))
+               (wpub-command-for-async (format "wpub %s '%s'" wpub-cmd-opencc url)))
+          (async-wpub wpub-command-for-async))
+      )
+    )
+
+#+END_SRC
+
+*** eww to kindle via wpub
+#+BEGIN_SRC emacs-lisp
+  (defun eww-to-kindle ()
+    "send the content of current url to kindle via wpub"
+
+    (interactive)
+    (url-to-kindle eww-current-url)
+    )
+#+END_SRC
+
+*** send url or org to kindle
+#+BEGIN_SRC emacs-lisp
+(defun send-url-or-org-to-kindle ()
+    "Send content of current buffer to kindle"
+
+    (interactive)
+    (cond
+     ((not (eq eww-current-url nil)) (eww-to-kindle))
+     ((eq (current-buffer-mode) 'org-mode) (org-to-kindle))
+     ((eq (current-buffer-mode) 'elfeed-search-mode) (elfeed-search-to-kindle))
+     ((eq (current-buffer-mode) 'elfeed-show-mode) (elfeed-show-to-kindle))
+     (t (message "%s" "Can't send this page to kindle."))))
+#+END_SRC
+
+*** bindkeys
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c oo" 'md-to-org)
+  (bind-key "C-c op" 'org-to-pdf)
+  (bind-key "C-c ok" 'send-url-or-org-to-kindle)
+#+END_SRC
+
+** Insert stock ids at point
+#+BEGIN_SRC emacs-lisp
+  (req-package esqlite
+    :config
+    (progn
+      (defun insert-stock-id-at-point ()
+        "Insert stock ids at point."
+
+        (interactive)
+
+        (if (string= ".elfeed.org" (buffer-name))
+            (let* ((db-name "/mnt/lvm-data/Programing/stock4/db/stock2.db")
+                   (sql-fetch-stock-ids "select s.sid, i.name from summary as s, stock_info as i where s.sid=i.sid and s.userid=\"mariolong\""))
+
+              (dolist (sid (esqlite-read db-name sql-fetch-stock-ids))
+                (insert (format "**** [[https://tw.stock.yahoo.com/rss/s/%s][%s-%s]]\n"
+                                (car sid) (car sid) (second sid)))))
+
+          (message "%s" "Must in '.elfeed.org'")))
+
+      (bind-key "C-c fi" 'insert-stock-id-at-point)
+      ))
+#+END_SRC
+* Internet
+** helm-google
+
+#+BEGIN_SRC emacs-lisp
+  (req-package helm-google
+    :bind ("C-c hg" . helm-google))
+#+END_SRC
+
+** TODO eww (Emacs Web broWser)
+*** eww basic
+#+BEGIN_SRC emacs-lisp
+  (req-package eww
+    :loader :built-in
+    :config
+    (progn
+      (setq browse-url-browser-function 'eww-browse-url)
+
+      (setq browse-url-generic-program (executable-find "google-chrome-stable")
+            shr-external-browser 'browse-url-generic)
+
+      (add-hook 'eww-mode-hook '(lambda ()
+                                  (toggle-truncate-lines nil)))
+
+      (unbind-key "g" eww-mode-map)
+      (bind-keys :map eww-mode-map
+                 ("gg" . beginning-of-buffer)
+                 ("G" . end-of-buffer)
+                 ("j" . next-line)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("B" . eww-browse-with-external-browser)
+                 ("f" . ace-link-eww)
+                 ("m" . endless/toggle-image-display)
+                 ("q" . eww-quit-reset-image-flag)
+                 ("H" . eww-back-url)
+                 ("L" . eww-forward-url)
+                 ("ok" . eww-to-kindle)
+                 ("oo" . eww-to-org)
+                 ("yy" . eww-copy-page-url))
+      ))
+#+END_SRC
+
+*** toggle image display
+
+#+BEGIN_SRC emacs-lisp
+
+  (defun eww-quit-reset-image-flag ()
+    "reset image-flag"
+
+    (interactive)
+    (setq endless/display-images t)
+    ;; (quit-window)
+    (kill-buffer "*eww*")
+    )
+
+  (defvar-local endless/display-images t)
+
+  (defun endless/toggle-image-display ()
+    "Toggle images display on current buffer."
+    (interactive)
+
+    (setq endless/display-images
+          (null endless/display-images))
+    (endless/backup-display-property endless/display-images))
+
+  (defun endless/backup-display-property (invert &optional object)
+    "Move the 'display property at POS to 'display-backup.
+  Only applies if display property is an image.
+  If INVERT is non-nil, move from 'display-backup to 'display
+  instead.
+  Optional OBJECT specifies the string or buffer. Nil means current
+  buffer."
+    (let* ((inhibit-read-only t)
+           (from (if invert 'display-backup 'display))
+           (to (if invert 'display 'display-backup))
+           (pos (point-min))
+           left prop)
+      (while (and pos (/= pos (point-max)))
+        (if (get-text-property pos from object)
+            (setq left pos)
+          (setq left (next-single-property-change pos from object)))
+          (if (or (null left) (= left (point-max)))
+            (setq pos nil)
+          (setq prop (get-text-property left from object))
+          (setq pos (or (next-single-property-change left from object)
+                        (point-max)))
+          (when (eq (car prop) 'image)
+            (add-text-properties left pos (list from nil to prop) object))))))
+
+#+END_SRC
+
+*** eww to org
+save current web page to org-mode
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-to-org ()
+    "save current page to org file from eww"
+
+    (interactive)
+    (if (eq (current-buffer-mode) 'eww-mode)
+        (let* ((back-current-url eww-current-url)
+               (default-directory "/mnt/lvm-data/Documents/eww/")
+               (org-file-name (expand-file-name (concat eww-current-title ".org") default-directory)))
+
+          (write-file org-file-name)
+          (eww back-current-url)
+          (message "write file: %s" eww-to-org-file-name)
+          )))
+#+END_SRC
+*** browse at point
+
+#+BEGIN_SRC emacs-lisp
+  (defun browse-at-point ()
+    "browse at point: selected region or url or single word
+  if cursor at whitespace then call eww wait for input some thing."
+
+    (interactive)
+
+    (defun thing-at-point-to-eww ()
+      (unless (setq ret (thing-at-point 'url))
+        (unless (setq ret (thing-at-point 'symbol))
+          (setq ret (thing-at-point 'whitespace))
+          ))
+
+      (if (null ret)
+          (setq ret ""))
+
+      (s-trim ret))
+
+    (if mark-active
+        (setq thing (buffer-substring-no-properties (region-beginning) (region-end)))
+      (setq thing (thing-at-point-to-eww)))
+
+    (if (string= "" thing)
+        (call-interactively 'eww)
+      (eww thing)))
+
+  (bind-key "C-c ab" 'browse-at-point)
+#+END_SRC
+
+*** Yahoo! dictionary
+
+#+BEGIN_SRC emacs-lisp
+  (defun dictionary-at-point ()
+    "find the definition from Yahoo Dictionary."
+
+    (interactive)
+    (let ((dictionary-url "https://tw.dictionary.yahoo.com/dictionary?p=")
+          (word (read-from-minibuffer "Input word:" (word-at-point))))
+      (if word
+          (eww (concat dictionary-url word)))))
+
+  (bind-key "C-c ay" 'dictionary-at-point)
+#+END_SRC
+
+** TODO elfeed
+*** elfeed basic
+#+BEGIN_SRC emacs-lisp
+  (req-package elfeed
+    :bind ("C-c af" . elfeed)
+    :config
+    (progn
+      (custom-set-faces
+       '(elfeed-search-unread-title-face ((t :inherit default)))
+       '(elfeed-search-title-face ((t :inherit font-lock-comment-face)))
+       '(elfeed-search-date-face ((t (:inherit font-lock-string-face))))
+       '(elfeed-search-feed-face ((t (:inherit font-lock-doc-face))))
+       '(elfeed-search-tag-face ((t (:inherit font-lock-constant-face))))
+       )
+
+      (setq elfeed-search-filter "@1-weeks-ago +unread")
+      (setf url-queue-timeout 30)
+
+      (add-hook 'elfeed-search-mode-hook
+                '(lambda() (progn
+                             (elfeed-update))))
+
+      (add-hook 'elfeed-new-entry-hook
+                '(lambda() (progn
+                             (elfeed-make-tagger :before "1 week ago"
+                                                 :remove 'unread))))
+
+      (defun elfeed-search-mark-all-read ()
+        "mark all feed as read in elfeed search mode"
+
+        (interactive)
+        (mark-whole-buffer)
+        (elfeed-search-untag-all-unread)
+        )
+
+      (defun elfeed-search-mark-read ()
+        "mark current line to read and scroll screen down in elfeed search mode"
+
+        (interactive)
+        (elfeed-search-untag-all-unread)
+        (when (< (smooth-scroll-lines-below-point) smooth-scroll-margin)
+          (scroll-up-line))
+        )
+
+      (defun elfeed-entry-url (entry)
+        (and entry (elfeed-entry-link entry)))
+
+      (defun get-elfeed-search-url ()
+        (elfeed-entry-url (elfeed-search-selected :ignore-region)))
+
+      (defun get-elfeed-show-url ()
+        (elfeed-entry-url elfeed-show-entry))
+
+      (defun copy-elfeed-search-url ()
+        "copy url to clipboard"
+
+        (interactive)
+        (setq return-url (get-elfeed-search-url))
+        (message "%s" return-url)
+        (kill-new return-url))
+
+      (defun copy-elfeed-show-url ()
+        "copy url to clipboard"
+
+        (interactive)
+        (setq return-url (get-elfeed-show-url))
+        (message "%s" return-url)
+        (kill-new return-url))
+
+      (defun elfeed-search-to-kindle ()
+        "send current content to kindle"
+
+        (interactive)
+        (url-to-kindle (get-elfeed-search-url)))
+
+      (defun elfeed-show-to-kindle ()
+        "send current content to kindle"
+
+        (interactive)
+        (url-to-kindle (get-elfeed-show-url)))
+
+      (defun elfeed-search-external-browser ()
+        "open current url via extenal browser"
+
+        (interactive)
+        (elfeed-search-browse-url t))
+
+      (defun elfeed-show-external-browser ()
+        "open current url via extenal browser"
+
+        (interactive)
+        (elfeed-show-visit t))
+
+      (unbind-key "g" elfeed-search-mode-map)
+      (bind-keys :map elfeed-search-mode-map
+                 ("gg" . beginning-of-buffer)
+                 ("G" . end-of-buffer)
+                 ("j" . elfeed-search-mark-read)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("U" . elfeed-update)
+                 ("a" . elfeed-search-mark-all-read)
+                 ("B" . elfeed-search-external-browser)
+                 ("y" . copy-elfeed-search-url)
+                 ("ok" . elfeed-search-to-kindle))
+
+      (unbind-key "g" elfeed-show-mode-map)
+      (bind-keys :map elfeed-show-mode-map
+                 ("gg" . beginning-of-buffer)
+                 ("G" . end-of-buffer)
+                 ("j" . next-line)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("B" . elfeed-show-external-browser)
+                 ("y" . copy-elfeed-show-url)
+                 ("ok" . elfeed-show-to-kindle))
+      ))
+#+END_SRC
+
+*** elfeed-org
+
+using org-mode to manage feed url
+
+#+BEGIN_SRC emacs-lisp
+  (req-package elfeed-org
     :config (progn
-              (add-hook 'prog-mode-hook
-                        '(lambda() (ggtags-mode 1))
-                        )))
-
+              (setq rmh-elfeed-org-files (list "~/.elfeed.org"))
+              (elfeed-org)
+              ))
 #+END_SRC
 
-* 程式語言
+** TODO hangups
+ref: https://github.com/jtamagnan/hangups.el
 
-** Python
+#+BEGIN_SRC emacs-lisp
 
+  (req-package hangups
+    :loader :path
+    :require adaptive-wrap
+    :bind ("C-c ah" . hangups)
+    :config
+    (progn
+      (unbind-key "g" hangups-conv-mode-map)
+      (bind-keys :map hangups-conv-mode-map
+                 ("gg" . beginning-of-buffer)
+                 ("G" . end-of-buffer)
+                 ("j" . next-line)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("U" . hangups-conv-refresh)
+                 ("o" . browse-at-point)
+                 )))
+#+END_SRC
+
+** TODO erc
+* TODO Python
+*** TODO elpy
 *** anaconda
 
 這個就可以了，不必再設定 company-jedi。
@@ -1438,6 +2003,7 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
 
 #+BEGIN_SRC emacs-lisp :tangle no
   (req-package jedi
+  :require (python-environment)
     :init
     (progn
       (add-hook 'python-mode-hook 'jedi:setup)
@@ -1454,7 +2020,107 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
   (req-package company-jedi
     :init (add-to-list 'company-backends 'company-jedi))
 #+END_SRC
+* Org
+*** basic setup
+ #+BEGIN_SRC emacs-lisp
+   (req-package org
+     :loader :built-in
+     :mode (("\\.org\\'" . org-mode)
+            ("\\.org_archive\\'" . org-mode))
+     :config
+     (progn
+       (add-hook 'org-mode-hook
+                 '(lambda ()
+                    (setq mode-name " ꙮ ")))
+       (setq org-src-fontify-natively t
+             org-src-window-setup 'current-window
+             org-confirm-babel-evaluate nil
+             org-startup-indented t)
+       ))
+ #+END_SRC
 
+*** TODO Color of org-mode src_block
+color of parentheses is bad look
+
+*** Pretty Bullets
+ref: https://github.com/sabof/org-bullets
+
+#+BEGIN_SRC emacs-lisp
+  (req-package org-bullets
+    :config
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+END_SRC
+
+*** Extend org-mode's easy templates
+
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'org
+    '(progn
+       (add-to-list 'org-structure-template-alist
+                    '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
+       (add-to-list 'org-structure-template-alist
+                    '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))))
+#+END_SRC
+
+*** Extend babel support languages
+
+#+BEGIN_SRC emacs-lisp
+(eval-after-load 'org
+  '(progn
+     (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((emacs-lisp . t)
+        (C . t)
+        (ditaa . t)
+        (dot . t)
+        (js . t)
+        (latex . t)
+        (perl . t)
+        (python . t)
+        (ruby . t)
+        (sh . t)
+        (clojure . t)
+        ))))
+#+END_SRC
+
+*** Capture and Agenda
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'org
+    '(progn
+       (setq org-agenda-window-setup 'current-window)
+       (add-hook 'org-agenda-mode-hook 'hl-line-mode)
+
+       (setq org-directory "~/org")
+       (setq org-default-notes-file (expand-file-name "notes.org" org-directory))
+
+       (setq org-capture-templates
+             '(("t" "Todo" entry (file+headline "~/org/notes.org" "Tasks")
+                "* TODO %?\n%T")
+               ("n" "Note" entry (file+headline "~/org/notes.org" "Notes")
+                "* TODO %?\n%T")
+               ))
+
+       (setq org-agenda-files (list (expand-file-name "emacs-init.org" user-emacs-directory) org-default-notes-file))
+
+       (add-hook 'org-agenda-mode-hook
+                 '(lambda ()
+                    (local-set-key (kbd "C-g") 'org-agenda-exit)))
+       ))
+#+END_SRC
+
+*** keybinds
+=C-c '= 編輯原始碼
+=C-Return= 增加一個標題
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c l" 'org-store-link)
+  (bind-key "C-c ac" 'org-capture)
+  (bind-key "C-c aa" 'org-agenda)
+  (unbind-key "C-c [")
+  (unbind-key "C-c ]")
+#+END_SRC
+
+* Other Modes
 ** SQL
 
 在 SQL 視窗中，自動轉行，能看到所有資料
@@ -1547,8 +2213,7 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
 #+END_SRC
 
 ** Web
-
-*** web-mode
+*** TODO web-mode
 
 目前是為了 mako 使用的 web-mode，看起來還有一些問題需要微調，不知如何下手。
 
@@ -1591,7 +2256,7 @@ Source: https://github.com/smihica/emmet-mode
                 (lambda () (setq emmet-indentation 4)))))
 #+END_SRC
 
-*** js2-mode
+*** TODO js2-mode
 
 Source: https://github.com/mooz/js2-mode
 
@@ -1611,70 +2276,14 @@ Source: https://github.com/joshwnj/json-mode
 (req-package json-mode
   :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
 #+END_SRC
-** Org
-
-#+BEGIN_SRC emacs-lisp
-(req-package org
-  ;;:require (org-crypt org-mac-link org-magit)
-  :mode (("\\.org\\'" . org-mode)
-         ("\\.org_archive\\'" . org-mode))
-  :config
-  (progn
-    (add-hook 'org-mode-hook
-              '(lambda ()
-                 (setq mode-name " ꙮ ")))
-    ;; fontify source code
-    (setq org-src-fontify-natively t)
-    ;; Use current window when switch to source block
-    (setq org-src-window-setup 'current-window)
-    ;; Disable prompting to evaluate babel blocks
-    (setq org-confirm-babel-evaluate nil)
-    ))
-#+END_SRC
-
-*** 常用按鍵
-=C-c '= 編輯原始碼
-
-*** Extend org-mode's easy templates
-
-#+BEGIN_SRC emacs-lisp
-  (eval-after-load 'org
-    '(progn
-       (add-to-list 'org-structure-template-alist
-                    '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
-       (add-to-list 'org-structure-template-alist
-                    '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))))
-#+END_SRC
-
-*** Extend babel support languages
-
-#+BEGIN_SRC emacs-lisp :tango no
-(eval-after-load 'org
-  '(progn
-     (org-babel-do-load-languages
-      'org-babel-load-languages
-      '((emacs-lisp . t)
-        (C . t)
-        (ditaa . t)
-        (dot . t)
-        (js . t)
-        (latex . t)
-        (perl . t)
-        (python . t)
-        (ruby . t)
-        (sh . t)
-        (plantuml . t)
-        (clojure . t)
-        ))))
-#+END_SRC
-
 ** nginx-mode
 
 #+BEGIN_SRC emacs-lisp
   (req-package nginx-mode)
 #+END_SRC
 
-* 完成配置
+* End of configuration
+** req-package finish
 
 At long last we need only call the following function to send =req-package= on
 its merry way.
@@ -1683,7 +2292,25 @@ its merry way.
   (req-package-finish)
 #+END_SRC
 
-* 結語
+** Startup emacs as server
+#+BEGIN_SRC emacs-lisp
+  (unless (string-equal "root" (getenv "USER"))
+    (require 'server)
+    (unless (server-running-p) (server-start)))
+#+END_SRC
 
-使用 emacs 會上癮的，只是要花很多時間熟悉這套工具。
-熟悉了這個工具，真的就不想用其它的編輯器。
+* The Final note
+
+使用 emacs 會上癮，尤其是 lisp 這種語言，真的迷人，只是要花很多時間熟
+悉這套工具。熟悉了這個工具，真的就不想用其它的編輯器，也不能用其它的編
+輯器了。
+
+因為，已經習慣自己一手打造出來，獨一無二，順手的工具。
+
+* Reference
+
+[1] https://github.com/coldnew/coldnew-emacs
+
+[2] https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
+
+[3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
