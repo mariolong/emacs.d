@@ -1257,7 +1257,7 @@ C-o
 
 *** helm-flyspell
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-flyspell
     :require (flyspell helm)
     :commands (helm-flyspell-correct)
@@ -1811,7 +1811,7 @@ save current web page to org-mode
   (bind-key "C-c ay" 'dictionary-at-point)
 #+END_SRC
 
-** TODO elfeed
+** elfeed
 *** elfeed basic
 #+BEGIN_SRC emacs-lisp
   (req-package elfeed
@@ -1904,30 +1904,32 @@ save current web page to org-mode
         (interactive)
         (elfeed-show-visit t))
 
-      (unbind-key "g" elfeed-search-mode-map)
+      ;; (unbind-key "g" elfeed-search-mode-map)
       (bind-keys :map elfeed-search-mode-map
-                 ("gg" . beginning-of-buffer)
-                 ("G" . end-of-buffer)
-                 ("j" . elfeed-search-mark-read)
-                 ("k" . previous-line)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
+                 ;; ("gg" . beginning-of-buffer)
+                 ;; ("G" . end-of-buffer)
+                 ;; ("j" . elfeed-search-mark-read)
+                 ;; ("k" . previous-line)
+                 ;; ("d" . scroll-up-command)
+                 ;; ("e" . scroll-down-command)
                  ("U" . elfeed-update)
                  ("a" . elfeed-search-mark-all-read)
                  ("B" . elfeed-search-external-browser)
                  ("y" . copy-elfeed-search-url)
+                 ("w" . copy-elfeed-search-url)
                  ("ok" . elfeed-search-to-kindle))
 
-      (unbind-key "g" elfeed-show-mode-map)
+      ;; (unbind-key "g" elfeed-show-mode-map)
       (bind-keys :map elfeed-show-mode-map
-                 ("gg" . beginning-of-buffer)
-                 ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
+                 ;; ("gg" . beginning-of-buffer)
+                 ;; ("G" . end-of-buffer)
+                 ;; ("j" . next-line)
+                 ;; ("k" . previous-line)
+                 ;; ("d" . scroll-up-command)
+                 ;; ("e" . scroll-down-command)
                  ("B" . elfeed-show-external-browser)
                  ("y" . copy-elfeed-show-url)
+                 ("w" . copy-elfeed-show-url)
                  ("ok" . elfeed-show-to-kindle))
       ))
 #+END_SRC
@@ -1944,25 +1946,25 @@ using org-mode to manage feed url
               ))
 #+END_SRC
 
+*** TODO smooth scrolling
 ** TODO hangups
 ref: https://github.com/jtamagnan/hangups.el
 
 #+BEGIN_SRC emacs-lisp
-
   (req-package hangups
     :loader :path
     :require adaptive-wrap
     :bind ("C-c ah" . hangups)
     :config
     (progn
-      (unbind-key "g" hangups-conv-mode-map)
+      ;; (unbind-key "g" hangups-conv-mode-map)
       (bind-keys :map hangups-conv-mode-map
-                 ("gg" . beginning-of-buffer)
-                 ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
+                 ;; ("gg" . beginning-of-buffer)
+                 ;; ("G" . end-of-buffer)
+                 ;; ("j" . next-line)
+                 ;; ("k" . previous-line)
+                 ;; ("d" . scroll-up-command)
+                 ;; ("e" . scroll-down-command)
                  ("U" . hangups-conv-refresh)
                  ("o" . browse-at-point)
                  )))
