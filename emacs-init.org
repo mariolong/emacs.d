@@ -1438,7 +1438,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
       (setq magit-diff-refine-hunk t)
       (setq magit-default-tracking-name-function 'magit-default-tracking-name-branch-only))
     :bind ("C-c g" . magit-status))
-
+.gitignore
   (req-package magit-filenotify
     :require magit
     :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
