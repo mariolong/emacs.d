@@ -491,8 +491,8 @@ If you change buffer, or focus, disable the current buffer's mark:
 (transient-mark-mode t)
 #+END_SRC
 
-** TODO Show active region
-#+BEGIN_SRC emacs-lisp
+** Show active region
+#+BEGIN_SRC emacs-lisp :tangle no
   (make-variable-buffer-local 'transient-mark-mode)
   (put 'transient-mark-mode 'permanent-local t)
   (setq-default transient-mark-mode t)
@@ -565,26 +565,6 @@ ref: [[https://github.com/Fanael/highlight-numbers]]
     (add-hook 'prog-mode-hook '(lambda()
                                  (if (not (derived-mode-p 'json-mode))
                                      (highlight-numbers-mode)))))
-#+END_SRC
-
-** TODO Highlight escape charset
-
-ref: [[https://github.com/dgutov/highlight-escape-sequences]]
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package highlight-escape-sequences
-    :config
-    (progn
-      ;; Make face the same as builtin face
-      (put 'font-lock-regexp-grouping-backslash 'face-alias 'font-lock-builtin-face)
-
-      ;; Add extra modes
-      (add-to-list 'hes-simple-modes 'c-mode)
-      (add-to-list 'hes-simple-modes 'c-mode)
-      (add-to-list 'hes-simple-modes 'python-mode)
-
-      ;; Enable globally
-      (hes-mode 1)))
 #+END_SRC
 
 ** Highlight FIXME, TODO
@@ -1237,17 +1217,18 @@ C-o
       (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
 
-** TODO Flyspell
+** TODO Flyspell                                                     :edit:
 
 #+BEGIN_SRC emacs-lisp
-(req-package flyspell
-  :require (ispell)
-  :init
-    (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-    (add-hook 'text-mode-hook 'flyspell-mode)
-    (add-hook 'org-mode-hook 'flyspell-mode)
-  :config
-    (define-key flyspell-mode-map (kbd "C-;") nil))
+  (req-package flyspell
+    :require (ispell)
+    :init
+    (progn
+      (add-hook 'prog-mode-hook 'flyspell-prog-mode)
+      (add-hook 'text-mode-hook 'flyspell-mode)
+      (add-hook 'org-mode-hook 'flyspell-mode))
+    :config
+    (unbind-key "C-;" flycheck-mode-map))
 #+END_SRC
 
 *** Helpful Default Keybindings
@@ -1370,7 +1351,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 
 *** helm-company
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-company
     :require company
     :commands helm-company
@@ -1381,7 +1362,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 
 *** helm-ag
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-ag)
 #+END_SRC
 
@@ -1389,13 +1370,14 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 看起來比 helm 好看些，且快速
 
 #+BEGIN_SRC emacs-lisp
-  (req-package swiper
+  (req-package ivy
     :loader :path
-    :require (counsel ivy)
+    :require (counsel swiper)
     :config
     (progn
       (ivy-mode 1)
       (setq ivy-use-virtual-buffers t)
+      (setq completion-in-region-function 'ivy-completion-in-region)
 
       (bind-key "C-s" 'swiper)
       (bind-key "C-x f" 'ivy-recentf)
@@ -1423,6 +1405,8 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       (bind-key "C-h C-\\" 'counsel-goto-recent-directory)
       ))
 #+END_SRC
+
+** TODO ivy company like helm-company
 
 * Project relative functions
 ** TODO Magit
@@ -1453,7 +1437,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
     :init (global-diff-hl-mode))
 #+END_SRC
 
-** TODO ediff
+** TODO ediff                                                     :project:
 
 #+BEGIN_SRC emacs-lisp
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
@@ -2063,9 +2047,6 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
        ))
  #+END_SRC
 
-*** TODO Color of org-mode src_block
-color of parentheses is bad look
-
 *** Pretty Bullets
 ref: https://github.com/sabof/org-bullets
 
@@ -2080,6 +2061,8 @@ ref: https://github.com/sabof/org-bullets
 #+BEGIN_SRC emacs-lisp
   (eval-after-load 'org
     '(progn
+       (add-to-list 'org-structure-template-alist
+                    '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:"))
        (add-to-list 'org-structure-template-alist
                     '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
        (add-to-list 'org-structure-template-alist
