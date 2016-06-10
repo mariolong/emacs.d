@@ -383,7 +383,7 @@ set color of parenttheses like spacemacs.
   (req-package moedict
     :require esqlite
     :loader :path
-    :bind ("C-c am" . moedict))
+    :bind ("C-c xm" . moedict))
 
   (setq browse-url-chromium-program "google-chrome-stable")
 #+END_SRC
@@ -1213,7 +1213,7 @@ C-o
       (add-hook 'after-init-hook 'global-flycheck-mode)
       (setq flycheck-indication-mode 'right-fringe)
       (define-key flycheck-mode-map flycheck-keymap-prefix nil)
-      (setq flycheck-keymap-prefix (kbd "C-c c"))
+      (setq flycheck-keymap-prefix (kbd "C-c v"))
       (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
 
@@ -1662,10 +1662,11 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       (add-hook 'eww-mode-hook '(lambda ()
                                   (toggle-truncate-lines nil)))
 
-      (unbind-key "g" eww-mode-map)
+      ;; (unbind-key "g" eww-mode-map)
+      (unbind-key "o" eww-mode-map)
       (bind-keys :map eww-mode-map
-                 ("gg" . beginning-of-buffer)
-                 ("G" . end-of-buffer)
+                 ;; ("gg" . beginning-of-buffer)
+                 ;; ("G" . end-of-buffer)
                  ("j" . next-line)
                  ("k" . previous-line)
                  ("d" . scroll-up-command)
@@ -1777,7 +1778,7 @@ save current web page to org-mode
         (call-interactively 'eww)
       (eww thing)))
 
-  (bind-key "C-c ab" 'browse-at-point)
+  (bind-key "C-c xb" 'browse-at-point)
 #+END_SRC
 
 *** Yahoo! dictionary
@@ -1792,14 +1793,14 @@ save current web page to org-mode
       (if word
           (eww (concat dictionary-url word)))))
 
-  (bind-key "C-c ay" 'dictionary-at-point)
+  (bind-key "C-c xy" 'dictionary-at-point)
 #+END_SRC
 
 ** elfeed
 *** elfeed basic
 #+BEGIN_SRC emacs-lisp
   (req-package elfeed
-    :bind ("C-c af" . elfeed)
+    :bind ("C-c xf" . elfeed)
     :config
     (progn
       (custom-set-faces
@@ -1892,11 +1893,12 @@ save current web page to org-mode
       (bind-keys :map elfeed-search-mode-map
                  ;; ("gg" . beginning-of-buffer)
                  ;; ("G" . end-of-buffer)
-                 ;; ("j" . elfeed-search-mark-read)
-                 ;; ("k" . previous-line)
-                 ;; ("d" . scroll-up-command)
-                 ;; ("e" . scroll-down-command)
-                 ("U" . elfeed-update)
+                 ("n" . elfeed-search-mark-read)
+                 ("j" . elfeed-search-mark-read)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("g" . elfeed-update)
                  ("a" . elfeed-search-mark-all-read)
                  ("B" . elfeed-search-external-browser)
                  ("y" . copy-elfeed-search-url)
@@ -1907,10 +1909,10 @@ save current web page to org-mode
       (bind-keys :map elfeed-show-mode-map
                  ;; ("gg" . beginning-of-buffer)
                  ;; ("G" . end-of-buffer)
-                 ;; ("j" . next-line)
-                 ;; ("k" . previous-line)
-                 ;; ("d" . scroll-up-command)
-                 ;; ("e" . scroll-down-command)
+                 ("j" . next-line)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
                  ("B" . elfeed-show-external-browser)
                  ("y" . copy-elfeed-show-url)
                  ("w" . copy-elfeed-show-url)
@@ -1938,18 +1940,18 @@ ref: https://github.com/jtamagnan/hangups.el
   (req-package hangups
     :loader :path
     :require adaptive-wrap
-    :bind ("C-c ah" . hangups)
+    :bind ("C-c xh" . hangups)
     :config
     (progn
       ;; (unbind-key "g" hangups-conv-mode-map)
       (bind-keys :map hangups-conv-mode-map
                  ;; ("gg" . beginning-of-buffer)
                  ;; ("G" . end-of-buffer)
-                 ;; ("j" . next-line)
-                 ;; ("k" . previous-line)
-                 ;; ("d" . scroll-up-command)
-                 ;; ("e" . scroll-down-command)
-                 ("U" . hangups-conv-refresh)
+                 ("j" . next-line)
+                 ("k" . previous-line)
+                 ("d" . scroll-up-command)
+                 ("e" . scroll-down-command)
+                 ("g" . hangups-conv-refresh)
                  ("o" . browse-at-point)
                  )))
 #+END_SRC
