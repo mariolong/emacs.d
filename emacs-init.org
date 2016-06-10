@@ -909,7 +909,7 @@ ref: https://github.com/abo-abo/avy
 #+BEGIN_SRC emacs-lisp
   (req-package avy
     :commands (global-avy-mode avy-goto-char avy-goto-line)
-    :bind ("C-:" . avy-goto-char)
+    :bind ("C-z" . avy-goto-char)
     :bind ("M-g f" . avy-goto-line))
 #+END_SRC
 
@@ -1113,7 +1113,7 @@ ref: https://ebzzry.github.io/emacs-pairs.html
       (smartparens-global-mode t)
       (show-smartparens-global-mode t)))
 #+END_SRC
-
+** TODO [#A] match parenthese like vi %
 ** iedit
 [[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
 
@@ -1186,6 +1186,7 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
 #+END_SRC
 
 *** Add quickhelp in company-mode
+ref: https://github.com/expez/company-quickhelp
 
 #+BEGIN_SRC emacs-lisp
   (req-package company-quickhelp
@@ -1647,7 +1648,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
     :bind ("C-c hg" . helm-google))
 #+END_SRC
 
-** TODO eww (Emacs Web broWser)
+** eww (Emacs Web broWser)
 *** eww basic
 #+BEGIN_SRC emacs-lisp
   (req-package eww
@@ -1750,7 +1751,7 @@ save current web page to org-mode
           (message "write file: %s" eww-to-org-file-name)
           )))
 #+END_SRC
-*** browse at point
+*** TODO eww browse at point (add prefix key to open eww directly)
 
 #+BEGIN_SRC emacs-lisp
   (defun browse-at-point ()
@@ -1932,7 +1933,7 @@ using org-mode to manage feed url
               ))
 #+END_SRC
 
-*** TODO smooth scrolling
+*** TODO [#C] smooth scrolling
 ** TODO hangups
 ref: https://github.com/jtamagnan/hangups.el
 
@@ -2123,8 +2124,8 @@ ref: https://github.com/sabof/org-bullets
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-c l" 'org-store-link)
-  (bind-key "C-c ac" 'org-capture)
-  (bind-key "C-c aa" 'org-agenda)
+  (bind-key "C-c c" 'org-capture)
+  (bind-key "C-c a" 'org-agenda)
   (unbind-key "C-c [")
   (unbind-key "C-c ]")
 #+END_SRC
