@@ -91,7 +91,7 @@ user-emacs-directory 定義於 init.el 中
     "My emacs storage area for persistent files.")
 #+END_SRC
 
-** TODO add .emacs.d/lisp to load path
+** TODO [#B] add .emacs.d/lisp to load path
 ref: https://www.emacswiki.org/emacs/DotEmacsModular
 
 #+BEGIN_SRC emacs-lisp
@@ -116,7 +116,7 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
                load-path)))))
 #+END_SRC
 
-** TODO tangle this initial file via async
+** TODO [#B] tangle this initial file via async
 * Package Management
 
 用過 quelpa，因為啟動時會自動抓原始碼，啟動速度真的很慢。
@@ -383,7 +383,7 @@ set color of parenttheses like spacemacs.
   (req-package moedict
     :require esqlite
     :loader :path
-    :bind ("C-c xm" . moedict))
+    :bind ("C-c m" . moedict))
 
   (setq browse-url-chromium-program "google-chrome-stable")
 #+END_SRC
@@ -393,7 +393,7 @@ set color of parenttheses like spacemacs.
 #+BEGIN_SRC emacs-lisp :tangle no
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
     "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-    (flet ((process-list ())) ad-do-it))
+    (flet (process-list) ad-do-it))
 #+END_SRC
 
 ** Don't ask me when kill process buffer
@@ -414,7 +414,7 @@ set color of parenttheses like spacemacs.
   (global-font-lock-mode t)
 #+END_SRC
 
-** TODO Whitespaces and tabs
+** TODO [#B] Whitespaces and tabs
 #+BEGIN_SRC emacs-lisp
   (setq c-basic-offset 4)
   (setq python-indent-offset 4)
@@ -1640,10 +1640,10 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       (bind-key "C-c fi" 'insert-stock-id-at-point)
       ))
 #+END_SRC
-* Internet
+* Internet                                                         :internet:
 ** helm-google
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-google
     :bind ("C-c hg" . helm-google))
 #+END_SRC
@@ -1779,7 +1779,7 @@ save current web page to org-mode
         (call-interactively 'eww)
       (eww thing)))
 
-  (bind-key "C-c xb" 'browse-at-point)
+  (bind-key "C-c b" 'browse-at-point)
 #+END_SRC
 
 *** Yahoo! dictionary
@@ -1794,14 +1794,14 @@ save current web page to org-mode
       (if word
           (eww (concat dictionary-url word)))))
 
-  (bind-key "C-c xy" 'dictionary-at-point)
+  (bind-key "C-c y" 'dictionary-at-point)
 #+END_SRC
 
 ** elfeed
 *** elfeed basic
 #+BEGIN_SRC emacs-lisp
   (req-package elfeed
-    :bind ("C-c xf" . elfeed)
+    :bind ("C-c e" . elfeed)
     :config
     (progn
       (custom-set-faces
@@ -1941,7 +1941,7 @@ ref: https://github.com/jtamagnan/hangups.el
   (req-package hangups
     :loader :path
     :require adaptive-wrap
-    :bind ("C-c xh" . hangups)
+    :bind ("C-c h" . hangups)
     :config
     (progn
       ;; (unbind-key "g" hangups-conv-mode-map)
@@ -2031,7 +2031,7 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
   (req-package company-jedi
     :init (add-to-list 'company-backends 'company-jedi))
 #+END_SRC
-* Org
+* Org                                                                   :Org:
 *** basic setup
  #+BEGIN_SRC emacs-lisp
    (req-package org
@@ -2121,6 +2121,13 @@ ref: https://github.com/sabof/org-bullets
 *** keybinds
 =C-c '= 編輯原始碼
 =C-Return= 增加一個標題
+=C-c C-c= 增加或修改 tags
+=C-<left>/<right>= 對標題設定 TODO keywords
+=C-<up>/<down>= 對標題設定重要性
+=<TAB>= 循環展開一個標題 (含子標題)
+=S-<TAB= 循環展開全檔的標題
+=C-c C-o= open url link
+=C-c \= 展開本檔相對應 tag 的標題，可用 & | 串接，做邏輯性查詢
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-c l" 'org-store-link)
