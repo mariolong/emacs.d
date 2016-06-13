@@ -250,7 +250,7 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
   (diminish 'overwrite-mode)
 #+END_SRC
 
-** TODO spaceline
+** TODO [#C] spaceline
 from spacemacs import spaceline for nice look
 
 ** fringe
@@ -879,19 +879,19 @@ Add parts of each file's directory to the buffer name if not unique
               (bind-keys :map pdf-view-mode-map
                          ("j" . pdf-view-next-line-or-next-page)
                          ("k" . pdf-view-previous-line-or-previous-page)
-                         ("J" . pdf-view-next-page)
+                         ("H" . pdf-view-next-page)
+                         ("L" . pdf-view-previous-page)
                          ("e" . pdf-view-scroll-down-or-previous-page)
-                         ("K" . pdf-view-previous-page)
                          ("d" . pdf-view-scroll-up-or-next-page)
-                         ("gg" . pdf-view-first-page)
-                         ("G" . pdf-view-last-page)
+                         ;; ("gg" . pdf-view-first-page)
+                         ;; ("G" . pdf-view-last-page)
                          ("=" . pdf-view-fit-width-to-window)
                          ("-" . pdf-view-shrink)
                          ("+" . pdf-view-enlarge))
               ))
 #+END_SRC
 
-* 編輯功能
+* 編輯功能                                                             :edit:
 ** Smooth-scrolling
 
 #+BEGIN_SRC emacs-lisp
@@ -1113,8 +1113,23 @@ ref: https://ebzzry.github.io/emacs-pairs.html
       (smartparens-global-mode t)
       (show-smartparens-global-mode t)))
 #+END_SRC
-** TODO [#A] match parenthese like vi %
+** Emulation of the vi % command
+ref: https://www.emacswiki.org/emacs/NavigatingParentheses
+
+#+BEGIN_SRC emacs-lisp
+  (defun goto-match-paren (arg)
+    "Go to the matching parenthesis if on parenthesis, otherwise insert %.
+    vi style of % jumping to matching brace."
+    (interactive "p")
+    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+          (t (self-insert-command (or arg 1)))))
+
+  (bind-key "%" 'goto-match-paren)
+#+END_SRC
+
 ** iedit
+
 [[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
 
 Normal scenario of Iedit mode is like:
@@ -1218,7 +1233,7 @@ C-o
       (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
 
-** TODO Flyspell                                                     :edit:
+** TODO [#B] Flyspell
 
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell
@@ -1237,8 +1252,20 @@ C-o
 =C-.= corrects word at point.
 =C-,​= to jump to next misspelled word.
 
-*** helm-flyspell
-
+*** TODO [#B] ivy flyspell
+#+BEGIN_SRC emacs-lisp
+  (req-package flyspell-correct
+    :require (flyspell ivy flyspell-correct-ivy)
+    :config
+    (progn
+      ;; set ivy as correcting interface
+      (setq flyspell-correct-interface 'flyspell-correct-ivy)
+      ;; bind flyspell-correct-word-generic
+      (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
+      ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
+      ))
+#+END_SRC
+*** TODO helm-flyspell
 #+BEGIN_SRC emacs-lisp :tangle no
   (req-package helm-flyspell
     :require (flyspell helm)
@@ -1372,7 +1399,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 
 #+BEGIN_SRC emacs-lisp
   (req-package ivy
-    :loader :path
+    ;; :loader :path
     :require (counsel swiper)
     :config
     (progn
@@ -1409,7 +1436,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 
 ** TODO ivy company like helm-company
 
-* Project relative functions
+* Project relative function                                        :project:
 ** TODO Magit
 
 #+BEGIN_SRC emacs-lisp
@@ -1438,8 +1465,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
     :init (global-diff-hl-mode))
 #+END_SRC
 
-** TODO ediff                                                     :project:
-
+** TODO ediff
 #+BEGIN_SRC emacs-lisp
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-vertically)
@@ -1465,21 +1491,6 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 #+END_SRC
 
 * Interactive Commands
-** Emulation of the vi % command
-ref: https://www.emacswiki.org/emacs/NavigatingParentheses
-
-#+BEGIN_SRC emacs-lisp
-  (defun goto-match-paren (arg)
-    "Go to the matching parenthesis if on parenthesis, otherwise insert %.
-    vi style of % jumping to matching brace."
-    (interactive "p")
-    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-          (t (self-insert-command (or arg 1)))))
-
-  (bind-key "%" 'goto-match-paren)
-#+END_SRC
-
 ** convert org, markdown, kindle file
 *** get major mode of current buffer
 
@@ -1574,7 +1585,7 @@ ref: https://www.emacswiki.org/emacs/NavigatingParentheses
           ;; (set-buffer-file-coding-system 'utf-8-unix)
           (let* ((wpub-temp-file (expand-file-name
                                   (concat user-cache-directory (buffer-name))))
-                 (wpub-command (format "wpub -f org %s" wpub-temp-file))
+                 (wpub-command (format "wpub -f org '%s'" wpub-temp-file))
                  (str (buffer-substring-no-properties (point-max) 1)))
 
             (with-temp-file wpub-temp-file
