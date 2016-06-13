@@ -5,6 +5,8 @@
       inhibit-startup-echo-area-message t)
 (modify-all-frames-parameters '((fullscreen . maximized)))
 
+(defalias 'second 'cadr)
+
 (require 'package)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
