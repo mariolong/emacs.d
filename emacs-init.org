@@ -931,7 +931,7 @@ ref: https://github.com/abo-abo/ace-link
 #+BEGIN_SRC emacs-lisp
   (req-package ace-link
     :config
-    (ace-link-setup-default))
+    (ace-link-setup-default "f"))
 #+END_SRC
 
 ** Smart home
@@ -1465,6 +1465,21 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 #+END_SRC
 
 * Interactive Commands
+** Emulation of the vi % command
+ref: https://www.emacswiki.org/emacs/NavigatingParentheses
+
+#+BEGIN_SRC emacs-lisp
+  (defun goto-match-paren (arg)
+    "Go to the matching parenthesis if on parenthesis, otherwise insert %.
+    vi style of % jumping to matching brace."
+    (interactive "p")
+    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
+          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
+          (t (self-insert-command (or arg 1)))))
+
+  (bind-key "%" 'goto-match-paren)
+#+END_SRC
+
 ** convert org, markdown, kindle file
 *** get major mode of current buffer
 
@@ -1640,7 +1655,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       (bind-key "C-c fi" 'insert-stock-id-at-point)
       ))
 #+END_SRC
-* Internet                                                         :internet:
+* Internet relative functions                                      :internet:
 ** helm-google
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -1652,6 +1667,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 *** eww basic
 #+BEGIN_SRC emacs-lisp
   (req-package eww
+    :defer 1
     :loader :built-in
     :config
     (progn
@@ -1664,16 +1680,18 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
                                   (toggle-truncate-lines nil)))
 
       ;; (unbind-key "g" eww-mode-map)
-      (unbind-key "o" eww-mode-map)
+      ;; (unbind-key "o" eww-mode-map)
       (bind-keys :map eww-mode-map
                  ;; ("gg" . beginning-of-buffer)
                  ;; ("G" . end-of-buffer)
                  ("j" . next-line)
                  ("k" . previous-line)
+                 ("l" . forward-char)
+                 ("h" . backward-char)
                  ("d" . scroll-up-command)
                  ("e" . scroll-down-command)
                  ("B" . eww-browse-with-external-browser)
-                 ("f" . ace-link-eww)
+                 ;; ("f" . ace-link-eww)
                  ("m" . endless/toggle-image-display)
                  ("q" . eww-quit-reset-image-flag)
                  ("H" . eww-back-url)
@@ -1897,6 +1915,8 @@ save current web page to org-mode
                  ("n" . elfeed-search-mark-read)
                  ("j" . elfeed-search-mark-read)
                  ("k" . previous-line)
+                 ("l" . forward-char)
+                 ("h" . backward-char)
                  ("d" . scroll-up-command)
                  ("e" . scroll-down-command)
                  ("g" . elfeed-update)
@@ -1912,6 +1932,8 @@ save current web page to org-mode
                  ;; ("G" . end-of-buffer)
                  ("j" . next-line)
                  ("k" . previous-line)
+                 ("l" . forward-char)
+                 ("h" . backward-char)
                  ("d" . scroll-up-command)
                  ("e" . scroll-down-command)
                  ("B" . elfeed-show-external-browser)
@@ -1934,7 +1956,7 @@ using org-mode to manage feed url
 #+END_SRC
 
 *** TODO [#C] smooth scrolling
-** TODO hangups
+** hangups
 ref: https://github.com/jtamagnan/hangups.el
 
 #+BEGIN_SRC emacs-lisp
@@ -1950,6 +1972,8 @@ ref: https://github.com/jtamagnan/hangups.el
                  ;; ("G" . end-of-buffer)
                  ("j" . next-line)
                  ("k" . previous-line)
+                 ("l" . forward-char)
+                 ("h" . backward-char)
                  ("d" . scroll-up-command)
                  ("e" . scroll-down-command)
                  ("g" . hangups-conv-refresh)
