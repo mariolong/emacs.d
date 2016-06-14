@@ -91,13 +91,13 @@ user-emacs-directory 定義於 init.el 中
     "My emacs storage area for persistent files.")
 #+END_SRC
 
-** TODO [#B] add .emacs.d/lisp to load path
+** TODO [#C] add .emacs.d/lisp to load path
 ref: https://www.emacswiki.org/emacs/DotEmacsModular
 
 #+BEGIN_SRC emacs-lisp
   (add-to-list 'load-path (concat user-emacs-directory "lisp/hangups.el"))
   (add-to-list 'load-path (concat user-emacs-directory "lisp/moedict.el"))
-  (add-to-list 'load-path (concat user-emacs-directory "lisp/swiper"))
+  ;; (add-to-list 'load-path (concat user-emacs-directory "lisp/swiper"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -116,7 +116,42 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
                load-path)))))
 #+END_SRC
 
-** TODO [#B] tangle this initial file via async
+** Tangle this initial file before exit emacs
+
+#+BEGIN_SRC emacs-lisp
+  (defconst emacs-init-org-file (expand-file-name "emacs-init.org" user-emacs-directory))
+  (defconst emacs-init-el-file (expand-file-name "emacs-init.el" user-emacs-directory))
+
+  (defun tangle-emacs-init-org ()
+    "Tangle emacs-init.org to .el"
+
+    (interactive)
+
+    (let* ((age (lambda (file)
+                  (float-time
+                   (time-subtract (current-time)
+                                  (nth 5 (or (file-attributes (file-truename file))
+                                             (file-attributes file))))))))
+      (if (file-exists-p emacs-init-org-file)
+          (unless (and (file-exists-p emacs-init-el-file)
+                       (> (funcall age emacs-init-org-file)
+                          (funcall age emacs-init-el-file)))
+            (progn
+              ;; (require 'org)
+              ;; (require 'ob-tangle)
+              (setq org-confirm-babel-evaluate nil)
+              (setq org-confirm-execute-src-block nil)
+              (org-babel-tangle-file emacs-init-org-file emacs-init-el-file "emacs-lisp"))
+            ))))
+
+  (defun tangle-mario-init ()
+    (when (equal (buffer-file-name) emacs-init-org-file)
+      (tangle-emacs-init-org)))
+
+  (add-hook 'kill-emacs-hook 'tangle-emacs-init-org)
+  ;; (add-hook 'after-save-hook 'tangle-mario-init)
+#+END_SRC
+
 * Package Management
 
 用過 quelpa，因為啟動時會自動抓原始碼，啟動速度真的很慢。
@@ -343,14 +378,11 @@ set color of parenttheses like spacemacs.
   (bind-key "C-c fu" 'buffer-to-utf-8-unix)
 #+END_SRC
 
-** translate buffer via opencc
-
-:TODO: opencc refactor
+** Translate buffer via opencc
 
 #+BEGIN_SRC emacs-lisp
   (defvar opencc-conv-temp-file (expand-file-name
                                  (concat user-cache-directory "opencc.tmp")))
-  ;; (defvar opencc-conv-config "s2twp.json")
 
   (defun opencc-conv-command ()
     (concat "opencc"
@@ -377,7 +409,7 @@ set color of parenttheses like spacemacs.
 #+END_SRC
 
 ** 萌典 moedict
-安裝後，需執行 =moedict-install-dictionary= ，才能開始使用萌典。
+安裝後，需執行一次 =moedict-install-dictionary= ，才能開始使用萌典。
 
 #+BEGIN_SRC emacs-lisp
   (req-package moedict
@@ -484,14 +516,14 @@ https://github.com/glasserc/ethan-wspace
   (setq echo-keystrokes 0.1)
 #+END_SRC
 
-** Transient mark
+** TODO Transient mark
 If you change buffer, or focus, disable the current buffer's mark:
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (transient-mark-mode t)
 #+END_SRC
 
-** Show active region
+** TODO Show active region
 #+BEGIN_SRC emacs-lisp :tangle no
   (make-variable-buffer-local 'transient-mark-mode)
   (put 'transient-mark-mode 'permanent-local t)
@@ -517,7 +549,7 @@ periodically and when exiting Emacs.
 #+BEGIN_SRC emacs-lisp
   (global-subword-mode 1)
 #+END_SRC
-** Save files and this session
+** Save files and exit (current file)
 =C-x C-c= save-buffers-kill-emacs
 
 #+begin_src emacs-lisp
@@ -589,6 +621,16 @@ ref: [[https://github.com/Fanael/highlight-numbers]]
 #+BEGIN_SRC emacs-lisp
   (mouse-avoidance-mode 'banish)
 #+END_SRC
+** TODO async
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package async
+    :init
+    (progn
+      (async-bytecomp-package-mode 1)
+      (setq async-bytecomp-allowed-packages '(all))))
+#+END_SRC
+
 * Windown Management
 ** winner-mode
 
@@ -693,29 +735,8 @@ Undo/redo window configuration with C-c <left>/<right>
   (autoload 'ibuffer "ibuffer" "List buffers." t)
 #+END_SRC
 
-** fasd
-這個相當好用，按下 C-h C-\，輸入部份檔名或目錄名稱，即可直接開啟想要的檔案或目錄。
-
-ref: https://github.com/steckerhalter/emacs-fasd
-
-先在 OS 中安裝 =fasd=
-
-用 ivy 取代了
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package fasd
-    :require grizzl
-    :config (global-fasd-mode 1)
-    :bind ("C-h C-\\" . fasd-find-file))
-#+END_SRC
-
-*** Calling fasd-find-file with a prefix argument of
-
-C-u lists only directories
-M-- lists only files
-
-** TODO Dired relative functions
-*** dired
+** Dired relative functions
+*** TODO dired
 #+BEGIN_SRC emacs-lisp :tangle no
 (req-package dired
   :commands dired
@@ -732,6 +753,7 @@ M-- lists only files
 #+END_SRC
 
 *** dired+
+
 #+BEGIN_SRC emacs-lisp
   (req-package dired+
     :init (progn
@@ -741,6 +763,7 @@ M-- lists only files
 #+END_SRC
 
 *** openwith
+
 #+BEGIN_SRC emacs-lisp
   (req-package openwith
     :config
@@ -1113,6 +1136,7 @@ ref: https://ebzzry.github.io/emacs-pairs.html
       (smartparens-global-mode t)
       (show-smartparens-global-mode t)))
 #+END_SRC
+
 ** Emulation of the vi % command
 ref: https://www.emacswiki.org/emacs/NavigatingParentheses
 
@@ -1234,6 +1258,7 @@ C-o
 #+END_SRC
 
 ** TODO [#B] Flyspell
+ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/spell-checking/packages.el
 
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell
@@ -1243,8 +1268,7 @@ C-o
       (add-hook 'prog-mode-hook 'flyspell-prog-mode)
       (add-hook 'text-mode-hook 'flyspell-mode)
       (add-hook 'org-mode-hook 'flyspell-mode))
-    :config
-    (unbind-key "C-;" flycheck-mode-map))
+    :config (unbind-key "C-;" flyspell-mode-map))
 #+END_SRC
 
 *** Helpful Default Keybindings
@@ -1252,6 +1276,16 @@ C-o
 =C-.= corrects word at point.
 =C-,​= to jump to next misspelled word.
 
+*** TODO [#B] auto-dictionary
+ref: https://github.com/nschum/auto-dictionary-mode
+
+#+BEGIN_SRC emacs-lisp
+  (req-package auto-dictionary
+    :require (flyspell)
+    :init
+    (add-hook 'flyspell-mode-hook (lambda () (auto-dictionary-mode 1))))
+
+#+END_SRC
 *** TODO [#B] ivy flyspell
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell-correct
@@ -1261,7 +1295,7 @@ C-o
       ;; set ivy as correcting interface
       (setq flyspell-correct-interface 'flyspell-correct-ivy)
       ;; bind flyspell-correct-word-generic
-      (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
+      ;; (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
       ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
       ))
 #+END_SRC
@@ -1276,8 +1310,9 @@ C-o
 #+END_SRC
 ** TODO Ispell
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package ispell
+    :diminish " Ⓢ"
     :config
     (progn
       (setq-default ispell-program-name "aspell")
@@ -2145,7 +2180,7 @@ ref: https://github.com/sabof/org-bullets
                 "* TODO %?\n%T")
                ))
 
-       (setq org-agenda-files (list (expand-file-name "emacs-init.org" user-emacs-directory) org-default-notes-file))
+       (setq org-agenda-files (list emacs-init-org-file org-default-notes-file))
 
        (add-hook 'org-agenda-mode-hook
                  '(lambda ()
