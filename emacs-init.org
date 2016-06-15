@@ -25,7 +25,7 @@ introduce, which make me never accidentally using outdated compiled files.
   (setq load-prefer-newer t)
 #+END_SRC
 
-** cleanup
+** Cleanup
 *** 不必顯示功能表、工具列和捲軸
 
 在 init.el 的開始部份加上下列 3 行：
@@ -64,7 +64,7 @@ introduce, which make me never accidentally using outdated compiled files.
   (setq initial-scratch-message "")
 #+END_SRC
 
-** 設定字型
+** Font settings
 
 重要的是設定中文字型
 
@@ -241,6 +241,142 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
     :init (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
 
+** TODO spaceline
+from spacemacs import spaceline for nice look
+ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
+
+#+BEGIN_SRC emacs-lisp
+  (req-package spaceline-config
+    :config 
+    (progn 
+      (spaceline-spacemacs-theme)
+      (setq-default powerline-default-separator
+                    (if (display-graphic-p) 'arrow 'utf-8))
+      ))
+#+END_SRC
+
+spaceline from spacemacs
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package spaceline-config
+    :init
+    (progn
+      (spacemacs|do-after-display-system-init
+       (setq-default powerline-default-separator
+                     (if (display-graphic-p) 'wave 'utf-8)))
+      (defun spacemacs//set-powerline-for-startup-buffers ()
+        "Set the powerline for buffers created when Emacs starts."
+        (dolist (buffer '("*Messages*" "*spacemacs*" "*Compile-Log*"))
+          (when (and (get-buffer buffer)
+                     (configuration-layer/package-usedp 'spaceline))
+            (spacemacs//restore-powerline buffer))))
+      (add-hook 'emacs-startup-hook
+                'spacemacs//set-powerline-for-startup-buffers))
+    :config
+    (progn
+      (defun spacemacs/customize-powerline-faces ()
+        "Alter powerline face to make them work with more themes."
+        (set-face-attribute 'powerline-inactive2 nil
+                            :inherit 'font-lock-comment-face))
+      (spacemacs/customize-powerline-faces)
+
+      (dolist (spec '((minor-modes "tmm")
+                      (major-mode "tmM")
+                      (version-control "tmv")
+                      (new-version "tmV")
+                      (point-position "tmp")
+                      (org-clock "tmc")))
+        (let* ((segment (car spec))
+               (status-var (intern (format "spaceline-%S-p" segment))))
+          (eval `(spacemacs|add-toggle ,(intern (format "mode-line-%S" segment))
+                   :status ,status-var
+                   :on (setq ,status-var t)
+                   :off (setq ,status-var nil)
+                   :documentation ,(format "Show %s in the mode-line."
+                                           (replace-regexp-in-string
+                                            "-" " " (format "%S" segment)))
+                   :evil-leader ,(cadr spec)))))
+      (setq spaceline-org-clock-p nil)
+
+      (defun spacemacs//evil-state-face ()
+        (if (bound-and-true-p evil-state)
+            (let ((state (if (eq 'operator evil-state) evil-previous-state evil-state)))
+              (intern (format "spacemacs-%S-face" state)))
+          'face-of-god))
+      (setq spaceline-highlight-face-func 'spacemacs//evil-state-face)
+
+      (let ((unicodep (dotspacemacs|symbol-value
+                       dotspacemacs-mode-line-unicode-symbols)))
+        (setq spaceline-window-numbers-unicode unicodep)
+        (setq spaceline-workspace-numbers-unicode unicodep))
+
+      (defpowerline spacemacs-powerline-new-version
+        (propertize
+         spacemacs-version-check-lighter
+         'mouse-face 'mode-line-highlight
+         'help-echo (format "New version %s | Click with mouse-1 to update"
+                            spacemacs-new-version)
+         'local-map (let ((map (make-sparse-keymap)))
+                      (define-key map
+                        [mode-line down-mouse-1]
+                        (lambda (event)
+                          (interactive "@e")
+                          (if (yes-or-no-p
+                               (format (concat "Do you want to update to the newest "
+                                               "version %s ?") spacemacs-new-version))
+                              (progn
+                                (spacemacs/switch-to-version spacemacs-new-version))
+                            (message "Update aborted."))))
+                      map)))
+
+      (spaceline-define-segment new-version
+        (when spacemacs-new-version
+          (spacemacs-powerline-new-version
+           (spacemacs/get-new-version-lighter-face
+            spacemacs-version spacemacs-new-version))))
+
+      (spaceline-spacemacs-theme '(new-version :when active))
+      (spaceline-helm-mode t)
+      (when (configuration-layer/package-usedp 'info+)
+        (spaceline-info-mode t))
+
+      (defun spacemacs//restore-powerline (buffer)
+        "Restore the powerline in buffer"
+        (with-current-buffer buffer
+          (setq-local mode-line-format (default-value 'mode-line-format))
+          (powerline-set-selected-window)
+          (powerline-reset)))
+
+      (defun spacemacs//prepare-diminish ()
+        (when spaceline-minor-modes-p
+          (let ((unicodep (dotspacemacs|symbol-value
+                           dotspacemacs-mode-line-unicode-symbols)))
+            (setq spaceline-minor-modes-separator
+                  (if unicodep (if (display-graphic-p) "" " ") "|"))
+            (dolist (mm spacemacs--diminished-minor-modes)
+              (let ((mode (car mm)))
+                (when (and (boundp mode) (symbol-value mode))
+                  (let* ((unicode (cadr mm))
+                         (ascii (caddr mm))
+                         (dim (if unicodep
+                                  unicode
+                                (if ascii ascii unicode))))
+                    (diminish mode dim))))))))
+      (add-hook 'spaceline-pre-hook 'spacemacs//prepare-diminish)))
+#+END_SRC
+
+** smart-mode-line
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package smart-mode-line
+    :require smart-mode-line-powerline-theme
+    :init
+    (progn
+      (setq sml/vc-mode-show-backend t)
+      (setq sml/no-confirm-load-theme t)
+      (sml/setup)))
+#+END_SRC
+
 ** Change cursor color according to mode
 
 #+BEGIN_SRC emacs-lisp
@@ -262,26 +398,11 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
   (add-hook 'post-command-hook 'hcz-set-cursor-color-according-to-mode)
 #+END_SRC
 
-** smart-mode-line
-
-#+BEGIN_SRC emacs-lisp
-  (req-package smart-mode-line
-    :require smart-mode-line-powerline-theme
-    :init
-    (progn
-      (setq sml/vc-mode-show-backend t)
-      (setq sml/no-confirm-load-theme t)
-      (sml/setup)))
-#+END_SRC
-
-*** diminish some mode
+** diminish some mode
 
 #+BEGIN_SRC emacs-lisp
   (diminish 'overwrite-mode)
 #+END_SRC
-
-** TODO [#C] spaceline
-from spacemacs import spaceline for nice look
 
 ** fringe
 改得細一點，預設值是 8 pixel
@@ -415,7 +536,7 @@ set color of parenttheses like spacemacs.
   (setq browse-url-chromium-program "google-chrome-stable")
 #+END_SRC
 
-* 一般設定
+* Basic settings
 ** TODO Don't ask me when close emacs with process is running
 #+BEGIN_SRC emacs-lisp :tangle no
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
@@ -625,7 +746,7 @@ ref: [[https://github.com/Fanael/highlight-numbers]]
       (setq async-bytecomp-allowed-packages '(all))))
 #+END_SRC
 
-* Window Management
+* Window Management                                                  :window:
 ** winner-mode
 
 Undo/redo window configuration with C-c <left>/<right>
@@ -641,7 +762,7 @@ Undo/redo window configuration with C-c <left>/<right>
   :bind ("C-x o" . switch-window))
 #+END_SRC
 
-* Buffer Management
+* Buffer Management                                                  :buffer:
 ** Edit current buffer as root
 
 #+BEGIN_SRC emacs-lisp
@@ -908,7 +1029,7 @@ Add parts of each file's directory to the buffer name if not unique
               ))
 #+END_SRC
 
-* 編輯功能                                                             :edit:
+* Editing                                                              :edit:
 ** Smooth-scrolling
 
 #+BEGIN_SRC emacs-lisp
@@ -935,6 +1056,7 @@ ref: https://github.com/cute-jumper/ace-pinyin
 
 #+BEGIN_SRC emacs-lisp
   (req-package ace-pinyin
+    :diminish ""
     :config
     (progn
       (ace-pinyin-global-mode +1)
@@ -1271,12 +1393,14 @@ if want to use "hunspell", then must install hunspell and hunspell_en in OS.
                                     ;; "--run-together-limit=5"
                                     ;; "--run-together-min=2"
                                     )))
+       ;; how to fire 'hunspell'?
        ((executable-find "hunspell")
         (setq ispell-program-name "hunspell")
         (setq ispell-extra-args   '("-d en_US"))
-        ;; (setq ispell-local-dictionary-alist ;
-        ;; '(("zh_TW" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
-        ;; ))
+        (setq ispell-local-dictionary-alist 
+              '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
+                ("zh_TW" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
+                ))
         )
        )
       (setq ispell-local-dictionary "en_US")
@@ -1306,7 +1430,7 @@ if want to use "hunspell", then must install hunspell and hunspell_en in OS.
 
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell-correct-ivy
-    :defer 1  
+    :defer 5
     :require (flyspell ivy flyspell-correct)
     :bind (:map flyspell-mode-map
                 ("M-$" . flyspell-correct-word-generic))
@@ -1382,36 +1506,13 @@ GitHub: https://github.com/steckerhalter/discover-my-major
            ("C-h M-m" . discover-my-mode)))
 #+END_SRC
 
-* helm
-
-Helm offers a command called =helm-mini= that opens a =helm= buffer
-populated with recent files and currently open buffers. I want Helm
-everywhere, so instead we'll activate =helm-mode= and work from there.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package helm-config 
-    :require (popwin async)
-    :diminish helm-mode
-    :init (progn
-            (setq helm-ff-auto-update-initial-value)
-            (setq popwin:special-display-config
-                  (append helm-popwin
-                          popwin:special-display-config))
-            ;;(bind-key* "M-x" 'helm-M-x)
-            ;;(bind-key* "C-x f" 'helm-recentf)
-            ;; (bind-key* "C-x b" 'helm-mini)
-            ;; (bind-key* "C-x C-f" 'helm-find-files)
-            )
-    ;; :config (helm-mode 1)
-    )
-#+END_SRC
-
 * Completion
 ** ivy
 看起來比 helm 好看些，且快速
 
 #+BEGIN_SRC emacs-lisp
   (req-package ivy
+    :diminish ""
     :require (counsel swiper)
     :bind (("C-s" . swiper)
            ("M-x" . counsel-M-x)
@@ -1455,11 +1556,40 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 
 ** ivy swoop like helm-swoop
 ref: https://github.com/abo-abo/swiper/issues/3
+ref: https://github.com/ShingoFukuyama/emacs-swoop
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package swoop
+    :config
+    (define-key isearch-mode-map (kbd "C-o") 'swoop-from-isearch)
+    )
 #+END_SRC
 
-* Project relative function                                        :project:
+** helm
+
+Helm offers a command called =helm-mini= that opens a =helm= buffer
+populated with recent files and currently open buffers. I want Helm
+everywhere, so instead we'll activate =helm-mode= and work from there.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (req-package helm-config 
+    :require (popwin async)
+    :diminish helm-mode
+    :init (progn
+            (setq helm-ff-auto-update-initial-value)
+            (setq popwin:special-display-config
+                  (append helm-popwin
+                          popwin:special-display-config))
+            ;;(bind-key* "M-x" 'helm-M-x)
+            ;;(bind-key* "C-x f" 'helm-recentf)
+            ;; (bind-key* "C-x b" 'helm-mini)
+            ;; (bind-key* "C-x C-f" 'helm-find-files)
+            )
+    ;; :config (helm-mode 1)
+    )
+#+END_SRC
+
+* Project relative function                                         :project:
 ** TODO Magit
 
 #+BEGIN_SRC emacs-lisp
@@ -1615,7 +1745,7 @@ ref: https://github.com/abo-abo/swiper/issues/3
 
 #+END_SRC
 
-*** TODO url to kindle via wpub (add quit options)
+*** TODO send url to kindle via wpub (add quit options)
 #+BEGIN_SRC emacs-lisp
   (defun url-to-kindle (url)
     (interactive)
@@ -1662,6 +1792,8 @@ ref: https://github.com/abo-abo/swiper/issues/3
 #+END_SRC
 
 ** Insert stock ids at point
+Insert stock ids to '.elfeed.org' and read their RSS
+
 #+BEGIN_SRC emacs-lisp
   (req-package esqlite
     :config
