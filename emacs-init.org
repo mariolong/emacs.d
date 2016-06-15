@@ -144,12 +144,7 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
               (org-babel-tangle-file emacs-init-org-file emacs-init-el-file "emacs-lisp"))
             ))))
 
-  (defun tangle-mario-init ()
-    (when (equal (buffer-file-name) emacs-init-org-file)
-      (tangle-emacs-init-org)))
-
   (add-hook 'kill-emacs-hook 'tangle-emacs-init-org)
-  ;; (add-hook 'after-save-hook 'tangle-mario-init)
 #+END_SRC
 
 * Package Management
@@ -421,7 +416,7 @@ set color of parenttheses like spacemacs.
 #+END_SRC
 
 * 一般設定
-** Don't ask me when close emacs with process is running
+** TODO Don't ask me when close emacs with process is running
 #+BEGIN_SRC emacs-lisp :tangle no
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
     "Prevent annoying \"Active processes exist\" query when you quit Emacs."
@@ -445,16 +440,7 @@ set color of parenttheses like spacemacs.
 #+BEGIN_SRC emacs-lisp
   (global-font-lock-mode t)
 #+END_SRC
-
-** TODO [#B] Whitespaces and tabs
-#+BEGIN_SRC emacs-lisp
-  (setq c-basic-offset 4)
-  (setq python-indent-offset 4)
-  (setq tab-width 4)
-  (setq indent-tabs-mode nil)
-#+END_SRC
-
-*** ethan-wspace
+** ethan-wspace
 
 Takes care of trailing whitespaces (removal, highlighting)
 https://github.com/glasserc/ethan-wspace
@@ -486,9 +472,17 @@ https://github.com/glasserc/ethan-wspace
 #+END_SRC
 
 *** 存檔前清除多餘的空白
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
+
+** Whitespaces and tabs
+#+BEGIN_SRC emacs-lisp :tangle no
+  (setq c-basic-offset 4)
+  (setq python-indent-offset 4)
+  (setq tab-width 4)
+  (setq indent-tabs-mode nil)
+#+END_SRC
 
 ** Default truncate lines
 #+BEGIN_SRC emacs-lisp
@@ -516,14 +510,14 @@ https://github.com/glasserc/ethan-wspace
   (setq echo-keystrokes 0.1)
 #+END_SRC
 
-** TODO Transient mark
+** DONE Transient mark
 If you change buffer, or focus, disable the current buffer's mark:
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (transient-mark-mode t)
 #+END_SRC
 
-** TODO Show active region
+** DONE Show active region
 #+BEGIN_SRC emacs-lisp :tangle no
   (make-variable-buffer-local 'transient-mark-mode)
   (put 'transient-mark-mode 'permanent-local t)
@@ -932,8 +926,8 @@ ref: https://github.com/abo-abo/avy
 #+BEGIN_SRC emacs-lisp
   (req-package avy
     :commands (global-avy-mode avy-goto-char avy-goto-line)
-    :bind ("C-z" . avy-goto-char)
-    :bind ("M-g f" . avy-goto-line))
+    :bind (("C-z" . avy-goto-char)
+           ("M-g f" . avy-goto-line)))
 #+END_SRC
 
 ** ace-pinyin
@@ -1123,6 +1117,7 @@ ref: https://github.com/magnars/expand-region.el
   (req-package expand-region
     :bind ("C-=" . er/expand-region))
 #+END_SRC
+
 ** smartparens
 ref: https://github.com/Fuco1/smartparens
 ref: https://ebzzry.github.io/emacs-pairs.html
@@ -1256,85 +1251,78 @@ C-o
       (setq flycheck-keymap-prefix (kbd "C-c v"))
       (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
+** Spell checking
+*** Ispell
 
-** TODO [#B] Flyspell
-ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/spell-checking/packages.el
+#+BEGIN_SRC emacs-lisp
+  (req-package ispell
+    :loader :built-in
+    :config                               ;
+    (progn
+      (cond
+       ((executable-find "aspell")
+        (setq ispell-program-name "aspell")
+        (setq ispell-extra-args   '("--sug-mode=ultra"
+                                    "--lang=en_US"
+                                    ;; "--ignore=2"
+                                    ;; "--run-together"
+                                    ;; "--run-together-limit=5"
+                                    ;; "--run-together-min=2"
+                                    )))
+       ((executable-find "hunspell")
+        (setq ispell-program-name "hunspell")
+        (setq ispell-extra-args   '("-d en_US")))
+       )
+      (setq ispell-silently-savep t)
+      ))
+#+END_SRC
 
+*** Flyspell
+
+=C-.= corrects word at point.
+=C-,​= to jump to next misspelled word.
+=M-$= correct word at point
+ 
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell
     :require (ispell)
     :init
     (progn
-      (add-hook 'prog-mode-hook 'flyspell-prog-mode)
-      (add-hook 'text-mode-hook 'flyspell-mode)
-      (add-hook 'org-mode-hook 'flyspell-mode))
+      ;; (add-hook 'prog-mode-hook #'flyspell-prog-mode) 
+      (add-hook 'prog-mode-hook #'turn-on-flyspell)
+      (add-hook 'text-mode-hook #'turn-on-flyspell)
+      (add-hook 'org-mode-hook  #'turn-on-flyspell))
     :config (unbind-key "C-;" flyspell-mode-map))
 #+END_SRC
 
-*** Helpful Default Keybindings
-
-=C-.= corrects word at point.
-=C-,​= to jump to next misspelled word.
-
-*** TODO [#B] auto-dictionary
-ref: https://github.com/nschum/auto-dictionary-mode
+*** flyspell-correct-ivy
 
 #+BEGIN_SRC emacs-lisp
-  (req-package auto-dictionary
-    :require (flyspell)
-    :init
-    (add-hook 'flyspell-mode-hook (lambda () (auto-dictionary-mode 1))))
-
-#+END_SRC
-*** TODO [#B] ivy flyspell
-#+BEGIN_SRC emacs-lisp
-  (req-package flyspell-correct
-    :require (flyspell ivy flyspell-correct-ivy)
+  (req-package flyspell-correct-ivy
+    :defer 1  
+    :require (flyspell ivy flyspell-correct)
+    :bind (:map flyspell-mode-map
+                ("M-$" . flyspell-correct-word-generic))
     :config
     (progn
-      ;; set ivy as correcting interface
       (setq flyspell-correct-interface 'flyspell-correct-ivy)
+      ;; (bind-keys :map flyspell-mode-map 
+      ;; ("M-$" . flyspell-correct-word-generic))
       ;; bind flyspell-correct-word-generic
       ;; (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
       ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
       ))
 #+END_SRC
-*** TODO helm-flyspell
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package helm-flyspell
-    :require (flyspell helm)
-    :commands (helm-flyspell-correct)
-    :config
-    (progn
-      (bind-key "M-$" 'helm-flyspell-correct flyspell-mode-map)))
-#+END_SRC
-** TODO Ispell
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package ispell
-    :diminish " Ⓢ"
-    :config
-    (progn
-      (setq-default ispell-program-name "aspell")
-      (setq ispell-extra-args
-            (list "--sug-mode=normal" ;; ultra|fast|normal|bad-spellers
-                  "--lang=en_US"
-                  "--ignore=3"
-                  "--run-together"
-                  "--run-together-limit=5"
-                  "--run-together-min=2"))
-      (setq ispell-local-dictionary "en_US")
-      (setq ispell-local-dictionary-alist
-            '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil nil nil utf-8)))
-      ))
-#+END_SRC
-
-有一些內容不必 check
+*** Make spell-checking tool ignore some org-mode section
+see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-org-mode
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
-  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
-  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_EXAMPLE" . "#\\+END_EXAMPLE"))
+  (eval-after-load 'ispell
+    '(progn
+       (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+       (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+       ))
 #+END_SRC
 
 ** popwin
@@ -1372,7 +1360,6 @@ ref: https://github.com/nschum/auto-dictionary-mode
       (which-key-mode)
       (which-key-setup-side-window-bottom)
       (setq which-key-side-window-max-width 0.25)))
-
 #+END_SRC
 
 ** discover-my-major
@@ -1384,8 +1371,8 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
 #+BEGIN_SRC emacs-lisp
   (req-package discover-my-major
-    :bind ("C-h C-m" . discover-my-major)
-    :bind ("C-h M-m" . discover-my-mode))
+    :bind (("C-h C-m" . discover-my-major)
+           ("C-h M-m" . discover-my-mode)))
 #+END_SRC
 
 * helm
@@ -2401,3 +2388,5 @@ its merry way.
 [2] https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
 
 [3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
+
+[4] https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-spell.el
