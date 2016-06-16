@@ -141,7 +141,8 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
               ;; (require 'ob-tangle)
               (setq org-confirm-babel-evaluate nil)
               (setq org-confirm-execute-src-block nil)
-              (org-babel-tangle-file emacs-init-org-file emacs-init-el-file "emacs-lisp"))
+              (org-babel-tangle-file emacs-init-org-file emacs-init-el-file "emacs-lisp")
+              (byte-compile-file emacs-init-el-file))
             ))))
 
   (add-hook 'kill-emacs-hook 'tangle-emacs-init-org)
@@ -480,7 +481,8 @@ set color of parenttheses like spacemacs.
     )
 #+END_SRC
 
-** set buffer to utf-8-unix
+** Set buffer to utf-8-unix
+
 #+BEGIN_SRC emacs-lisp
   (defun buffer-to-utf-8-unix()
     (interactive)
@@ -536,7 +538,7 @@ set color of parenttheses like spacemacs.
 #+BEGIN_SRC emacs-lisp :tangle no
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
     "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-    (flet (process-list) ad-do-it))
+    (noflet (process-list ()) ad-do-it))
 #+END_SRC
 
 ** Don't ask me when kill process buffer
@@ -1244,12 +1246,13 @@ ref: https://ebzzry.github.io/emacs-pairs.html
 #+BEGIN_SRC emacs-lisp
   (req-package smartparens-config
     :ensure smartparens
-    ;; :diminish " ⓟ"
     :init
     (progn
-      (diminish 'smartparens-mode " ⓟ")
       (smartparens-global-mode t)
-      (show-smartparens-global-mode t)))
+      (show-smartparens-global-mode t))
+    :config
+    (diminish 'smartparens-mode "ⓟ")
+    )
 #+END_SRC
 
 ** Emulation of the vi % command
@@ -1528,6 +1531,22 @@ GitHub: https://github.com/steckerhalter/discover-my-major
       (setq ivy-use-virtual-buffers t)
       (setq completion-in-region-function 'ivy-completion-in-region)
       ))
+#+END_SRC
+
+** Search at point on swiper
+
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'swiper
+    '(progn
+       (define-key swiper-map (kbd "C-.")
+         (lambda () 
+           (interactive)
+           (insert (format "%s" (with-ivy-window (thing-at-point 'word))))))
+       (define-key swiper-map (kbd "M-.")
+         (lambda ()
+           (interactive)
+           (insert (format "%s" (with-ivy-window (thing-at-point 'symbol))))))
+       ))
 #+END_SRC
 
 ** Open recent directory with dired via ivy
@@ -2079,15 +2098,14 @@ save current web page to org-mode
       (bind-keys :map elfeed-search-mode-map
                  ;; ("gg" . beginning-of-buffer)
                  ;; ("G" . end-of-buffer)
-                 ("n" . elfeed-search-mark-read)
-                 ("j" . elfeed-search-mark-read)
+                 ("j" . next-line)
                  ("k" . previous-line)
                  ("l" . forward-char)
                  ("h" . backward-char)
                  ("d" . scroll-up-command)
                  ("e" . scroll-down-command)
                  ("g" . elfeed-update)
-                 ("a" . elfeed-search-mark-all-read)
+                 ("R" . elfeed-search-mark-all-read)
                  ("B" . elfeed-search-external-browser)
                  ("y" . copy-elfeed-search-url)
                  ("w" . copy-elfeed-search-url)
@@ -2500,7 +2518,8 @@ its merry way.
 #+BEGIN_SRC emacs-lisp
   (diminish 'overwrite-mode)
   (diminish 'subword-mode)
-  (diminish 'org-indent-mode)
+  (eval-after-load 'org-indent
+    '(diminish 'org-indent-mode ""))
   (diminish 'org-src-mode)
 #+END_SRC
 
