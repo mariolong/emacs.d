@@ -1607,14 +1607,22 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       :require magit
       :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
 #+END_SRC
+** TODO meld (hind shell command buffer after run)
+Using =M-x call-meld= to find the differences from last commit.
+#+BEGIN_SRC emacs-lisp
+  (defun call-meld ()
+    (interactive)
+    (shell-command (format "meld %s" (buffer-file-name)))
+    )
+#+END_SRC
 
-** TODO diff-hl
+** TODO diff-hl (keybinds to navigate the position of differences)
 
 可以顯示出尚未 stage 的程式碼
 
 #+BEGIN_SRC emacs-lisp
   (req-package diff-hl
-    :init (global-diff-hl-mode))
+    :config (global-diff-hl-mode))
 #+END_SRC
 
 ** TODO ediff
