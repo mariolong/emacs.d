@@ -241,7 +241,7 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
     :init (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
 
-** TODO spaceline
+** spaceline
 from spacemacs import spaceline for nice look
 ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
 
@@ -250,6 +250,7 @@ ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/sp
     :config 
     (progn 
       (spaceline-spacemacs-theme)
+      (setq spaceline-minor-modes-separator "")
       (setq-default powerline-default-separator
                     (if (display-graphic-p) 'arrow 'utf-8))
       ))
@@ -398,12 +399,6 @@ spaceline from spacemacs
   (add-hook 'post-command-hook 'hcz-set-cursor-color-according-to-mode)
 #+END_SRC
 
-** diminish some mode
-
-#+BEGIN_SRC emacs-lisp
-  (diminish 'overwrite-mode)
-#+END_SRC
-
 ** fringe
 改得細一點，預設值是 8 pixel
 
@@ -436,6 +431,7 @@ set color of parenttheses like spacemacs.
 
 #+BEGIN_SRC emacs-lisp
   (req-package  highlight-parentheses
+    :diminish ""
     :init
     (progn
       (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
@@ -458,6 +454,7 @@ set color of parenttheses like spacemacs.
 #+BEGIN_SRC emacs-lisp
   (req-package pangu-spacing
     :defer 1
+    :diminish ""
     :config
     (progn
       (global-pangu-spacing-mode 1)
@@ -568,6 +565,7 @@ https://github.com/glasserc/ethan-wspace
 
 #+BEGIN_SRC emacs-lisp
   (req-package ethan-wspace
+    :diminish "🄣"
     :config
     (progn
       ;; Turn off `mode-require-final-newline' since ethan-wspace
@@ -1155,6 +1153,7 @@ C-3 C-k 刪去 3 行
 
 #+BEGIN_SRC emacs-lisp
   (req-package hungry-delete
+    :diminish ""
     :init (global-hungry-delete-mode 1))
 #+END_SRC
 
@@ -1247,7 +1246,7 @@ ref: https://ebzzry.github.io/emacs-pairs.html
 #+BEGIN_SRC emacs-lisp
   (req-package smartparens-config
     :ensure smartparens
-    :diminish (smartparens-mode)
+    :diminish " ⓟ"
     :init
     (progn
       (smartparens-global-mode t)
@@ -1319,6 +1318,7 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
 
 #+BEGIN_SRC emacs-lisp
   (req-package aggressive-indent
+    :diminish " Ⓘ"
     :init (global-aggressive-indent-mode))
 #+END_SRC
 
@@ -1326,7 +1326,7 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
 
 #+BEGIN_SRC emacs-lisp
   (req-package company
-    :diminish company-mode
+    :diminish " ⓐ"
     :init (add-hook 'after-init-hook 'global-company-mode)
     :config
     (progn
@@ -1364,7 +1364,7 @@ C-o
 
 #+BEGIN_SRC emacs-lisp
   (req-package flycheck
-    :diminish (flycheck-mode . " ✓ ")
+    :diminish (flycheck-mode . " ⓢ")
     :config
     (progn
       (add-hook 'after-init-hook 'global-flycheck-mode)
@@ -1417,6 +1417,7 @@ if want to use "hunspell", then must install hunspell and hunspell_en in OS.
 #+BEGIN_SRC emacs-lisp
   (req-package flyspell
     :require (ispell)
+    :diminish " Ⓢ"
     :init
     (progn
       ;; (add-hook 'prog-mode-hook #'flyspell-prog-mode) 
@@ -1485,6 +1486,7 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
 ** Which-key
 #+BEGIN_SRC emacs-lisp
   (req-package which-key
+    :diminish ""
     :config
     (progn
       (setq which-key-idle-delay 0.5)
@@ -1513,7 +1515,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 #+BEGIN_SRC emacs-lisp
   (req-package ivy
     :diminish ""
-    :require (counsel swiper)
+    :require (counsel swiper ag)
     :bind (("C-s" . swiper)
            ("M-x" . counsel-M-x)
            ("C-x f" . ivy-recentf)
@@ -1526,16 +1528,12 @@ GitHub: https://github.com/steckerhalter/discover-my-major
       (ivy-mode 1)
       (setq ivy-use-virtual-buffers t)
       (setq completion-in-region-function 'ivy-completion-in-region)
-    
-      (eval-after-load 'magit
-        '(setq magit-completing-read-function 'ivy-completing-read))
-
       ))
 #+END_SRC
 
 ** Open recent directory with dired via ivy
 #+BEGIN_SRC emacs-lisp
-  (eval-after-load 'ivy'
+  (eval-after-load 'ivy
     '(progn
        (defun counsel-goto-recent-directory ()
          "Open recent directory with dired"
@@ -1550,7 +1548,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
                              (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
            (ivy-read "directories:" collection :action 'dired)))
 
-       (bind-key "C-h C-\\" 'counsel-goto-recent-directory)
+       (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
        ))
 #+END_SRC
 
@@ -1633,6 +1631,7 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
 #+BEGIN_SRC emacs-lisp
   (req-package projectile
     :require (ivy)
+    :diminish ""
     :init
     (progn (projectile-global-mode)
            (setq projectile-completion-system 'ivy)))
@@ -2221,13 +2220,9 @@ Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
  #+BEGIN_SRC emacs-lisp
    (req-package org
      :loader :built-in
-     :mode (("\\.org\\'" . org-mode)
-            ("\\.org_archive\\'" . org-mode))
+     :mode ("\\.org\\'" . org-mode)
      :config
      (progn
-       (add-hook 'org-mode-hook
-                 '(lambda ()
-                    (setq mode-name " ꙮ ")))
        (setq org-src-fontify-natively t
              org-src-window-setup 'current-window
              org-confirm-babel-evaluate nil
@@ -2406,7 +2401,7 @@ ref: https://github.com/sabof/org-bullets
 
 ** Emacs Lisp
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (req-package lisp-mode
     :init
     (add-hook 'emacs-lisp-mode-hook
@@ -2485,6 +2480,14 @@ Source: https://github.com/joshwnj/json-mode
 #+END_SRC
 
 * End of configuration
+** diminish some mode
+
+#+BEGIN_SRC emacs-lisp
+  (diminish 'overwrite-mode)
+  (diminish 'subword-mode)
+  (diminish 'org-indent-mode)
+#+END_SRC
+
 ** req-package finish
 
 At long last we need only call the following function to send =req-package= on
