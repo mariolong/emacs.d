@@ -459,9 +459,8 @@ set color of parenttheses like spacemacs.
     (progn
       (global-pangu-spacing-mode 1)
 
-      (add-to-list 'pangu-spacing-inhibit-mode-alist 'eww-mode)
-      (add-to-list 'pangu-spacing-inhibit-mode-alist 'elfeed-search-mode)
-      (add-to-list 'pangu-spacing-inhibit-mode-alist 'elfeed-show-mode)
+      (dolist (m '(eww-mode elfeed-search-mode elfeed-show-mode))
+        (add-to-list 'pangu-spacing-inhibit-mode-alist m))
 
       ;; Always insert `real' space in org-mode.
       (dolist (m '(org-mode-hook markdown-mode-hook rst-mode-hook))
@@ -476,9 +475,8 @@ set color of parenttheses like spacemacs.
 
 #+BEGIN_SRC emacs-lisp
   (req-package fcitx
-    :defer 1
     :config
-      (fcitx-aggressive-setup)
+    (fcitx-default-setup)
     )
 #+END_SRC
 
@@ -1246,9 +1244,10 @@ ref: https://ebzzry.github.io/emacs-pairs.html
 #+BEGIN_SRC emacs-lisp
   (req-package smartparens-config
     :ensure smartparens
-    :diminish " ⓟ"
+    ;; :diminish " ⓟ"
     :init
     (progn
+      (diminish 'smartparens-mode " ⓟ")
       (smartparens-global-mode t)
       (show-smartparens-global-mode t)))
 #+END_SRC
@@ -2480,14 +2479,6 @@ Source: https://github.com/joshwnj/json-mode
 #+END_SRC
 
 * End of configuration
-** diminish some mode
-
-#+BEGIN_SRC emacs-lisp
-  (diminish 'overwrite-mode)
-  (diminish 'subword-mode)
-  (diminish 'org-indent-mode)
-#+END_SRC
-
 ** req-package finish
 
 At long last we need only call the following function to send =req-package= on
@@ -2495,6 +2486,14 @@ its merry way.
 
 #+BEGIN_SRC emacs-lisp
   (req-package-finish)
+#+END_SRC
+** diminish some mode
+
+#+BEGIN_SRC emacs-lisp
+  (diminish 'overwrite-mode)
+  (diminish 'subword-mode)
+  (diminish 'org-indent-mode)
+  (diminish 'org-src-mode)
 #+END_SRC
 
 ** Startup emacs as server
