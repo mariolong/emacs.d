@@ -5,7 +5,10 @@
 #+BABEL: :cache yes
 #+OPTIONS: ^:nil
 
-* 前言
+* Preface
+
+Thanks, coldnew. https://github.com/coldnew/coldnew-emacs
+工作流程很多都是學自coldnew，啟蒙者。
 
 2016-1-5
 用了一陣子的 spacemacs，雖然覺得不錯，但是 0.105 版出來後，許多設定又不能用了。
@@ -15,7 +18,25 @@
 我又回來了。
 實在是用不到 spacemacs 那麼多的功能，而且覺得 spacemacs 愈來愈慢，不夠快意。
 
+2016-11-29
+花了點時間好好地整理一下這個檔
+
+2016-12-14
+Switch to =use-package=, it is faster than =req-package= very much.
+
 * Initialization
+** Use lexical binding
+
+For some of my functions, and general coolness, =lexical binding= is a must.
+Without it, closures cannot be made for example.
+
+This line needs to appear at the beginning of the file to work. Just to keep
+things looking nice I put it at the beginning of the file.
+
+#+BEGIN_SRC emacs-lisp :padline no
+  ;; -*- lexical-binding: t -*-
+#+END_SRC
+
 ** load prefer newer
 
 since emacs 24.4, new option `load-prefer-newer' has been
@@ -26,99 +47,134 @@ introduce, which make me never accidentally using outdated compiled files.
 #+END_SRC
 
 ** Cleanup
-*** 不必顯示功能表、工具列和捲軸
+*** no menu bar, no tool bar, no scroll bar
 
-在 init.el 的開始部份加上下列 3 行：
-如果要用功能表，可以按 <F10> 。
+Press <F10> to show menu
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (menu-bar-mode -1)
   (tool-bar-mode -1)
   (scroll-bar-mode -1)
 #+end_src
 
-*** 不顯示啟始畫面
-在 init.el 的開始部份加上，
+*** fullscreen
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
+  (modify-all-frames-parameters '((fullscreen . maximized)))
+#+end_src
+
+*** inhibit startup message
+
+#+begin_src emacs-lisp
   (setq inhibit-startup-message t
         inhibit-startup-echo-area-message t)
 #+end_src
 
-*** 直接開啟全螢幕
-在 init.el 的開始部份加上，
-
-#+begin_src emacs-lisp :tangle no
-  (modify-all-frames-parameters '((fullscreen . maximized)))
-#+end_src
-
-*** 清除 redefinition 訊息
+*** clean message of redefinition
 
 #+BEGIN_SRC emacs-lisp
   (setq ad-redefinition-action 'accept)
 #+END_SRC
 
-*** 清除 scratch message
+*** clean scratch message
 
 #+BEGIN_SRC emacs-lisp
-  (setq initial-scratch-message "")
+  (setq initial-scratch-message ";; This is scratch buffer.\n\n")
 #+END_SRC
 
 ** Font settings
 
-重要的是設定中文字型
+眼睛不好了，把字體放大些，最重要的是設定中文字型和表情符號。
+123456789012345678901234567890123456789012345678901234567890
+
+error: Fontset `tty' does not exist
+solution: http://www.cnblogs.com/aqing1987/p/4464106.html
 
 #+begin_src emacs-lisp
-  (set-face-attribute 'default nil :font "Source Code Pro 18")
+  (defun set-font-for-chinese ()
+    (set-face-attribute 'default nil
+			:family "Source Code Pro" :height 180)
+    (set-face-attribute 'variable-pitch nil
+			:family "Sans" :height 200 :weight 'regular)
 
-  (dolist (charset '(kana han cjk-misc bopomofo))
-    (set-fontset-font (frame-parameter nil 'font) charset
-                      (font-spec :family "Source Han Sans" :size 28)))
+    (dolist (charset '(kana han cjk-misc bopomofo))
+      (set-fontset-font (frame-parameter nil 'font) charset
+			(font-spec :family "Source Han Sans" :size 28)))
 
-  (set-fontset-font (frame-parameter nil 'font) 'symbol (font-spec :family "Symbola" :size 32))
+    (set-fontset-font (frame-parameter nil 'font) 'symbol (font-spec :family "Symbola" :size 32)))
+
+  (add-to-list 'after-make-frame-functions (lambda (new-frame)
+					     (select-frame new-frame)
+					     (if window-system
+						 (set-font-for-chinese))))
+
+  (when window-system
+    (set-font-for-chinese))
 #+end_src
 
-一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十一二三四五六七八九十
-1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890
-
-** Define user-cache-directory variable
-
-user-emacs-directory 定義於 init.el 中
+** Define user's directory variables
 
 #+BEGIN_SRC emacs-lisp
+  (setq user-emacs-directory (file-name-directory (or load-file-name (buffer-file-name))))
+  (defconst user-emacs-init-org (expand-file-name "emacs-init.org" user-emacs-directory))
+  ;; (defconst user-emacs-init-el (expand-file-name "emacs-init.el" user-emacs-directory))
+  (defconst emacs-init-el (expand-file-name "init.el" user-emacs-directory))
+
   (defconst user-cache-directory
-    (file-name-as-directory (concat user-emacs-directory ".cache"))
+    (file-name-as-directory (expand-file-name ".cache" user-emacs-directory))
     "My emacs storage area for persistent files.")
 #+END_SRC
 
-** TODO [#C] add .emacs.d/lisp to load path
-ref: https://www.emacswiki.org/emacs/DotEmacsModular
+** Create temporary file directory if it is not exist
 
 #+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path (concat user-emacs-directory "lisp/hangups.el"))
-  (add-to-list 'load-path (concat user-emacs-directory "lisp/moedict.el"))
-  ;; (add-to-list 'load-path (concat user-emacs-directory "lisp/swiper"))
+  (set-default 'temporary-file-directory (expand-file-name "tmp" user-emacs-directory))
+  (unless (file-exists-p temporary-file-directory)
+    (make-directory temporary-file-directory))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (let* ((lisp-dir '("lisp/" "themes/")))
-    (dolist (lisp-path lisp-dir)
-      (when (not (file-exists-p lisp-path))
-        (make-directory (concat user-emacs-directory lisp-path) t))
-      (let* ((load-dir (concat user-emacs-directory lisp-path))
-             (default-directory load-dir))
-        (setq load-path
-              (append
-               (let ((load-path (copy-sequence load-path)))
-                 (append
-                  (copy-sequence (normal-top-level-add-to-load-path '(".")))
-                  (normal-top-level-add-subdirs-to-load-path)))
-               load-path)))))
+** Add .emacs.d/lisp to load path
+
+NOTE: Don't use like xxx.el as directory name.
+
+#+BEGIN_SRC emacs-lisp
+(let* ((lisp-dir '("lisp/" "themes/")))
+  (dolist (lisp-path lisp-dir)
+    (when (not (file-exists-p lisp-path))
+      (make-directory (concat user-emacs-directory lisp-path) t))
+    (let* ((load-dir (concat user-emacs-directory lisp-path))
+	   (default-directory load-dir))
+      (setq load-path
+	    (append
+	     (let ((load-path (copy-sequence load-path)))
+	       (append
+		(copy-sequence (normal-top-level-add-to-load-path '(".")))
+		(normal-top-level-add-subdirs-to-load-path)))
+	     load-path)))))
+#+END_SRC
+
+** Tangle init.org when it saved
+
+#+BEGIN_SRC emacs-lisp
+  (defun tangle-init ()
+    "If the current buffer is 'init.org' the code-blocks are tangled."
+    (interactive)
+
+    (require 'async)
+    (let ((buffer-name "async-make-init.el"))
+      (when (equal (buffer-file-name) user-emacs-init-org)
+    (message "Begin re-generate init.el")
+	(async-start-process buffer-name "sh"
+			     '(lambda (result)
+				(message "Re-Generate init.el finish." result))
+			     (expand-file-name "makeinit.sh" user-emacs-directory)))))
+
+(add-hook 'after-save-hook 'tangle-init)
 #+END_SRC
 
 ** Tangle this initial file before exit emacs
-
-#+BEGIN_SRC emacs-lisp
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
   (defconst emacs-init-org-file (expand-file-name "emacs-init.org" user-emacs-directory))
   (defconst emacs-init-el-file (expand-file-name "emacs-init.el" user-emacs-directory))
 
@@ -137,8 +193,6 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
                        (> (funcall age emacs-init-org-file)
                           (funcall age emacs-init-el-file)))
             (progn
-              ;; (require 'org)
-              ;; (require 'ob-tangle)
               (setq org-confirm-babel-evaluate nil)
               (setq org-confirm-execute-src-block nil)
               (org-babel-tangle-file emacs-init-org-file emacs-init-el-file "emacs-lisp")
@@ -149,82 +203,76 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
 #+END_SRC
 
 * Package Management
+** Initialize =package=
+用 =package.el= 要先加來源庫，為了org，以下工作改到 init.el 中執行。
 
-用過 quelpa，因為啟動時會自動抓原始碼，啟動速度真的很慢。
-試用過 Cask 和 pallet，實在是看不出來有何優勢，也不能自動刪除不需要的 package，所以先不用。
-
-經過一番找尋，發現 req-package 真的不錯。
-首先安裝還是透過 =package.el= ，成功之後，就可以用 =req-package= 安裝其它的套件。
-
-** Initalize =package=
-用 =package.el= 要先加來源庫，以下工作改到 init.el 中執行。
-
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/"))
 
   (package-initialize)
 #+END_SRC
 
-** 安裝 =req-package=
+** Install =use-package=
+
+Switch to use-package form req-package because there are no reason to use req-package already for me.
+start emacs faster than req-package very very much.
 
 #+BEGIN_SRC emacs-lisp
-  (if (not (package-installed-p 'req-package))
+  (if (not (package-installed-p 'use-package))
       (progn
-        ;; (package-refresh-contents)
-        (package-install 'req-package)))
+	(package-refresh-contents)
+	(package-install 'use-package)))
 
-  (require 'req-package)
+  (require 'use-package)
+  (setq use-package-always-defer t)
+  (setq use-package-always-ensure t)
 #+END_SRC
 
-** 安裝 =diminish= 和 =bind-key=
+** Paradox
+use Paradox replace with package-list and my =upgrade-all-install-packages=
+good look and good functions
 
-使用 =req-package= 時，會用到 =:diminish= 和 =:bind= ，故安裝以下 2 個套件。
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  ;; (req-package diminish)
-  ;; (req-package bind-key)
+#+BEGIN_SRC emacs-lisp
+  (use-package paradox
+    :init
+    (setq paradox-execute-asynchronously t))
 #+END_SRC
 
-** 更新所有已安裝的套件
+** Upgrade all installed packages
 
 用 =M-x upgrade-all-installed-packages= 更新所有已安裝的套件
-因為用了 jedi.el，所以要更新一下 jedi server
 
-#+BEGIN_SRC emacs-lisp
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
   (defun upgrade-all-installed-packages ()
     "Upgrade all installed packages."
+
     (interactive)
     (save-window-excursion
       (package-list-packages)
       (package-menu-mark-upgrades)
-      (package-menu-execute t))
-    ;; (jedi:install-server)
-    )
+      (package-menu-execute t)))
 #+END_SRC
 
-** 刪除不需要的套件
+** uninstall packages
 
 用 =M-x package-list-packages= 找到不需要的套件，並刪除之。
 
-** 載入自定檔
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (load (concat user-emacs-directory "custom.el"))
-#+END_SRC
-
-** 重新載入 emacs 設定
+** reload emacs' "init.el"
 
 #+BEGIN_SRC emacs-lisp
   (defun reload-emacs ()
     "reload my emacs settings"
 
     (interactive)
-    (load-file (concat user-emacs-directory "init.el"))
+    (load-file (expand-file-name "init.el" user-emacs-directory))
     (delete-other-windows))
 #+END_SRC
 
-** 執行目前 buffer 到錯誤發生
+** Evaluate buffer until error occured
+
 #+BEGIN_SRC emacs-lisp
   (defun eval-buffer-until-error ()
     "Evaluate emacs buffer until error occured."
@@ -237,152 +285,38 @@ ref: https://www.emacswiki.org/emacs/DotEmacsModular
 * Theme
 ** Theme
 
+#+BEGIN_SRC emacs-lisp  :tangle no
+  (use-package dracula-theme
+    :init
+    (load-theme 'dracula t))
+#+END_SRC
+
 #+begin_src emacs-lisp
-  (req-package color-theme-sanityinc-tomorrow
-    :init (load-theme 'sanityinc-tomorrow-night :no-confirm))
+  (use-package color-theme-sanityinc-tomorrow
+    :init
+      (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
 
 ** spaceline
-from spacemacs import spaceline for nice look
+from spacemacs import spaceline for nice look and HUD.
+
 ref: https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
 
 #+BEGIN_SRC emacs-lisp
-  (req-package spaceline-config
-    :config 
-    (progn 
-      (spaceline-spacemacs-theme)
+  (use-package spaceline-config
+    :ensure spaceline
+    :commands spaceline-spacemacs-theme
+    :init
+    (progn
+      (setq-default powerline-default-separator 'wave)
       (setq spaceline-minor-modes-separator "")
-      (setq-default powerline-default-separator
-                    (if (display-graphic-p) 'arrow 'utf-8))
+      (spaceline-spacemacs-theme)
       ))
 #+END_SRC
-
-spaceline from spacemacs
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package spaceline-config
-    :init
-    (progn
-      (spacemacs|do-after-display-system-init
-       (setq-default powerline-default-separator
-                     (if (display-graphic-p) 'wave 'utf-8)))
-      (defun spacemacs//set-powerline-for-startup-buffers ()
-        "Set the powerline for buffers created when Emacs starts."
-        (dolist (buffer '("*Messages*" "*spacemacs*" "*Compile-Log*"))
-          (when (and (get-buffer buffer)
-                     (configuration-layer/package-usedp 'spaceline))
-            (spacemacs//restore-powerline buffer))))
-      (add-hook 'emacs-startup-hook
-                'spacemacs//set-powerline-for-startup-buffers))
-    :config
-    (progn
-      (defun spacemacs/customize-powerline-faces ()
-        "Alter powerline face to make them work with more themes."
-        (set-face-attribute 'powerline-inactive2 nil
-                            :inherit 'font-lock-comment-face))
-      (spacemacs/customize-powerline-faces)
-
-      (dolist (spec '((minor-modes "tmm")
-                      (major-mode "tmM")
-                      (version-control "tmv")
-                      (new-version "tmV")
-                      (point-position "tmp")
-                      (org-clock "tmc")))
-        (let* ((segment (car spec))
-               (status-var (intern (format "spaceline-%S-p" segment))))
-          (eval `(spacemacs|add-toggle ,(intern (format "mode-line-%S" segment))
-                   :status ,status-var
-                   :on (setq ,status-var t)
-                   :off (setq ,status-var nil)
-                   :documentation ,(format "Show %s in the mode-line."
-                                           (replace-regexp-in-string
-                                            "-" " " (format "%S" segment)))
-                   :evil-leader ,(cadr spec)))))
-      (setq spaceline-org-clock-p nil)
-
-      (defun spacemacs//evil-state-face ()
-        (if (bound-and-true-p evil-state)
-            (let ((state (if (eq 'operator evil-state) evil-previous-state evil-state)))
-              (intern (format "spacemacs-%S-face" state)))
-          'face-of-god))
-      (setq spaceline-highlight-face-func 'spacemacs//evil-state-face)
-
-      (let ((unicodep (dotspacemacs|symbol-value
-                       dotspacemacs-mode-line-unicode-symbols)))
-        (setq spaceline-window-numbers-unicode unicodep)
-        (setq spaceline-workspace-numbers-unicode unicodep))
-
-      (defpowerline spacemacs-powerline-new-version
-        (propertize
-         spacemacs-version-check-lighter
-         'mouse-face 'mode-line-highlight
-         'help-echo (format "New version %s | Click with mouse-1 to update"
-                            spacemacs-new-version)
-         'local-map (let ((map (make-sparse-keymap)))
-                      (define-key map
-                        [mode-line down-mouse-1]
-                        (lambda (event)
-                          (interactive "@e")
-                          (if (yes-or-no-p
-                               (format (concat "Do you want to update to the newest "
-                                               "version %s ?") spacemacs-new-version))
-                              (progn
-                                (spacemacs/switch-to-version spacemacs-new-version))
-                            (message "Update aborted."))))
-                      map)))
-
-      (spaceline-define-segment new-version
-        (when spacemacs-new-version
-          (spacemacs-powerline-new-version
-           (spacemacs/get-new-version-lighter-face
-            spacemacs-version spacemacs-new-version))))
-
-      (spaceline-spacemacs-theme '(new-version :when active))
-      (spaceline-helm-mode t)
-      (when (configuration-layer/package-usedp 'info+)
-        (spaceline-info-mode t))
-
-      (defun spacemacs//restore-powerline (buffer)
-        "Restore the powerline in buffer"
-        (with-current-buffer buffer
-          (setq-local mode-line-format (default-value 'mode-line-format))
-          (powerline-set-selected-window)
-          (powerline-reset)))
-
-      (defun spacemacs//prepare-diminish ()
-        (when spaceline-minor-modes-p
-          (let ((unicodep (dotspacemacs|symbol-value
-                           dotspacemacs-mode-line-unicode-symbols)))
-            (setq spaceline-minor-modes-separator
-                  (if unicodep (if (display-graphic-p) "" " ") "|"))
-            (dolist (mm spacemacs--diminished-minor-modes)
-              (let ((mode (car mm)))
-                (when (and (boundp mode) (symbol-value mode))
-                  (let* ((unicode (cadr mm))
-                         (ascii (caddr mm))
-                         (dim (if unicodep
-                                  unicode
-                                (if ascii ascii unicode))))
-                    (diminish mode dim))))))))
-      (add-hook 'spaceline-pre-hook 'spacemacs//prepare-diminish)))
-#+END_SRC
-
-** smart-mode-line
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package smart-mode-line
-    :require smart-mode-line-powerline-theme
-    :init
-    (progn
-      (setq sml/vc-mode-show-backend t)
-      (setq sml/no-confirm-load-theme t)
-      (sml/setup)))
-#+END_SRC
-
+(if (display-graphic-p) 'wave 'utf-8)
 ** Change cursor color according to mode
 
 #+BEGIN_SRC emacs-lisp
-  ;; Change cursor color according to mode
   (defvar hcz-set-cursor-color-color "")
   (defvar hcz-set-cursor-color-buffer "")
   (defun hcz-set-cursor-color-according-to-mode ()
@@ -397,6 +331,7 @@ spaceline from spacemacs
                (string= (buffer-name) hcz-set-cursor-color-buffer))
         (set-cursor-color (setq hcz-set-cursor-color-color color))
         (setq hcz-set-cursor-color-buffer (buffer-name)))))
+
   (add-hook 'post-command-hook 'hcz-set-cursor-color-according-to-mode)
 #+END_SRC
 
@@ -410,41 +345,51 @@ spaceline from spacemacs
 ** rainbow-mode
 
 #+BEGIN_SRC emacs-lisp
-  (req-package rainbow-mode
+  (use-package rainbow-mode
     :diminish rainbow-mode
     :init
-    (add-hook 'prog-mode-hook 'rainbow-mode)
-    (add-hook 'css-mode-hook 'rainbow-mode))
+    (progn
+      (add-hook 'prog-mode-hook 'rainbow-mode)
+      (add-hook 'css-mode-hook 'rainbow-mode)))
 #+END_SRC
 
 ** rainbow-delimiters
 ref: https://github.com/Fanael/rainbow-delimiters
 
 #+BEGIN_SRC emacs-lisp
-  (req-package rainbow-delimiters
-    :config
-    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-    (add-hook 'org-mode-hook 'rainbow-delimiters-mode))
+  (use-package rainbow-delimiters
+    :init
+    (progn
+      (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
+      (add-hook 'org-mode-hook 'rainbow-delimiters-mode)))
 #+END_SRC
 
 ** highlight-parentheses
 set color of parenttheses like spacemacs.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package  highlight-parentheses
+  (use-package  highlight-parentheses
     :diminish ""
     :init
     (progn
       (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
+
       (setq hl-paren-delay 0.2)
       (setq hl-paren-colors '("Springgreen3"
                               "IndianRed1"
                               "IndianRed3"
-                              "IndianRed4")))
-    :config
-    (progn
-      ;; (global-highlight-parentheses-mode t)
-      (set-face-attribute 'hl-paren-face nil :weight 'ultra-bold)))
+                              "IndianRed4"))
+      (global-highlight-parentheses-mode t)
+      (set-face-attribute 'hl-paren-face nil :weight 'ultra-bold)
+      ))
+#+END_SRC
+
+** beacon
+#+BEGIN_SRC emacs-lisp
+
+(use-package beacon
+:init
+(beacon-mode 1))
 #+END_SRC
 
 * Chinese setup
@@ -453,19 +398,18 @@ set color of parenttheses like spacemacs.
 自動在中英文字間加入空白，以利閱讀
 
 #+BEGIN_SRC emacs-lisp
-  (req-package pangu-spacing
-    :defer 1
+  (use-package pangu-spacing
     :diminish ""
     :config
     (progn
       (global-pangu-spacing-mode 1)
 
-      (dolist (m '(eww-mode elfeed-search-mode elfeed-show-mode))
-        (add-to-list 'pangu-spacing-inhibit-mode-alist m))
+      (dolist (mode '(eww-mode elfeed-search-mode elfeed-show-mode))
+	(add-to-list 'pangu-spacing-inhibit-mode-alist mode))
 
       ;; Always insert `real' space in org-mode.
-      (dolist (m '(org-mode-hook markdown-mode-hook rst-mode-hook))
-        (add-hook m '(lambda()
+      (dolist (mode '(markdown-mode-hook rst-mode-hook))
+	(add-hook mode '(lambda()
                        (set (make-local-variable 'pangu-spacing-real-insert-separtor) t))))
       ))
 #+END_SRC
@@ -475,70 +419,49 @@ set color of parenttheses like spacemacs.
 進入 normal mode 時，自動切換至英文輸入模式
 
 #+BEGIN_SRC emacs-lisp
-  (req-package fcitx
-    :config
-    (fcitx-default-setup)
-    )
-#+END_SRC
-
-** Set buffer to utf-8-unix
-
-#+BEGIN_SRC emacs-lisp
-  (defun buffer-to-utf-8-unix()
-    (interactive)
-    (set-buffer-file-coding-system 'utf-8-unix))
-
-  (bind-key "C-c fu" 'buffer-to-utf-8-unix)
+  (use-package fcitx
+    :init (fcitx-aggressive-setup))
 #+END_SRC
 
 ** Translate buffer via opencc
 
 #+BEGIN_SRC emacs-lisp
-  (defvar opencc-conv-temp-file (expand-file-name
-                                 (concat user-cache-directory "opencc.tmp")))
-
-  (defun opencc-conv-command ()
-    (concat "opencc"
-            " -i " opencc-conv-temp-file))
-
   (defun opencc-buffer ()
     "Convert chinese from simplified to variants and phrases of Taiwan"
 
     (interactive)
 
     (set-buffer-file-coding-system 'utf-8-unix)
-    (let ((str (buffer-substring-no-properties (point-max) 1)))
-      (with-temp-file opencc-conv-temp-file
-        (insert str "\n")))
 
-    (let ((result
-           (shell-command-to-string (opencc-conv-command))))
+    (let ((opencc-conv-temp-file (expand-file-name "opencc.tmp" temporary-file-directory)))
+      (let ((str (buffer-substring-no-properties (point-max) 1)))
+	(with-temp-file opencc-conv-temp-file
+	  (insert str "\n")))
 
-      (erase-buffer)
-      (insert result)
-      (goto-char (point-min))))
+      (let ((current-point (point))
+	    (result
+	     (shell-command-to-string (concat "opencc -i " opencc-conv-temp-file))))
+
+	(erase-buffer)
+	(insert result)
+	(goto-char current-point))))
 
   (bind-key "C-c fo" 'opencc-buffer)
-#+END_SRC
 
-** 萌典 moedict
-安裝後，需執行一次 =moedict-install-dictionary= ，才能開始使用萌典。
-
-#+BEGIN_SRC emacs-lisp
-  (req-package moedict
-    :require esqlite
-    :loader :path
-    :bind ("C-c m" . moedict))
-
-  (setq browse-url-chromium-program "google-chrome-stable")
 #+END_SRC
 
 * Basic settings
-** TODO Don't ask me when close emacs with process is running
-#+BEGIN_SRC emacs-lisp :tangle no
+
+#+BEGIN_SRC emacs-lisp
+  (use-package noflet)
+#+END_SRC
+
+** Don't ask me when close emacs with process is running
+#+BEGIN_SRC emacs-lisp
+  (require 'noflet)
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
     "Prevent annoying \"Active processes exist\" query when you quit Emacs."
-    (noflet (process-list ()) ad-do-it))
+    (noflet ((process-list ())) ad-do-it))
 #+END_SRC
 
 ** Don't ask me when kill process buffer
@@ -564,7 +487,7 @@ Takes care of trailing whitespaces (removal, highlighting)
 https://github.com/glasserc/ethan-wspace
 
 #+BEGIN_SRC emacs-lisp
-  (req-package ethan-wspace
+  (use-package ethan-wspace
     :diminish "🄣"
     :config
     (progn
@@ -584,24 +507,10 @@ https://github.com/glasserc/ethan-wspace
       (setq-default ethan-wspace-errors (remove 'no-nl-eof ethan-wspace-errors))))
 #+END_SRC
 
-*** 不指示空白行及行尾空白
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq-default indicate-empty-lines nil)
-  (setq-default indicate-buffer-boundaries nil)
-#+END_SRC
-
-*** 存檔前清除多餘的空白
-#+BEGIN_SRC emacs-lisp :tangle no
+** Delete trailing whitespace before save buffer
+#+BEGIN_SRC emacs-lisp
   (add-hook 'before-save-hook 'delete-trailing-whitespace)
 #+end_src
-
-** Whitespaces and tabs
-#+BEGIN_SRC emacs-lisp :tangle no
-  (setq c-basic-offset 4)
-  (setq python-indent-offset 4)
-  (setq tab-width 4)
-  (setq indent-tabs-mode nil)
-#+END_SRC
 
 ** Default truncate lines
 #+BEGIN_SRC emacs-lisp
@@ -620,27 +529,13 @@ https://github.com/glasserc/ethan-wspace
 
 ** Clipboard
 #+BEGIN_SRC emacs-lisp
-  (setq x-select-enable-clipboard t
-        x-select-enable-primary t)
+  (setq select-enable-clipboard t
+        select-enable-primary t)
 #+END_SRC
 
 ** Show keystrokes in progress
 #+begin_src emacs-lisp
   (setq echo-keystrokes 0.1)
-#+END_SRC
-
-** DONE Transient mark
-If you change buffer, or focus, disable the current buffer's mark:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(transient-mark-mode t)
-#+END_SRC
-
-** DONE Show active region
-#+BEGIN_SRC emacs-lisp :tangle no
-  (make-variable-buffer-local 'transient-mark-mode)
-  (put 'transient-mark-mode 'permanent-local t)
-  (setq-default transient-mark-mode t)
 #+END_SRC
 
 ** Remove text in active region if inserting text
@@ -662,12 +557,6 @@ periodically and when exiting Emacs.
 #+BEGIN_SRC emacs-lisp
   (global-subword-mode 1)
 #+END_SRC
-** Save files and exit (current file)
-=C-x C-c= save-buffers-kill-emacs
-
-#+begin_src emacs-lisp
-  (bind-key "C-x k" 'kill-this-buffer)
-#+END_SRC
 
 ** Parentheses
 #+BEGIN_SRC emacs-lisp
@@ -679,8 +568,8 @@ periodically and when exiting Emacs.
 In most case, I'll make line numers display globally by =linum=.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package linum
-    :config
+  (use-package linum
+    :init
     (add-hook 'prog-mode-hook
               '(lambda () (linum-mode 1))))
 
@@ -690,7 +579,7 @@ In most case, I'll make line numers display globally by =linum=.
 ** Relative Line Numbers
 
 #+BEGIN_SRC emacs-lisp
-  (req-package linum-relative
+  (use-package linum-relative
     :init
     (progn
       (linum-relative-mode)
@@ -698,21 +587,20 @@ In most case, I'll make line numers display globally by =linum=.
       (setq linum-relative-format "%4s")))
 #+END_SRC
 
-** Highlight numbers
+** Highlight numbers on program mode
 
 ref: [[https://github.com/Fanael/highlight-numbers]]
-
+:ensure parent-mode
 #+BEGIN_SRC emacs-lisp
-  (req-package highlight-numbers
-    :require (parent-mode)
-    :config
+  (use-package highlight-numbers
+    :init
     ;; json-mode has it's own highlight numbers method
     (add-hook 'prog-mode-hook '(lambda()
                                  (if (not (derived-mode-p 'json-mode))
                                      (highlight-numbers-mode)))))
 #+END_SRC
 
-** Highlight FIXME, TODO
+** Highlight FIXME, TODO in program mode
 
 #+begin_src emacs-lisp
   (defun font-lock-comment-annotations ()
@@ -734,33 +622,650 @@ ref: [[https://github.com/Fanael/highlight-numbers]]
 #+BEGIN_SRC emacs-lisp
   (mouse-avoidance-mode 'banish)
 #+END_SRC
-** TODO async
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package async
-    :init
-    (progn
-      (async-bytecomp-package-mode 1)
-      (setq async-bytecomp-allowed-packages '(all))))
-#+END_SRC
 
 * Window Management                                                  :window:
+** golden ratio
+
+https://github.com/roman/golden-ratio.el
+
+#+BEGIN_SRC emacs-lisp
+  (use-package golden-ratio
+    :diminish ""
+    :init
+      (golden-ratio-mode 1))
+#+END_SRC
+
 ** winner-mode
 
 Undo/redo window configuration with C-c <left>/<right>
 
 #+BEGIN_SRC emacs-lisp
-  (winner-mode 1)
+(use-package winner)
 #+END_SRC
 
-** switch-window
+** TODO ace-window with golden-ratio
+
+https://github.com/abo-abo/ace-wimndow
 
 #+BEGIN_SRC emacs-lisp
-(req-package switch-window
-  :bind ("C-x o" . switch-window))
+  (use-package ace-window
+    :init
+    (progn
+      (global-set-key [remap other-window] 'ace-window)
+      (custom-set-faces
+       '(aw-leading-char-face
+	 ((t (:inherit ace-jump-face-foreground :height 3.0)))))
+      ))
+#+END_SRC
+
+** keybinding of delete frame
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x w" 'delete-frame)
+#+END_SRC
+
+** popwin
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popwin
+    :init
+    (progn
+      (setq helm-popwin
+            '(("*Flycheck errors*" :height 10)
+              ("*Helm Find Files*" :height 0.3)
+              ("^\*helm.+\*$" :regexp t :height 15))))
+    :config
+    (progn
+      (popwin-mode 1)
+      (push '("*helm semantic/imenu*" :width 0.382 :position left) popwin:special-display-config)
+      (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
+      ))
 #+END_SRC
 
 * Buffer Management                                                  :buffer:
+** Create *scratch* automatically
+Sometimes I'll kill the =*scratch*= buffer to make it clean, just use
+following function to let emacs re-create it automatically.
+
+#+BEGIN_SRC emacs-lisp
+  (defun create-scratch-buffer ()
+    "create scratch buffer if it is not exist."
+
+    (unless (get-buffer "*scratch*")
+      (with-current-buffer
+	  (get-buffer-create "*scratch*")
+	(insert initial-scratch-message)
+	(lisp-interaction-mode))))
+
+  (defun switch-to-scratch-buffer ()
+    "switch buffer to scratch if not exist then create new one"
+    (interactive)
+    (create-scratch-buffer)
+    (switch-to-buffer "*scratch*"))
+
+    ;; (run-with-idle-timer 1 t 'create-scratch-buffer)
+#+END_SRC
+
+** rebind kill-emacs to "C-x C-c C-c"
+
+#+BEGIN_SRC emacs-lisp
+  (unbind-key "C-x C-c")
+  (bind-key "C-x C-c C-c" 'kill-emacs)
+#+END_SRC
+
+** kill all buffer except current buffer
+
+http://stackoverflow.com/questions/3417438/closing-all-other-buffers-in-emacs
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x C-c c" 'kill-other-buffers)
+  (defun kill-other-buffers ()
+    (interactive)
+    (mapc 'kill-buffer (cdr (buffer-list (current-buffer))))
+    (delete-other-windows))
+#+END_SRC
+
+** kill all buffer except *scratch*
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x C-c s" 'kill-all-buffer-but-scratch)
+  (defun kill-all-buffer-but-scratch ()
+    (interactive)
+    (switch-to-scratch-buffer)
+    (kill-other-buffers)
+    (delete-other-windows))
+#+END_SRC
+
+** Save files and exit (current file)
+=C-x C-c= save-buffers-kill-emacs
+rebind =C-x C-c= to (kill-other-buffers) as below
+
+#+begin_src emacs-lisp
+  (bind-key "C-x k" 'kill-this-buffer)
+#+END_SRC
+
+** Show current buffer-file information
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fn" 'my/file-info)
+
+  (defun my/file-info ()
+    "Show current buffer information."
+    (interactive)
+    (if (buffer-file-name (current-buffer))
+        (progn
+          (let* ((file-name (buffer-file-name (current-buffer)))
+                 (f-attr (file-attributes file-name))
+                 (f-size (nth 7 f-attr))  ; ファイルサイズ
+                 (f-mode (nth 8 f-attr))  ; ファイル属性
+                 (mes1 (format "file path: %s\n" file-name))
+                 (mes2 (format "file size: %s byte\n" f-size))
+                 (mes3 (format "file type: %s" f-mode))
+                 (mess (concat mes1 mes2 mes3)))
+            (message "%s" mess)))
+      nil))
+#+END_SRC
+
+** Set buffer to utf-8-unix
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fu" 'buffer-to-utf-8-unix)
+
+  (defun buffer-to-utf-8-unix()
+    (interactive)
+    (set-buffer-file-coding-system 'utf-8-unix))
+#+END_SRC
+
+** cycle revert buffer decoding
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fa" 'my/cycle-revert-buffer-decoding)
+
+  (defun my/cycle-revert-buffer-decoding ()
+    (interactive)
+
+    (let* ((decoders [utf-8 gb18030 big5])
+	   (index-before
+	    (if (get 'my/cycle-revert-buffer-decoding 'state)
+		(get 'my/cycle-revert-buffer-decoding 'state)
+	      0))
+	   (index-after (% (+ index-before 1) (length decoders)))
+	   (next-decoder (aref decoders index-after)))
+      (message "%s %s" decoders next-decoder)
+      (put 'my/cycle-revert-buffer-decoding 'state index-after)
+      (revert-buffer-with-coding-system next-decoder)))
+#+END_SRC
+
+** revert-buffer
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fv" 'revert-buffer)
+
+  (global-auto-revert-mode 1)
+  (setq global-auto-revert-non-file-buffers t)
+  (setq auto-revert-verbose nil)
+  (setq revert-without-query '(".*")) ;; disable revert query
+#+END_SRC
+
+** ibuffer
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x C-b" 'ibuffer)
+  (autoload 'ibuffer "ibuffer" "List buffers." t)
+  (add-hook 'ibuffer-hook '(lambda ()
+			     (revert-buffer)))
+#+END_SRC
+
+** Switch to previous buffer
+#+BEGIN_SRC emacs-lisp
+  (bind-key "M-o" 'mode-line-other-buffer)
+#+END_SRC
+** persistent-scratch
+
+A persistent scratch buffer form Pragmatic Emacs
+http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/
+
+#+BEGIN_SRC emacs-lisp
+(use-package persistent-scratch
+  :config
+  (persistent-scratch-setup-default))
+#+END_SRC
+
+** recentf
+
+#+BEGIN_SRC emacs-lisp
+(use-package recentf
+  :config
+  (progn
+    (setq recentf-save-file (expand-file-name "recentf" user-cache-directory))
+    (recentf-mode 1)
+    (setq recentf-max-saved-items 500
+          recentf-max-menu-items 10)))
+#+end_src
+
+** save-place
+自動記錄每一個檔案，游標所在的位置。
+下次再開啟這個檔案時，游標會自動回到上次的地方。
+
+#+BEGIN_SRC emacs-lisp
+  (use-package saveplace
+    :init
+    (progn
+      (setq save-place-file (expand-file-name "places" user-cache-directory))
+      (save-place-mode 1)))
+#+end_src
+
+** uniquift
+Add parts of each file's directory to the buffer name if not unique
+
+#+BEGIN_SRC emacs-lisp
+(use-package uniquify
+:ensure nil
+:init
+(setq uniquify-buffer-name-style 'post-forward-angle-brackets)
+)
+#+END_SRC
+* Minibuffer                                                         :minibuffer:
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package minibuffer
+  :ensure nil
+  :config
+  <<minibuffer-config>>)
+#+END_SRC
+
+** Make cursor in minibufer use bar shape
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (add-hook 'minibuffer-setup-hook '(lambda () (setq cursor-type 'bar)))
+#+END_SRC
+
+** Some helper function to let me insert quick in minibuffer
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+
+  (defun my/minibuffer-insert (p)
+    (kill-line 0) (insert p))
+
+  (defun my/minibuffer-switch-to-ramdisk ()
+    "Insert ramdisk path according to system type"
+    (interactive)
+    (my/minibuffer-insert user-ramdisk-directory))
+
+  (defun my/minibuffer-switch-to-home ()
+    "Insert $HOME path."
+    (interactive)
+    (my/minibuffer-insert (file-name-as-directory (getenv "HOME"))))
+
+  (defun my/minibuffer-switch-to-rootdir ()
+    "Insert / path."
+    (interactive)
+    (my/minibuffer-insert "/"))
+
+  (defun my/minibuffer-switch-to-tramp ()
+    "Insert /ssh:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:"))
+
+  (defun my/minibuffer-switch-to-vm ()
+    "Insert /ssh:vm:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:vm:"))
+
+  (defun my/minibuffer-switch-to-cluster ()
+    "Insert /ssh:cluster:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:cluster:"))
+#+END_SRC
+
+** Save history of minibuffer :tangle no :noweb-ref minibuffer-config
+
+When Savehist mode is enabled, minibuffer history is saved
+periodically and when exiting Emacs.  When Savehist mode is enabled
+for the first time in an Emacs session, it loads the previous
+minibuffer history from ‘savehist-file’.
+
+#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref minibuffer-config
+  (use-package savehist
+    :config
+    (setq savehist-file (expand-file-name "savehist.dat" user-cache-directory))
+    (savehist-mode 1))
+#+END_SRC
+
+** Increase Garbage Collector Value in minibuffer
+
+By binding this temporarily to a large number, you can effectively prevent garbage collection during a part of the program. I increase the value when enter minibuffer, this will help to improve minibuffer speed with large package like helm, flx.
+
+ref: http://bling.github.io/blog/2016/01/18/why-are-you-changing-gc-cons-threshold/
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb-ref minibuffer-config
+  (eval-after-load 'minibuffer
+    '(progn
+       (lexical-let ((default-threshold gc-cons-threshold))
+         (defun my/minibuffer-gc-setup-hook ()
+           (setq gc-cons-threshold most-positive-fixnum))
+         (add-hook 'minibuffer-setup-hook #'my/minibuffer-gc-setup-hook)
+         ;; When exit, set back to default threshold
+         (defun my/minibuffer-gc-exit-hook ()
+           (setq gc-cons-threshold default-threshold))
+         (add-hook 'minibuffer-exit-hook #'my/minibuffer-gc-exit-hook))))
+#+END_SRC
+
+** Setup Keybindings                                            :keybinding:
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (bind-keys :map minibuffer-local-map
+             ("C-w" . backward-kill-word)
+             ("M-p" . previous-history-element)
+             ("M-n" . next-history-element)
+             ("C-g" . minibuffer-keyboard-quit)
+             ("M-t" . my/minibuffer-switch-to-ramdisk)
+             ("M-h" . my/minibuffer-switch-to-home)
+             ("M-/" . my/minibuffer-switch-to-rootdir)
+             ("M-s" . my/minibuffer-switch-to-tramp)
+             ("M-v" . my/minibuffer-switch-to-vm)
+             ("M-c" . my/minibuffer-switch-to-cluster))
+#+END_SRC
+* File management
+** Dired: the most powerfull file management tool
+
+https://github.com/lunaryorn/.emacs.d/blob/master/init.el
+
+http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
+
+http://pragmaticemacs.com/category/dired/
+
+We recently looked at replacing text in buffers.
+Using dired, it is possible to do this in many files in a directory.
+Start dired and mark files as described here.
+Then use Q to run query-replace on all marked files.
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package dired
+    :ensure nil
+    :bind (:map dired-mode-map
+		("s" . my/counsel-dired-sort)
+		("f" . dired-find-name-in-current-directory)
+		("C-x M-o" . dired-omit-and-remember))
+    :config
+    <<dired-config>>)
+#+END_SRC
+
+*** Dired tries to guess a default target directory
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-dwim-target t)
+#+END_SRC
+
+*** Revert on re-visiting
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-auto-revert-buffer t)
+#+END_SRC
+
+*** -F marks links with @
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-ls-F-marks-symlinks t)
+#+END_SRC
+
+*** set dired listing switches
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  ;; dired-listing-switches "-alh"
+  (setq dired-listing-switches "--group-directories-first -alh")
+  ;; dired-listing-switches "-lFaGh1v --group-directories-first"
+#+END_SRC
+
+*** Don't ask me question when recursively copy/delete file(s)
+
+always: 表示永不詢問。
+top: 表示同一批檔案只詢問一次。
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-recursive-copies  'always
+	dired-recursive-deletes 'top)
+#+END_SRC
+
+*** sorting current directoy
+
+會先問你要根據什麼屬性排序，而且紀錄下排序狀態，不會跨 buffer 就不見了。
+
+#+BEGIN_SRC emacs-lisp
+  (defconst sorting-action '(("name" "")
+			     ("size" "S")
+			     ("extension" "X")
+			     ("access time" "ut")
+			     ("modified time" "t")
+			     ("status change time" "ct")))
+
+  ;; (defun sort-dir (sort-item)
+  ;; (dired-sort-other
+  ;; (concat dired-listing-switches
+  ;; (car (cdr (assoc sort-item sorting-action))))))
+
+  (defun my/counsel-dired-sort ()
+    (interactive)
+
+    (let ((sort-cmd (mapcar 'car sorting-action))
+	  (sort-dir (lambda (sort-item)
+		      (dired-sort-other
+		       (concat dired-listing-switches
+			       (car (cdr (assoc sort-item sorting-action))))))))
+
+      (ivy-read "sort by" sort-cmd
+		:preselect "name"
+		:initial-input "^"
+		:action #'sort-dir)))
+#+END_SRC
+
+*** dired omit mode enhancement
+
+;; Dired Omit 加強:
+;; 簡單來說，這個能夠紀錄下目前的「隱藏狀態」，所以當你按
+;; C-x M-o 隱藏以.為開頭的檔案後，即使到了不同目錄下，以.開頭的檔案
+;; 依舊是處於隱藏狀態，直到你重新按 C-x M-o 為止。
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+(setq dired-omit-files "^\\...+$")
+
+(defvar v-dired-omit t
+  "If dired-omit-mode enabled by default. Don't setq me.")
+
+(defun dired-omit-and-remember ()
+  "This function is a small enhancement for `dired-omit-mode', which will
+        \"remember\" omit state across Dired buffers."
+
+  (interactive)
+  (setq v-dired-omit (not v-dired-omit))
+  (dired-omit-auto-apply)
+  (revert-buffer))
+
+(defun dired-omit-auto-apply ()
+  (setq dired-omit-mode v-dired-omit))
+
+(add-hook 'dired-mode-hook 'dired-omit-auto-apply)
+#+END_SRC
+
+*** recursively find files under current directory
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+(defun dired-find-name-in-current-directory ()
+  (interactive)
+  (find-name-dired default-directory
+                   (format "*%s*" (read-from-minibuffer "Pattern: ")))
+  (set-buffer-multibyte t))
+(setq find-name-arg "-iname")
+(setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
+#+END_SRC
+
+*** 按 q 回到上層目錄，並自動把 cursor 移動到前一個目錄處
+
+the behave is like press '^'
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun my-dired-backward ()
+    "Go back to the parent directory (..), and the cursor will be moved to where
+            the previous directory."
+    (interactive)
+    (let* ((DIR (buffer-name)))
+      (if (equal DIR "*Find*")
+          (quit-window t)
+	(progn (find-alternate-file "..")
+               (re-search-forward DIR nil :no-error)
+               (revert-buffer)))))
+  (define-key dired-mode-map (kbd "q") 'my-dired-backward)
+#+END_SRC
+
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+;; 按 Enter 時 Dired 時不會一直開新的 Dired buffer（按 Enter 時只用同一個 Dired 開目錄）
+(defun dired-my-find-alternate-file ()
+  (interactive)
+  (if (file-regular-p (dired-get-filename))
+      (dired-find-file)
+    (dired-find-alternate-file)))
+(define-key dired-mode-map (kbd "RET") 'dired-my-find-alternate-file) ; 按 Enter 開檔案
+(put 'dired-find-alternate-file 'disabled nil) ; 避免 Dired 問你一些囉唆的問題
+
+#+END_SRC
+
+
+*** 和 KDE 的 Dolphin 一樣的檔案名過濾器，按 C-i 使用。 (by letoh)
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun dired-show-only (regexp)
+  (interactive "sFiles to show (regexp): ")
+  (dired-mark-files-regexp regexp)
+  (dired-toggle-marks)
+  (dired-do-kill-lines))
+(define-key dired-mode-map (kbd "C-i") 'dired-show-only)
+#+END_SRC
+
+*** M-Enter 呼叫外部程式（此處是透過 `kde-open`）來開啟檔案
+
+如果你不是用 KDE，可以改成 xdg-open 之類的。Windows 我不知該怎麼辦啦啦啦。
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun dired-open-file-with-external-program ()
+  "Open file with external program in dired"
+  (interactive)
+  (let* ((file (dired-get-filename nil t)))
+    (message "Opening %s..." file)
+    (call-process "kde-open" nil 0 nil file)
+    (message "Opening %s done" file)))
+(define-key dired-mode-map (kbd "M-RET") 'dired-open-file-with-external-program)
+#+END_SRC
+
+*** 在 Dired 下 C-x C-j 使用`kde-open`等外部程式開啟「當前目錄」
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun open-current-directory-with-external-program ()
+  "Open current directory with external program."
+  (interactive)
+  (call-process "kde-open" nil 0 nil (file-truename default-directory)))
+(define-key dired-mode-map (kbd "C-x C-j") 'open-current-directory-with-external-program)
+#+END_SRC
+
+*** 按 M-a 把檔案加入 SMPlayer 的播放清單中。
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun dired-add-to-smplayer-playlist ()
+  "Add a multimedia file or all multimedia files under a directory into SMPlayer's playlist via Dired."
+  (interactive)
+  (require 'cl)
+  (let* ((PATTERN "\\(\\.mp4\\|\\.flv\\|\\.rmvb\\|\\.mkv\\|\\.avi\\|\\.rm\\|\\.mp3\\|\\.wav\\|\\.wma\\|\\.m4a\\|\\.mpeg\\|\\.aac\\|\\.ogg\\|\\.flac\\|\\.ape\\|\\.mp2\\|\\.wmv\\|.m3u\\|.webm\\)$")
+         (FILE (dired-get-filename nil t)))
+    (if (file-directory-p FILE) ;if it's a dir.
+        (let* ((FILE_LIST (directory-files FILE t PATTERN))
+               (n 0)
+               s_FILE_LIST)
+          (dolist (x FILE_LIST)
+            (if (not (or (equal x ".") (equal x "..")))
+                (setq s_FILE_LIST (concat s_FILE_LIST "'" x "' ")))
+            (setq n (1+ n)))
+          (message "Opening %s files..." n)
+          (call-process-shell-command "smplayer -add-to-playlist" nil nil nil (format "%s &" s_FILE_LIST)))
+      (if (string-match PATTERN FILE)   ;if it's a file
+          (call-process "smplayer" nil 0 nil "-add-to-playlist" FILE)
+        (message "This is not a supported audio or video file."))))
+  (dired-next-line 1))
+(define-key dired-mode-map (kbd "M-a") 'dired-add-to-smplayer-playlist)
+#+END_SRC
+** dired+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired+
+    :init (progn
+            (diredp-toggle-find-file-reuse-dir 1)
+))
+ #+END_SRC
+
+** dired-async
+https://github.com/jwiegley/emacs-async
+
+#+BEGIN_SRC emacs-lisp
+  (use-package async
+    :init
+    (autoload 'dired-async-mode "dired-async.el" nil t)
+    (dired-async-mode 1))
+#+END_SRC
+
+** narrow dired to match filter
+
+http://pragmaticemacs.com/emacs/dynamically-filter-directory-listing-with-dired-narrow/
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-narrow
+  :bind (:map dired-mode-map
+              ("/" . dired-narrow)))
+#+END_SRC
+
+** openwith
+
+https://github.com/emacsmirror/openwith
+
+#+BEGIN_SRC emacs-lisp
+  (use-package openwith
+    :init
+    (progn
+      (openwith-mode t)
+      (setq openwith-associations
+            (list (list (openwith-make-extension-regexp '("jpg" "jpeg" "png"))
+                        "feh -FY" '(file))
+                  (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
+                        "mpv" '(file))
+                  (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts" "webm"
+                                                          "mpeg" "mpg" "ogg" "wmv" "mkv"))
+                        "mpv" '(file))
+                  ))))
+#+END_SRC
+
+** peep-dired
+#+BEGIN_SRC emacs-lisp
+(use-package peep-dired
+  :bind (:map dired-mode-map
+              ("P" . peep-dired)))
+#+END_SRC
+
+** Making directories on the fly
+
+ref: http://mbork.pl/2016-07-25_Making_directories_on_the_fly
+
+Today, a friend asked me how to create a directory – or a hierarchy
+of them – while finding a file in a nonexistent directory. I found
+some clues on the ‘net, but the best one used the old advice
+mechanism. So I decided to do it myself, based on the hints found. It
+turned out to be simpler than I thought; it’s made even easier by the
+fact that Elisp’s make-directory function acts basically like mkdir
+-p when given non-nil second (optional) argument.
+
+#+BEGIN_SRC emacs-lisp
+  (defun make-parent-directory ()
+    "Make sure the directory of `buffer-file-name' exists."
+    (make-directory (file-name-directory buffer-file-name) t))
+
+  (add-hook 'find-file-not-found-functions #'make-parent-directory)
+#+END_SRC
+
 ** Edit current buffer as root
 
 #+BEGIN_SRC emacs-lisp
@@ -772,6 +1277,7 @@ Undo/redo window configuration with C-c <left>/<right>
           (setq file (concat "/sudo:root@localhost:" (buffer-file-name)))
           (find-file file))
       (message "Current buffer does not have an associated file.")))
+  (bind-key "C-c fR" 'edit-current-file-as-root)
 #+END_SRC
 
 ** Delete current buffer file
@@ -789,6 +1295,7 @@ Undo/redo window configuration with C-c <left>/<right>
           (delete-file filename)
           (kill-buffer buffer)
           (message "File '%s' successfully removed" filename)))))
+  (bind-key "C-c fD" 'delete-current-buffer-file)
 #+END_SRC
 
 ** Rename current Buffer and file
@@ -810,315 +1317,396 @@ Undo/redo window configuration with C-c <left>/<right>
             (set-buffer-modified-p nil)
             (message "File '%s' successfully renamed to '%s'"
                      name (file-name-nondirectory new-name)))))))
+  (bind-key "C-c fr"  'rename-current-buffer-file)
 #+END_SRC
 
-** TODO Clone current Buffer and file
+** Clone current Buffer and file
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defun clone-current-buffer-file ()
-    "Clone current buffer and file it is visiting."
+#+BEGIN_SRC emacs-lisp
+  (defun clone-file-and-open (filename)
+    "Clone the current buffer writing it into FILENAME and open it"
+    (interactive "FClone to file: ")
+    (save-restriction
+      (widen)
+      (write-region (point-min) (point-max) filename nil nil nil 'confirm))
+    (find-file filename))
+  (bind-key "C-c fc"  'clone-file-and-open)
+#+END_SRC
+
+** Add executable attribute to file
+
+Actually this command is the same as =chmod +x= but it doesn't use any shell
+command, it use emacs's logior function to change file attribute.
+
+I only make =owener= can has executable permission, not change it for gourp or
+others user.
+
+#+BEGIN_SRC emacs-lisp
+  (defun set-file-executable()
+    "Add executable permissions on current file."
+
     (interactive)
-    (let ((name (buffer-name))
-          (filename (buffer-file-name)))
-      (if (not (and filename (file-exists-p filename)))
-          (error "Buffer '%s' is not visiting a file!" name)
-        (let ((new-name (read-file-name "New name: " filename)))
-          (if (get-buffer new-name)
-              (error "A buffer named '%s' already exists!" new-name)
-            (rename-file filename new-name 1)
-            (rename-buffer new-name)
-            (set-visited-file-name new-name)
-            (set-buffer-modified-p nil)
-            (message "File '%s' successfully renamed to '%s'"
-                     name (file-name-nondirectory new-name)))))))
+    (when (buffer-file-name)
+      (set-file-modes buffer-file-name
+                      (logior (file-modes buffer-file-name) #o100))
+      (message (concat "Made " buffer-file-name " executable"))))
+  (bind-key "C-c fx" 'set-file-executable)
 #+END_SRC
 
-** Auto revert
-
-#+BEGIN_SRC emacs-lisp
-  (global-auto-revert-mode 1)
-  (setq global-auto-revert-non-file-buffers t)
-  (setq auto-revert-verbose nil)
-  (setq revert-without-query '(".*")) ;; disable revert query
-#+END_SRC
-
-** ibuffer
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x C-b" 'ibuffer)
-  (autoload 'ibuffer "ibuffer" "List buffers." t)
-#+END_SRC
-
-** Dired relative functions
-*** TODO dired
-#+BEGIN_SRC emacs-lisp :tangle no
-(req-package dired
-  :commands dired
-  :require (helm-swoop autorevert diff-hl)
-;  :init (add-hook 'dired-load-hook (lambda () (load "dired-x")
-;                                     ;; Set global variables here.  For example:
-;                                     ;; (setq dired-guess-shell-gnutar "gtar")
-;                                    ))
-  :config (progn (define-key dired-mode-map (kbd "M-i") 'helm-swoop)
-                 (define-key dired-mode-map (kbd "M-RET") 'dired-find-file-other-window)
-                 (add-hook 'dired-mode-hook (lambda () (auto-revert-mode 1)))
-                 (add-hook 'dired-mode-hook (lambda () (diff-hl-dired-mode 1)))
-                 ))
-#+END_SRC
-
-*** dired+
-
-#+BEGIN_SRC emacs-lisp
-  (req-package dired+
-    :init (progn
-            (diredp-toggle-find-file-reuse-dir 1)
-            (autoload 'dired-async-mode "dired-async.el" nil t)
-            (dired-async-mode 1)))
-#+END_SRC
-
-*** openwith
-
-#+BEGIN_SRC emacs-lisp
-  (req-package openwith
-    :config
-    (progn
-      (openwith-mode t)
-      (setq openwith-associations
-            (list (list (openwith-make-extension-regexp '("jpg" "jpeg" "png"))
-                        "feh -FY" '(file))
-                  (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
-                        "mpv" '(file))
-                  (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts"
-                                                          "mpeg" "mpg" "ogg" "wmv" "mkv"))
-                        "mpv" '(file))
-                  ))))
-
-#+END_SRC
-
-** Multi-term
-這個比 eshell 好用。原因很簡單…習慣！
-
-參考：
-http://rawsyntax.com/blog/learn-emacs-zsh-and-multi-term/
-http://blog.jobbole.com/51598/
-
-將 shell 設為 zsh，呼叫 shell 的快捷鍵設為 <C-x  t>。
-C-! 以 popup window 的方式在下方開一個 term 視窗
-
-#+BEGIN_SRC emacs-lisp
-  (req-package multi-term
-    :init (setq multi-term-program "/bin/zsh")
-    :bind ("C-x t" . multi-term)
-    :config
-    (progn (add-hook 'term-mode-hook
-                     (lambda ()
-                       (add-to-list 'term-bind-key-alist '("M-[" . multi-term-prev))
-                       (add-to-list 'term-bind-key-alist '("M-]" . multi-term-next))))
-           (add-hook 'term-mode-hook
-                     (lambda ()
-                       (setq term-buffer-maximum-size 10000)))
-           (add-hook 'term-mode-hook
-                     (lambda ()
-                       (define-key term-raw-map (kbd "C-y") 'term-paste)))))
-#+END_SRC
-
-*** popup multi-term
-
-#+BEGIN_SRC emacs-lisp
-  (defun popwin-term:multi-term ()
-    (interactive)
-    (popwin:display-buffer-1
-     (or (get-buffer "*terminal*")
-         (save-window-excursion
-           (call-interactively 'multi-term)))
-     :default-config-keywords '(:position :bottom :height 12 :stick t)))
-
-  (bind-key "C-!" 'popwin-term:multi-term)
-#+END_SRC
-
-** Create *scratch* automatically
-
-Sometimes I'll kill the =*scratch*= buffer to make it clean, just use
-following function to let emacs re-create it automatically.
-
-#+BEGIN_SRC emacs-lisp
-  (run-with-idle-timer 1 t
-                       '(lambda ()
-                          (unless (get-buffer "*scratch*")
-                            (with-current-buffer
-                                (get-buffer-create "*scratch*")
-                              (lisp-interaction-mode)
-                              ))))
-#+END_SRC
-
-** recentf
-
-#+BEGIN_SRC emacs-lisp
-(req-package recentf
-  :config
-  (progn
-    (setq recentf-save-file (concat user-cache-directory "recentf"))
-    (recentf-mode 1)
-    (setq recentf-max-saved-items 500
-          recentf-max-menu-items 10)))
-#+end_src
-
-** save-place
-自動記錄每一個檔案，遊標所在的位置，下次再開啟這個檔案時，遊標會自動到上次看的地方。
-
-#+BEGIN_SRC emacs-lisp
-(req-package saveplace
-             :config
-               (progn
-                 (setq save-place-file (concat user-cache-directory "places"))
-                 (setq-default save-place t)))
-#+end_src
-
-** uniquift
-Add parts of each file's directory to the buffer name if not unique
-
-#+BEGIN_SRC emacs-lisp
-(req-package uniquify
-  :config
-    (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
-#+END_SRC
-
-** backup
-
-#+begin_src emacs-lisp
-  (setq backup-directory-alist `(("." . ,(concat user-emacs-directory
-                                                 "backups"))))
-  (setq backup-by-copying-when-linked t)
-  (setq delete-old-versions t
-        kept-new-versions 6
-        kept-old-versions 2
-        version-control t)
-#+end_src
-
-*** 不要再產生 “backup~” 或 “#autosave#” 檔案
-
+** no backup file
 #+begin_src emacs-lisp
   (setq make-backup-files nil) ; stop creating those backup~ files
   (setq auto-save-default nil) ; stop creating those #autosave# files
 #+end_src
-
-** pdf-tools
-如果報錯：無安裝 epdfinfo，執行一次 ~(pdf-tools-install)~ 即可。
+** Using pandoc to convert org, markdown file
+*** get major mode of current buffer
 
 #+BEGIN_SRC emacs-lisp
-  (req-package pdf-tools
-    ;;:commands pdf-view-mode
-    :init (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
-    :config (progn
-              (pdf-tools-install)
-              (setq pdf-view-continuous t)
+  (defun current-buffer-mode ()
+    "Return the major-mode associated with current buffer."
 
-              (bind-keys :map pdf-view-mode-map
-                         ("j" . pdf-view-next-line-or-next-page)
-                         ("k" . pdf-view-previous-line-or-previous-page)
-                         ("H" . pdf-view-next-page)
-                         ("L" . pdf-view-previous-page)
-                         ("e" . pdf-view-scroll-down-or-previous-page)
-                         ("d" . pdf-view-scroll-up-or-next-page)
-                         ;; ("gg" . pdf-view-first-page)
-                         ;; ("G" . pdf-view-last-page)
-                         ("=" . pdf-view-fit-width-to-window)
-                         ("-" . pdf-view-shrink)
-                         ("+" . pdf-view-enlarge))
-              ))
+    (with-current-buffer (buffer-name)
+      major-mode))
 #+END_SRC
 
-* Editing                                                              :edit:
-** Smooth-scrolling
-
+*** convert org-mode to pdf via pandoc
 #+BEGIN_SRC emacs-lisp
-  (req-package smooth-scrolling
-    :commands (smooth-scrolling-mode)
-    :init
-    (progn
-      (smooth-scrolling-mode 1)
-      (setq smooth-scroll-margin 5)))
+  (bind-key "C-c op" 'org-to-pdf)
+
+  (defun org-to-pdf ()
+    "Conver org to pdf and open the pdf file."
+
+    (interactive)
+    (if (eq (current-buffer-mode) 'org-mode)
+        (progn
+          (let* ((pdf-name (concat (file-name-sans-extension buffer-file-name) ".pdf")))
+
+            (message "convert to %s" (file-name-nondirectory pdf-name))
+
+            (let* ((latex-engin "xelatex")
+                   (template "/home/mario/.pandoc/default.latex")
+                   (result (shell-command
+                            (format "pandoc %s --latex-engine %s --template %s -s -o %s"
+                                    buffer-file-name
+                                    latex-engin
+                                    template
+                                    pdf-name
+                                    ))))
+              (if (eq result 0)
+                  (find-file pdf-name)
+                (message result)))
+            ))
+      (message "Current buffer must be 'org-mode'!")))
 #+END_SRC
 
-** avy
-ref: https://github.com/abo-abo/avy
+*** convert markdown to orgmode via pandoc
 
 #+BEGIN_SRC emacs-lisp
-  (req-package avy
-    :commands (global-avy-mode avy-goto-char avy-goto-line)
-    :bind (("C-z" . avy-goto-char)
-           ("M-g f" . avy-goto-line)))
+  (defun md-to-org ()
+    "Convert markdown to org for edit. Especially for evernote/geeknote."
+
+    (interactive)
+    (if (eq (current-buffer-mode) 'markdown-mode)
+        (let* ((default-directory "/mnt/lvm-data/Documents/")
+               (md-buffer-name (buffer-name))
+               (md-file-name (buffer-file-name))
+               (md-org-buffer (find-file (read-file-name "" default-directory)))
+               (md-org-file-name (buffer-file-name)))
+
+          (if (not (file-exists-p md-org-file-name))
+              (progn
+                (shell-command (format "pandoc -f markdown -t org -o %s %s"
+                                       md-org-file-name
+                                       md-file-name))
+                (revert-buffer nil t)
+                (goto-char (point-min))
+                (insert "#+TITLE:\n")
+                (save-buffer)
+                (kill-buffer md-buffer-name))
+            (message "%s is already exist." md-org-file-name)))
+      (message "Current buffer must be 'markdown-mode'!")))
 #+END_SRC
 
-** ace-pinyin
-ref: https://github.com/cute-jumper/ace-pinyin
+*** save buffer as org-mode and bind key as "C-c oo"
+
+ bind key "C-c oo" to write current page of eww as orgmode
+ or markdown to org.
 
 #+BEGIN_SRC emacs-lisp
-  (req-package ace-pinyin
-    :diminish ""
-    :config
-    (progn
-      (ace-pinyin-global-mode +1)
-      (setq ace-pinyin-simplified-chinese-only-p nil)
+  (bind-key "C-c oo" 'write-buffer-as-orgmode)
+
+  (defun write-buffer-as-orgmode ()
+  (interactive)
+    (cond
+     ((eq (current-buffer-mode) 'markdown-mode) (md-to-org))
+     ((eq (current-buffer-mode) 'eww-mode) (eww-to-org))
+     (t (message "Current mode must be markdown or eww"))))
+#+END_SRC
+** Send file to kindle by wpub
+*** utility for async send file by wpub
+
+#+BEGIN_SRC emacs-lisp
+  (defun async-wpub (url &optional file-type opencc)
+    (let* ((cmd-opencc (if opencc (if (y-or-n-p "Convert to Traditional Chinese?") "-o" "") ""))
+	   (cmd-type (if file-type (format "-f %s" file-type) ""))
+	   (cmd-wpub (if url (format "wpub %s %s '%s'" cmd-opencc cmd-type url) nil)))
+
+      (if cmd-wpub
+	  (progn
+	    (message "%s" cmd-wpub)
+	    (start-file-process-shell-command "async-wpub"
+					      "*async-wpub*"
+					      cmd-wpub)))))
+#+END_SRC
+
+*** send org-mode file to kindle via wpub
+
+#+BEGIN_SRC emacs-lisp
+  (defun org-to-kindle ()
+    "Send current buffer to kindle via wpub.py"
+
+    (interactive)
+
+    (if (eq (current-buffer-mode) 'org-mode)
+	(progn
+	  (let ((wpub-temp-file (expand-file-name (buffer-name) temporary-file-directory))
+		(str (buffer-substring-no-properties (point-max) 1)))
+
+	    (with-temp-file wpub-temp-file
+	      (insert str "\n"))
+
+	    (async-wpub wpub-temp-file "org")))
+
+      (message "Current buffer must be 'org-mode'!")))
+#+END_SRC
+
+*** send html file to kindle via wpub
+
+#+BEGIN_SRC emacs-lisp
+  (defun html-file-to-kindle (fname)
+    (async-wpub fname "html" t))
+
+#+END_SRC
+
+*** send url to kindle via wpub
+
+#+BEGIN_SRC emacs-lisp
+  (defun url-to-kindle (url)
+    (async-wpub url nil t))
+#+END_SRC
+
+*** eww url to kindle via wpub
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-to-kindle ()
+    "send the content of current url to kindle via wpub"
+
+    (interactive)
+    (url-to-kindle (eww-current-url))
+    )
+#+END_SRC
+
+*** eww send current page kindle
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-to-kindle-directly ()
+    (interactive)
+
+    (let ((fname (eww-temp-file-name-html (eww-current-url))))
+      (eww-make-temp-file-source fname)
+      (html-file-to-kindle fname)))
+#+END_SRC
+
+**** write eww source to temp file
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-temp-file-name-html (fname)
+    (expand-file-name (concat (md5 fname) ".html")
+		      temporary-file-directory))
+
+  (defun eww-make-temp-file-source (temp-file-name)
+    (let ((source (eww-current-source)))
+      (with-temp-file temp-file-name
+	(insert (string-as-multibyte source)))))
+#+END_SRC
+
+*** elfeed send page to kindle
+
+#+BEGIN_SRC emacs-lisp
+
+  (defun elfeed-search-to-kindle ()
+    "send current content to kindle"
+
+    (interactive)
+    (url-to-kindle (get-elfeed-search-url)))
+
+  (defun elfeed-show-to-kindle ()
+    "send current content to kindle"
+
+    (interactive)
+    (url-to-kindle (get-elfeed-show-url)))
+
+#+END_SRC
+
+*** send url or org to kindle
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c ok" 'send-url-or-org-to-kindle)
+
+  (defun send-url-or-org-to-kindle ()
+    "Send content of current buffer to kindle"
+
+    (interactive)
+    (cond
+     ((not (eq (eww-current-url) nil)) (eww-to-kindle-directly))
+     ((eq (current-buffer-mode) 'org-mode) (org-to-kindle))
+     ((eq (current-buffer-mode) 'elfeed-search-mode) (elfeed-search-to-kindle))
+     ((eq (current-buffer-mode) 'elfeed-show-mode) (elfeed-show-to-kindle))
+     (t (message "%s" "Can't send this page to kindle."))))
+#+END_SRC
+** Open recent directory with dired by ivy
+
+#+BEGIN_SRC emacs-lisp
+  (defun counsel-goto-recent-directory ()
+    "Open recent directory with dired"
+
+    (interactive)
+    (unless recentf-mode (recentf-mode 1))
+    (let ((collection
+           (delete-dups
+            (append (mapcar 'file-name-directory recentf-list)
+                    ;; fasd history
+                    (if (executable-find "fasd")
+                        (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
+      (ivy-read "directories:" collection :action 'dired)))
+
+  (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
+#+END_SRC
+
+** Open recent directory with dired in other window
+
+Use fasd to open directory in another window and switch cursor to new
+window.
+
+if there are two panel already, then don't open the other window.
+Just switch to another window and open target directory.
+
+#+BEGIN_SRC emacs-lisp
+  (defun counsel-goto-recent-directory-other-window ()
+    (interactive)
+
+    (let ((old-buffer-name (buffer-name))
+	  (new-directory-name (counsel-goto-recent-directory)))
+      (message "open recent dir old:%s new:%s" old-buffer-name new-directory-name)
+      (if (eq (count-windows) 1)
+	  (split-window-right))
+
+      (switch-to-buffer old-buffer-name)
+      (other-window 1)
+      (golden-ratio)
+      (find-file new-directory-name)))
+#+END_SRC
+
+** Quick open some special files
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+  (bind-key "C-c ffs" 'ff-scratch)
+  (bind-key "C-c ffe" 'ff-elisp-source)
+  (bind-key "C-c ffi" 'ff-init-org)
+
+  (defun ff-init-org ()
+    (interactive)
+    (find-file (expand-file-name "emacs-init.org" user-emacs-directory)))
+
+  (defun ff-elisp-source ()
+    (interactive)
+    (let ((src-buffer-name "*Org Src emacs-init.org[ emacs-lisp ]*"))
+      (if (get-buffer src-buffer-name)
+	  (progn
+	    (switch-to-buffer src-buffer-name)
+	    (message ""))
+	(message "%s" "No Org Src buffer"))))
+
+  (defun ff-scratch ()
+    (interactive)
+    (switch-to-scratch-buffer))
+#+END_SRC
+
+** find-file usually files
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c ff" 'find-file-usually-files)
+
+  (defun find-file-usually-files ()
+    (interactive)
+    (let ((usually-files (list user-emacs-init-org
+			       emacs-init-el
+			       "*scratch*"
+			       "*Org Src emacs-init.org[ emacs-lisp ]*"
+			       "*Messages*"
+			       )))
+
+      (ivy-read "find file:" usually-files
+		:action #'find-file-or-buffer)))
+
+  (defun find-file-or-buffer (file-or-buffer-name)
+    (if (get-buffer file-or-buffer-name)
+	(switch-to-buffer file-or-buffer-name)
+      (if (file-exists-p file-or-buffer-name)
+	  (find-file file-or-buffer-name)
+	(message "Not found %s" file-or-buffer-name))
       ))
 #+END_SRC
 
-** ace-link
-ref: https://github.com/abo-abo/ace-link
+* Multi-term
+這個比 eshell 好用。原因很簡單…習慣！
 
-#+BEGIN_SRC emacs-lisp
-  (req-package ace-link
+參考：
+1. http://blog.jobbole.com/51598/
+2. https://www.emacswiki.org/emacs/MultiTerm
+3. http://rawsyntax.com/blog/learn-emacs-zsh-and-multi-term/
+4. http://paralambda.org/2012/07/02/using-gnu-emacs-as-a-terminal-emulator/
+5. http://emacs-fu.blogspot.tw/2010/06/console-apps-in-emacs-with-multi-term.html
+
+將 shell 設為 zsh，呼叫 shell 的快捷鍵設為 <C-x  t>。
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package multi-term
+    :demand popwin
+    :bind (("C-x t" . multi-term-next)
+	   ("C-x T" . multi-term)
+	   ("C-!" . popwin-term:multi-term))
+    :init
+    (setq multi-term-program "/bin/zsh")
     :config
-    (ace-link-setup-default "f"))
+    <<term-config>>)
+  #+END_SRC
+
+** term-mode-hook
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
+  (add-hook 'term-mode-hook
+	    (lambda ()
+	      (add-to-list 'term-bind-key-alist '("M-[" . multi-term-prev))
+	      (add-to-list 'term-bind-key-alist '("M-]" . multi-term-next))
+	      (setq term-buffer-maximum-size 10000)
+	      (define-key term-raw-map (kbd "C-y") 'term-paste)
+	      ))
 #+END_SRC
 
-** Smart home
-按 home 鍵，可讓遊標回到行首或第一個非空字元
+** popup multi-term
+C-! 以 popup window 的方式在下方開一個 term 視窗
 
-ref: https://github.com/tjarvstrand/config-files/blob/master/.emacs.d/lib/smart-beginning-of-line.el
-
-#+BEGIN_SRC emacs-lisp
-  (defun smart-beginning-of-line ()
-    "Move point to first non-whitespace character or beginning-of-line.
-
-  Move point to the first non-whitespace character on this line.
-  If point was already at that position, move point to beginning of line."
-
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
+  (defun popwin-term:multi-term ()
     (interactive)
-    (let ((oldpos (point)))
-      (back-to-indentation)
-      (and (= oldpos (point))
-           (beginning-of-line))))
 
-  (bind-key [home] 'smart-beginning-of-line)
-  (bind-key* "C-a" 'smart-beginning-of-line)
+    (popwin:display-buffer-1
+     (or (get-buffer "*terminal*")
+	 (save-window-excursion
+           (call-interactively 'multi-term)))
+     :default-config-keywords '(:position :bottom :height 12 :stick t)))
 #+END_SRC
-
-** Find symbol at point
-
-Source: http://blog.jorgenschaefer.de/2012/11/emacs-search-for-symbol-at-point.html
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-d" 'fc/isearch-yank-symbol isearch-mode-map)
-
-  ;; (define-key isearch-mode-map (kbd "C-d")
-  ;; 'fc/isearch-yank-symbol)
-
-  (defun fc/isearch-yank-symbol ()
-    "Yank the symbol at point into the isearch minibuffer.
-
-  C-w does something similar in isearch, but it only looks for
-  the rest of the word. I want to look for the whole string. And
-  symbol, not word, as I need this for programming the most."
-
-    (interactive)
-    (isearch-yank-string
-     (save-excursion
-       (when (and (not isearch-forward)
-                  isearch-other-end)
-         (goto-char isearch-other-end))
-       (thing-at-point 'symbol))))
-#+END_SRC
-
+* Editing                                                            :edit:
 ** Delete whole line or multi-lines
 
 ref: http://endlessparentheses.com/kill-entire-line-with-prefix-argument.html
@@ -1152,9 +1740,10 @@ C-3 C-k 刪去 3 行
 ** hungry-delete
 
 #+BEGIN_SRC emacs-lisp
-  (req-package hungry-delete
+  (use-package hungry-delete
     :diminish ""
-    :init (global-hungry-delete-mode 1))
+    :init
+    (global-hungry-delete-mode 1))
 #+END_SRC
 
 ** move-text
@@ -1214,14 +1803,14 @@ ref: http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up
 用 M-x undo-tree-visualize (C-x u) 看 undo-tree，很直覺。
 
 #+BEGIN_SRC emacs-lisp
-  (req-package undo-tree
-    :diminish ""
+  (use-package undo-tree
+    :diminish undo-tree-mode
     :init
     (progn
-      (setq undo-tree-auto-save-history t)
+      (global-undo-tree-mode)
       (setq undo-tree-history-directory-alist
-            `((".*" . ,(expand-file-name "undo" user-cache-directory))))
-      (global-undo-tree-mode)))
+	    `(("." . ,(file-name-as-directory (expand-file-name "undo-tree" user-cache-directory)))))
+      (setq undo-tree-auto-save-history t)))
 #+END_SRC
 
 ** expand-region
@@ -1235,64 +1824,11 @@ ref: https://github.com/magnars/expand-region.el
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "M-SPC" 'set-mark-command)
-  (req-package expand-region
+  (use-package expand-region
     :bind ("C-=" . er/expand-region))
 #+END_SRC
 
-** smartparens
-ref: https://github.com/Fuco1/smartparens
-ref: https://ebzzry.github.io/emacs-pairs.html
-
-#+BEGIN_SRC emacs-lisp
-  (req-package smartparens-config
-    :ensure smartparens
-    :init
-    (progn
-      (smartparens-global-mode t)
-      (show-smartparens-global-mode t))
-    :config
-    (diminish 'smartparens-mode "ⓟ")
-    )
-#+END_SRC
-
-** Emulation of the vi % command
-ref: https://www.emacswiki.org/emacs/NavigatingParentheses
-
-#+BEGIN_SRC emacs-lisp
-  (defun goto-match-paren (arg)
-    "Go to the matching parenthesis if on parenthesis, otherwise insert %.
-    vi style of % jumping to matching brace."
-    (interactive "p")
-    (cond ((looking-at "\\s\(") (forward-list 1) (backward-char 1))
-          ((looking-at "\\s\)") (forward-char 1) (backward-list 1))
-          (t (self-insert-command (or arg 1)))))
-
-  (bind-key "%" 'goto-match-paren)
-#+END_SRC
-
-** iedit
-
-[[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
-
-Normal scenario of Iedit mode is like:
-
-- Highlight certain contents - by press C-; (The default key binding)
-  All occurrences of a symbol, string or a rectangle in the buffer or
-  a region may be highlighted corresponding to current mark, point and
-  prefix argument.  Refer to the document of `iedit-mode’ for
-  details.
-
-- Edit one of the occurrences The change is applied to other
-  occurrences simultaneously.
-
-- Finish - by pressing C-; again
-
-#+BEGIN_SRC emacs-lisp
-  (req-package iedit
-    :init (setq iedit-unmatched-lines-invisible-default t))
-#+END_SRC
-
-** comment/uncomment-line
+** comment/uncomment line
 
 Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
 
@@ -1313,21 +1849,264 @@ Source: http://endlessparentheses.com/implementing-comment-line.html?source=rss
   (bind-key "M-;" #'endless/comment-line)
 #+END_SRC
 
+** smartparens
+ref: https://github.com/Fuco1/smartparens
+ref: https://ebzzry.github.io/emacs-pairs.html
+
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens-config
+    :ensure smartparens
+    :init
+    (progn
+      (smartparens-global-mode t)
+      (show-smartparens-global-mode t))
+    :config
+    (progn
+      (diminish 'smartparens-mode "ⓟ")
+      ))
+#+END_SRC
+
 ** aggressive-indent
+
 ref: http://endlessparentheses.com/permanent-auto-indentation.html
 
 非文字模式下，自動縮排。
 
 #+BEGIN_SRC emacs-lisp
-  (req-package aggressive-indent
+  (use-package aggressive-indent
     :diminish " Ⓘ"
-    :init (global-aggressive-indent-mode))
+    :init
+    (global-aggressive-indent-mode))
 #+END_SRC
 
+** multi-cursor
+
+ref: http://emacsrocks.com/e13.html
+
+#+BEGIN_SRC emacs-lisp
+  (use-package multiple-cursors
+    :bind (("C-S-c C-S-c" . mc/edit-lines)
+           ("C->" . mc/mark-next-like-this)
+           ("C-<" . mc/mark-previous-like-this)
+           ("C-c C-<" . mc/mark-all-like-this)
+           ))
+#+END_SRC
+
+** iedit
+
+[[https://github.com/victorhge/iedit][iedit]] let you edit multiple regions in the same way simultaneously.
+
+Normal scenario of Iedit mode is like:
+
+- Highlight certain contents - by press C-; (The default key binding)
+  All occurrences of a symbol, string or a rectangle in the buffer or
+  a region may be highlighted corresponding to current mark, point and
+  prefix argument.  Refer to the document of `iedit-mode’ for
+  details.
+
+- Edit one of the occurrences The change is applied to other
+  occurrences simultaneously.
+
+- Finish - by pressing C-; again
+
+co-work with 'narrow or widen dwim' as below.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package iedit)
+#+END_SRC
+
+** narrow or widen dwim
+
+Emacs narrow-or-widen-dwim · Endless Parentheses
+http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html
+
+#+BEGIN_SRC emacs-lisp
+  (defun narrow-or-widen-dwim (p)
+    "Widen if buffer is narrowed, narrow-dwim otherwise.
+  Dwim means: region, org-src-block, org-subtree, or
+  defun, whichever applies first. Narrowing to
+  org-src-block actually calls `org-edit-src-code'.
+
+  With prefix P, don't widen, just narrow even if buffer
+  is already narrowed."
+    (interactive "P")
+    (declare (interactive-only))
+    (cond ((and (buffer-narrowed-p) (not p)) (widen))
+          ((region-active-p)
+           (narrow-to-region (region-beginning)
+                             (region-end)))
+          ((derived-mode-p 'org-mode)
+           ;; `org-edit-src-code' is not a real narrowing
+           ;; command. Remove this first conditional if
+           ;; you don't want it.
+           (cond ((ignore-errors (org-edit-src-code) t)
+                  (delete-other-windows))
+		 ((ignore-errors (org-narrow-to-block) t))
+		 (t (org-narrow-to-subtree))))
+          ((derived-mode-p 'latex-mode)
+           (LaTeX-narrow-to-environment))
+          (t (narrow-to-defun))))
+
+  ;; (define-key endless/toggle-map "n"
+  ;; #'narrow-or-widen-dwim)
+  ;; This line actually replaces Emacs' entire narrowing
+  ;; keymap, that's how much I like this command. Only
+  ;; copy it if that's what you want.
+  (define-key ctl-x-map "n" #'narrow-or-widen-dwim)
+  (add-hook 'LaTeX-mode-hook
+            (lambda ()
+              (define-key LaTeX-mode-map "\C-xn"
+		nil)))
+#+END_SRC
+
+** ivy
+看起來比 helm 好看些，輕量且快速。
+
+useful keybindings:
+
+- M-i ivy-insert-current
+- M-j ivy-yank-word (word)
+- M-n ivy-next-history-element (symbol)
+- rebind M-. from find-tag to ivy-next-history-element on ivy-minibuffer-map
+
+進入 ivy-git-grep C-M-n/p 上下移動選單中的光標，檔案內容會跳到相對應的位置。
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ivy
+    :diminish ""
+    :bind
+    (("C-c C-r" . ivy-resume)
+     :map ivy-minibuffer-map
+     ("M-." . ivy-next-history-element))
+    :config
+    (progn
+      (ivy-mode 1)
+      (setq ivy-use-virtual-buffers t)
+      (setq ivy-display-style 'fancy)
+      (setq completion-in-region-function 'ivy-completion-in-region)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package swiper
+    :bind
+    ("C-s" . swiper))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package counsel
+    :ensure ag
+    :bind
+    (("M-y" . counsel-yank-pop)
+     ("M-x" . counsel-M-x)
+     ("C-x f" . counsel-recentf)
+     ("C-x l" . counsel-locate)
+     ("C-c k" . counsel-ag)
+     ("C-c j" . counsel-git-grep)
+     ("C-:" . counsel-company)
+     ("C-x C-\\" . counsel-goto-recent-directory)
+     ("C-x \\" . counsel-goto-recent-directory-other-window)
+     :map ivy-minibuffer-map
+     ("M-y" . ivy-next-line)))
+#+END_SRC
+
+** Flycheck
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :diminish (flycheck-mode . " ⓢ")
+    :config
+    (progn
+      (add-hook 'after-init-hook 'global-flycheck-mode)
+      (setq flycheck-indication-mode 'right-fringe)
+      (define-key flycheck-mode-map flycheck-keymap-prefix nil)
+      (setq flycheck-keymap-prefix (kbd "C-c v"))
+      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
+#+END_SRC
+
+** TODO Spell checking
+*** Ispell
+
+if want to use "hunspell", then must install hunspell and hunspell_en in OS.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ispell
+    :config                               ;
+    (progn
+      (cond
+       ((executable-find "aspell")
+	(setq ispell-program-name "aspell")
+	(setq ispell-extra-args   '("--sug-mode=ultra"
+                                    "--lang=en_US"
+                                    "--ignore=2"
+                                    "--run-together"
+                                    "--run-together-limit=5"
+                                    "--run-together-min=2")))
+       ;; how to fire 'hunspell'?
+       ((executable-find "hunspell")
+	(setq ispell-program-name "hunspell")
+	(setq ispell-extra-args   '("-d en_US"))
+	(setq ispell-local-dictionary-alist
+              '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
+		("zh_TW" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)))))
+
+      (setq ispell-local-dictionary "en_US")
+      (setq ispell-silently-savep t)))
+#+END_SRC
+
+*** flyspell
+
+=C-.= corrects word at point.
+=C-,​= to jump to next misspelled word.
+=M-$= correct word at point
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package flyspell
+    :demand ispell
+    :diminish " Ⓢ"
+    :init
+    (progn
+      (add-hook 'prog-mode-hook #'turn-on-flyspell)
+      (add-hook 'text-mode-hook #'turn-on-flyspell)
+
+      (dolist (hook '(elfeed-search-mode-hook change-log-mode-hook log-edit-mode-hook))
+	(add-hook hook (lambda () (flyspell-mode -1)))))
+
+    :config (unbind-key "C-;" flyspell-mode-map))
+#+END_SRC
+
+*** flyspell-correct-ivy
+
+#+BEGIN_SRC emacs-lisp
+  (use-package flyspell-correct-ivy
+    :demand (flyspell ivy flyspell-correct)
+    :bind (:map flyspell-mode-map
+                ("M-$" . flyspell-correct-word-generic))
+    :init
+    (progn
+      (setq flyspell-correct-interface 'flyspell-correct-ivy)
+      ;; (bind-keys :map flyspell-mode-map
+      ;; ("M-$" . flyspell-correct-word-generic))
+      ;; bind flyspell-correct-word-generic
+      ;; (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
+      ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
+      ))
+#+END_SRC
+
+*** Make spell-checking tool ignore some org-mode section
+
+see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-org-mode
+
+#+BEGIN_SRC emacs-lisp
+  (eval-after-load 'ispell
+    '(progn
+       (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+       (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+       ))
+#+END_SRC
 ** Company mode
 
 #+BEGIN_SRC emacs-lisp
-  (req-package company
+  (use-package company
     :diminish " ⓐ"
     :init (add-hook 'after-init-hook 'global-company-mode)
     :config
@@ -1339,20 +2118,23 @@ ref: http://endlessparentheses.com/permanent-auto-indentation.html
       (setq company-minimum-prefix-length 2)
       (setq company-echo-delay 0)
 
-      (add-to-list 'company-backends 'company-ispell t)
-      ))
+      (add-to-list 'company-backends 'company-ispell t)))
 #+END_SRC
 
 *** Add quickhelp in company-mode
 ref: https://github.com/expez/company-quickhelp
 
 #+BEGIN_SRC emacs-lisp
-  (req-package company-quickhelp
-    :require company
-    :config (company-quickhelp-mode 1))
+  (use-package company-quickhelp
+    :demand company
+    :init (company-quickhelp-mode 1))
 #+END_SRC
 
 *** keybindings
+
+When the completion candidates are shown,
+<f1> to display the documentation for the selected candidate,
+C-w  to see its source. Not all back-ends support this.
 
 M-n/p select up/down
 <return> to complete
@@ -1362,141 +2144,6 @@ C-r
 C-o
 <f1> to dispaly the documentation
 <C-w> to see its source
-** Flycheck
-
-#+BEGIN_SRC emacs-lisp
-  (req-package flycheck
-    :diminish (flycheck-mode . " ⓢ")
-    :config
-    (progn
-      (add-hook 'after-init-hook 'global-flycheck-mode)
-      (setq flycheck-indication-mode 'right-fringe)
-      (define-key flycheck-mode-map flycheck-keymap-prefix nil)
-      (setq flycheck-keymap-prefix (kbd "C-c v"))
-      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
-#+END_SRC
-** Spell checking
-*** Ispell
-
-if want to use "hunspell", then must install hunspell and hunspell_en in OS.
-
-#+BEGIN_SRC emacs-lisp
-  (req-package ispell
-    :loader :built-in
-    :config                               ;
-    (progn
-      (cond
-       ((executable-find "aspell")
-        (setq ispell-program-name "aspell")
-        (setq ispell-extra-args   '("--sug-mode=ultra"
-                                    "--lang=en_US"
-                                    ;; "--ignore=2"
-                                    ;; "--run-together"
-                                    ;; "--run-together-limit=5"
-                                    ;; "--run-together-min=2"
-                                    )))
-       ;; how to fire 'hunspell'?
-       ((executable-find "hunspell")
-        (setq ispell-program-name "hunspell")
-        (setq ispell-extra-args   '("-d en_US"))
-        (setq ispell-local-dictionary-alist 
-              '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
-                ("zh_TW" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
-                ))
-        )
-       )
-      (setq ispell-local-dictionary "en_US")
-      (setq ispell-silently-savep t)
-      ))
-#+END_SRC
-
-*** flyspell
-
-=C-.= corrects word at point.
-=C-,​= to jump to next misspelled word.
-=M-$= correct word at point
- 
-#+BEGIN_SRC emacs-lisp
-  (req-package flyspell
-    :require (ispell)
-    :diminish " Ⓢ"
-    :init
-    (progn
-      ;; (add-hook 'prog-mode-hook #'flyspell-prog-mode) 
-      (add-hook 'prog-mode-hook #'turn-on-flyspell)
-      (add-hook 'text-mode-hook #'turn-on-flyspell)
-      (add-hook 'org-mode-hook  #'turn-on-flyspell))
-    :config (unbind-key "C-;" flyspell-mode-map))
-#+END_SRC
-
-*** flyspell-correct-ivy
-
-#+BEGIN_SRC emacs-lisp
-  (req-package flyspell-correct-ivy
-    :defer 5
-    :require (flyspell ivy flyspell-correct)
-    :bind (:map flyspell-mode-map
-                ("M-$" . flyspell-correct-word-generic))
-    :config
-    (progn
-      (setq flyspell-correct-interface 'flyspell-correct-ivy)
-      ;; (bind-keys :map flyspell-mode-map 
-      ;; ("M-$" . flyspell-correct-word-generic))
-      ;; bind flyspell-correct-word-generic
-      ;; (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
-      ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
-      ))
-#+END_SRC
-
-*** Make spell-checking tool ignore some org-mode section
-see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-org-mode
-
-#+BEGIN_SRC emacs-lisp
-  (eval-after-load 'ispell
-    '(progn
-       (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
-       (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
-       ))
-#+END_SRC
-
-** popwin
-
-#+BEGIN_SRC emacs-lisp
-  (req-package popwin
-    :init
-    (progn
-      (setq helm-popwin
-            '(("*Flycheck errors*" :height 10)
-              ("*Helm Find Files*" :height 0.3)
-              ("^\*helm.+\*$" :regexp t :height 15))))
-    :config
-    (progn
-      (popwin-mode 1)
-      (push '("*helm semantic/imenu*" :width 0.382 :position left) popwin:special-display-config)
-      (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
-      ))
-#+END_SRC
-
-** Unbind-key
-#+BEGIN_SRC emacs-lisp
-  (unbind-key "C-\\")
-  (unbind-key "C-z")
-  (unbind-key "C-x C-z")
-  (unbind-key "C-x m")
-#+END_SRC
-
-** Which-key
-#+BEGIN_SRC emacs-lisp
-  (req-package which-key
-    :diminish ""
-    :config
-    (progn
-      (setq which-key-idle-delay 0.5)
-      (which-key-mode)
-      (which-key-setup-side-window-bottom)
-      (setq which-key-side-window-max-width 0.25)))
-#+END_SRC
-
 ** discover-my-major
 
 [[https://github.com/steckerhalter/discover-my-major][discover-my-major]] make you discover key bindings and their meaning for the
@@ -1505,112 +2152,159 @@ current Emacs major mode.
 GitHub: https://github.com/steckerhalter/discover-my-major
 
 #+BEGIN_SRC emacs-lisp
-  (req-package discover-my-major
+  (use-package discover-my-major
     :bind (("C-h C-m" . discover-my-major)
            ("C-h M-m" . discover-my-mode)))
 #+END_SRC
-
-* Completion
-** ivy
-看起來比 helm 好看些，且快速
+** Which-key
+#+BEGIN_SRC emacs-lisp
+  (use-package which-key
+    :diminish ""
+    :init
+    (progn
+      (setq which-key-idle-delay 0.5)
+      (which-key-mode)
+      (which-key-setup-side-window-bottom)
+      (setq which-key-side-window-max-width 0.25)))
+#+END_SRC
+** Unbind keys
 
 #+BEGIN_SRC emacs-lisp
-  (req-package ivy
+  (unbind-key "C-\\")
+  (unbind-key "C-z")
+  (unbind-key "C-x C-z")
+  (unbind-key "C-x m")
+#+END_SRC
+
+** TODO cycle replace hyphen, underscore, space, dot
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(defun xah-cycle-hyphen-underscore-space ( &optional *begin *end )
+  "Cycle {underscore, space, hypen} chars in selection or inside quote/bracket or line.
+When called repeatedly, this command cycles the {“_”, “-”, “ ”} characters, in that order.
+
+The region to work on is by this order:t
+① if there's active region (text selection), use that.
+② If cursor is string quote or any type of bracket, and is within current line, work on that region.
+③ else, work on current line.
+
+URL `http://ergoemacs.org/emacs/elisp_change_space-hyphen_underscore.html'
+Version 2016-11-11"
+  (interactive)
+  ;; this function sets a property 「'state」. Possible values are 0 to length of -charArray.
+  (let (-p1 -p2)
+    (if (and (not (null *begin)) (not (null *end)))
+        (progn (setq -p1 *begin -p2 *end))
+      (if (use-region-p)
+          (setq -p1 (region-beginning) -p2 (region-end))
+        (if (nth 3 (syntax-ppss))
+            (save-excursion
+              (skip-chars-backward "^\"")
+              (setq -p1 (point))
+              (skip-chars-forward "^\"")
+              (setq -p2 (point)))
+          (let (
+                (-skipChars
+                 (if (boundp 'xah-brackets)
+                     (concat "^\"" xah-brackets)
+                   "^\"<>(){}[]“”‘’‹›«»「」『』【】〖〗《》〈〉〔〕（）")))
+            (skip-chars-backward -skipChars (line-beginning-position))
+            (setq -p1 (point))
+            (skip-chars-forward -skipChars (line-end-position))
+            (setq -p2 (point))
+            (set-mark -p1)))))
+    (let* ((-inputText (buffer-substring-no-properties -p1 -p2))
+           (-charArray ["_" "-" "." " "])
+           (-length (length -charArray))
+           (-regionWasActive-p (region-active-p))
+           (-nowState
+            (if (equal last-command this-command )
+                (get 'xah-cycle-hyphen-underscore-space 'state)
+              0 ))
+           (-changeTo (elt -charArray -nowState)))
+      (save-excursion
+        (save-restriction
+          (narrow-to-region -p1 -p2)
+          (goto-char (point-min))
+          (while
+              (search-forward-regexp
+               (elt -charArray (% (+ -nowState 2) -length))
+               ;; (concat
+               ;;  (elt -charArray (% (+ -nowState 1) -length))
+               ;;  "\\|"
+               ;;  (elt -charArray (% (+ -nowState 2) -length)))
+               (point-max)
+               'NOERROR)
+            (replace-match -changeTo 'FIXEDCASE 'LITERAL))))
+      (when (or (string= -changeTo " ") -regionWasActive-p)
+        (goto-char -p2)
+        (set-mark -p1)
+        (setq deactivate-mark nil))
+      (put 'xah-cycle-hyphen-underscore-space 'state (% (+ -nowState 1) -length)))))
+#+END_SRC
+* Cursor move
+** avy
+ref: https://github.com/abo-abo/avy
+
+#+BEGIN_SRC emacs-lisp
+  (use-package avy
+    :bind (("M-g z" . avy-goto-char)
+           ("M-g f" . avy-goto-line)))
+#+END_SRC
+
+** ace-pinyin
+ref: https://github.com/cute-jumper/ace-pinyin
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ace-pinyin
+    :demand avy
     :diminish ""
-    :require (counsel swiper ag)
-    :bind (("C-s" . swiper)
-           ("M-x" . counsel-M-x)
-           ("C-x f" . ivy-recentf)
-           ("C-x l" . counsel-locate)
-           ("C-c k" . counsel-ag)
-           ("C-:" . counsel-company)
-           )
     :config
     (progn
-      (ivy-mode 1)
-      (setq ivy-use-virtual-buffers t)
-      (setq completion-in-region-function 'ivy-completion-in-region)
-      ))
+      (ace-pinyin-global-mode +1)
+      (setq ace-pinyin-simplified-chinese-only-p nil)))
 #+END_SRC
 
-** Search at point on swiper
+** Smart home
+按 home 鍵，可讓遊標回到行首或第一個非空字元
+
+ref: https://github.com/tjarvstrand/config-files/blob/master/.emacs.d/lib/smart-beginning-of-line.el
 
 #+BEGIN_SRC emacs-lisp
-  (eval-after-load 'swiper
-    '(progn
-       (define-key swiper-map (kbd "C-.")
-         (lambda () 
-           (interactive)
-           (insert (format "%s" (with-ivy-window (thing-at-point 'word))))))
-       (define-key swiper-map (kbd "M-.")
-         (lambda ()
-           (interactive)
-           (insert (format "%s" (with-ivy-window (thing-at-point 'symbol))))))
-       ))
+  (defun smart-beginning-of-line ()
+    "Move point to first non-whitespace character or beginning-of-line.
+
+  Move point to the first non-whitespace character on this line.
+  If point was already at that position, move point to beginning of line."
+
+    (interactive)
+    (let ((oldpos (point)))
+      (back-to-indentation)
+      (and (= oldpos (point))
+           (beginning-of-line))))
+
+  (bind-key [home] 'smart-beginning-of-line)
+  (bind-key* "C-a" 'smart-beginning-of-line)
 #+END_SRC
 
-** Open recent directory with dired via ivy
+** link-hint
+
+ref: https://github.com/noctuid/link-hint.el
+
 #+BEGIN_SRC emacs-lisp
-  (eval-after-load 'ivy
-    '(progn
-       (defun counsel-goto-recent-directory ()
-         "Open recent directory with dired"
-
-         (interactive)
-         (unless recentf-mode (recentf-mode 1))
-         (let ((collection
-                (delete-dups
-                 (append (mapcar 'file-name-directory recentf-list)
-                         ;; fasd history
-                         (if (executable-find "fasd")
-                             (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
-           (ivy-read "directories:" collection :action 'dired)))
-
-       (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
-       ))
+  (use-package link-hint
+    :bind ("C-c ol" . link-hint-open-link)
+    :init
+    (dolist (map (list help-mode-map Info-mode-map))
+        (bind-key "f" 'link-hint-open-link map)))
 #+END_SRC
-
-** ivy swoop like helm-swoop
-ref: https://github.com/abo-abo/swiper/issues/3
-ref: https://github.com/ShingoFukuyama/emacs-swoop
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package swoop
-    :config
-    (define-key isearch-mode-map (kbd "C-o") 'swoop-from-isearch)
-    )
-#+END_SRC
-
-** helm
-
-Helm offers a command called =helm-mini= that opens a =helm= buffer
-populated with recent files and currently open buffers. I want Helm
-everywhere, so instead we'll activate =helm-mode= and work from there.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package helm-config 
-    :require (popwin async)
-    :diminish helm-mode
-    :init (progn
-            (setq helm-ff-auto-update-initial-value)
-            (setq popwin:special-display-config
-                  (append helm-popwin
-                          popwin:special-display-config))
-            ;;(bind-key* "M-x" 'helm-M-x)
-            ;;(bind-key* "C-x f" 'helm-recentf)
-            ;; (bind-key* "C-x b" 'helm-mini)
-            ;; (bind-key* "C-x C-f" 'helm-find-files)
-            )
-    ;; :config (helm-mode 1)
-    )
-#+END_SRC
+** TODO jump between matched parens
 
 * Project relative function                                         :project:
-** TODO Magit
+** Magit (setup)
 
 #+BEGIN_SRC emacs-lisp
-  (req-package magit
-    :require (ivy)
+  (use-package magit
     :init
     (progn
       (setq magit-last-seen-setup-instructions "1.4.0")
@@ -1621,30 +2315,41 @@ everywhere, so instead we'll activate =helm-mode= and work from there.
       (setq magit-completing-read-function 'ivy-completing-read)
       (setq magit-default-tracking-name-function 'magit-default-tracking-name-branch-only))
     :bind ("C-c g" . magit-status))
+#+END_SRC
 
-    (req-package magit-filenotify
-      :require magit
+** magit-filenotify
+
+#+BEGIN_SRC emacs-lisp
+    (use-package magit-filenotify
       :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
 #+END_SRC
-** TODO meld (hind shell command buffer after run)
+
+** meld (hind shell command buffer after run)
 Using =M-x call-meld= to find the differences from last commit.
+
 #+BEGIN_SRC emacs-lisp
   (defun call-meld ()
     (interactive)
     (shell-command (format "meld %s" (buffer-file-name)))
+    (winner-undo)
     )
+  (bind-key "C-c fd" 'call-meld)
 #+END_SRC
 
-** TODO diff-hl (keybinds to navigate the position of differences)
+** diff-hl
 
+keybinds to navigate the position of differences
 可以顯示出尚未 stage 的程式碼
 
 #+BEGIN_SRC emacs-lisp
-  (req-package diff-hl
-    :config (global-diff-hl-mode))
+  (use-package diff-hl
+    :init
+    (progn (global-diff-hl-mode +1)
+	   (diff-hl-dired-mode 1)))
 #+END_SRC
 
-** TODO ediff
+** ediff
+
 #+BEGIN_SRC emacs-lisp
   (setq ediff-window-setup-function 'ediff-setup-windows-plain)
   (setq ediff-split-window-function 'split-window-vertically)
@@ -1655,237 +2360,75 @@ Using =M-x call-meld= to find the differences from last commit.
 ** projectile
 
 #+BEGIN_SRC emacs-lisp
-  (req-package projectile
-    :require (ivy)
+  (use-package projectile
     :diminish ""
     :init
     (progn (projectile-global-mode)
            (setq projectile-completion-system 'ivy)))
 #+END_SRC
-
-* Interactive Commands
-** convert org, markdown, kindle file
-*** get major mode of current buffer
-
-#+BEGIN_SRC emacs-lisp
-  (defun current-buffer-mode()
-    "Return the major-mode associated with current buffer."
-
-    (with-current-buffer (buffer-name)
-      major-mode))
-#+END_SRC
-
-*** convert org-mode to pdf via pandoc
-#+BEGIN_SRC emacs-lisp
-  (defun org-to-pdf ()
-    "Conver org to pdf and open the pdf file."
-
-    (interactive)
-    (if (eq (current-buffer-mode) 'org-mode)
-        (progn
-          (let* ((pdf-name (concat (file-name-sans-extension buffer-file-name) ".pdf")))
-
-            (message "convert to %s" (file-name-nondirectory pdf-name))
-
-            (let* ((latex-engin "xelatex")
-                   (template "/home/mario/.pandoc/default.latex")
-                   (result (shell-command
-                            (format "pandoc %s --latex-engine %s --template %s -s -o %s"
-                                    buffer-file-name
-                                    latex-engin
-                                    template
-                                    pdf-name
-                                    ))))
-              (if (eq result 0)
-                  (find-file pdf-name)
-                (message result)))
-            ))
-      (message "Current buffer must be 'org-mode'!")))
-#+END_SRC
-
-*** convert markdown to orgmode via pandoc
-
-#+BEGIN_SRC emacs-lisp
-  (defun md-to-org ()
-    "Convert markdown to org for edit. Especially for evernote/geeknote."
-
-    (interactive)
-    (if (eq (current-buffer-mode) 'markdown-mode)
-        (let* ((default-directory "/mnt/lvm-data/Documents/")
-               (md-buffer-name (buffer-name))
-               (md-file-name (buffer-file-name))
-               (md-org-buffer (find-file (read-file-name "" default-directory)))
-               (md-org-file-name (buffer-file-name)))
-
-          (if (not (file-exists-p md-org-file-name))
-              (progn
-                (shell-command (format "pandoc -f markdown -t org -o %s %s"
-                                       md-org-file-name
-                                       md-file-name))
-                (revert-buffer nil t)
-                (goto-char (point-min))
-                (insert "#+TITLE:\n")
-                (save-buffer)
-                (kill-buffer md-buffer-name))
-            (message "%s is already exist." md-org-file-name)))
-      (message "Current buffer must be 'markdown-mode'!")))
-#+END_SRC
-
-*** send command to wpub via async
-
-#+BEGIN_SRC emacs-lisp
-(defun async-wpub (cmd)
-    (message "%s" cmd)
-    (let ((wpub-buffer "*async-wpub*")
-          (name "async-wpub"))
-      (start-file-process-shell-command name wpub-buffer cmd)
-      ))
-#+END_SRC
-
-*** send org-mode file to kindle via wpub
-#+BEGIN_SRC emacs-lisp
-
-  ;; send .org to my kindle via wpub.py
-  (defun org-to-kindle ()
-    "Send current buffer to kindle via wpub.py"
-
-    (interactive)
-
-    (if (eq (current-buffer-mode) 'org-mode)
-        (progn
-          (message "%s is sending..." (buffer-name))
-
-          ;; (set-buffer-file-coding-system 'utf-8-unix)
-          (let* ((wpub-temp-file (expand-file-name
-                                  (concat user-cache-directory (buffer-name))))
-                 (wpub-command (format "wpub -f org '%s'" wpub-temp-file))
-                 (str (buffer-substring-no-properties (point-max) 1)))
-
-            (with-temp-file wpub-temp-file
-              (insert str "\n"))
-
-            (async-wpub wpub-command)))
-
-      (message "Current buffer must be 'org-mode'!")))
-
-#+END_SRC
-
-*** TODO send url to kindle via wpub (add quit options)
-#+BEGIN_SRC emacs-lisp
-  (defun url-to-kindle (url)
-    (interactive)
-    (if url
-        (let* ((wpub-cmd-opencc (if (y-or-n-p "Convert to Traditional Chinese?")
-                                    "-o"
-                                  ""))
-               (wpub-command-for-async (format "wpub %s '%s'" wpub-cmd-opencc url)))
-          (async-wpub wpub-command-for-async))
-      )
-    )
-
-#+END_SRC
-
-*** eww to kindle via wpub
-#+BEGIN_SRC emacs-lisp
-  (defun eww-to-kindle ()
-    "send the content of current url to kindle via wpub"
-
-    (interactive)
-    (url-to-kindle eww-current-url)
-    )
-#+END_SRC
-
-*** send url or org to kindle
-#+BEGIN_SRC emacs-lisp
-(defun send-url-or-org-to-kindle ()
-    "Send content of current buffer to kindle"
-
-    (interactive)
-    (cond
-     ((not (eq eww-current-url nil)) (eww-to-kindle))
-     ((eq (current-buffer-mode) 'org-mode) (org-to-kindle))
-     ((eq (current-buffer-mode) 'elfeed-search-mode) (elfeed-search-to-kindle))
-     ((eq (current-buffer-mode) 'elfeed-show-mode) (elfeed-show-to-kindle))
-     (t (message "%s" "Can't send this page to kindle."))))
-#+END_SRC
-
-*** bindkeys
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c oo" 'md-to-org)
-  (bind-key "C-c op" 'org-to-pdf)
-  (bind-key "C-c ok" 'send-url-or-org-to-kindle)
-#+END_SRC
-
-** Insert stock ids at point
-Insert stock ids to '.elfeed.org' and read their RSS
-
-#+BEGIN_SRC emacs-lisp
-  (req-package esqlite
-    :config
-    (progn
-      (defun insert-stock-id-at-point ()
-        "Insert stock ids at point."
-
-        (interactive)
-
-        (if (string= ".elfeed.org" (buffer-name))
-            (let* ((db-name "/mnt/lvm-data/Programing/stock4/db/stock2.db")
-                   (sql-fetch-stock-ids "select s.sid, i.name from summary as s, stock_info as i where s.sid=i.sid and s.userid=\"mariolong\""))
-
-              (dolist (sid (esqlite-read db-name sql-fetch-stock-ids))
-                (insert (format "**** [[https://tw.stock.yahoo.com/rss/s/%s][%s-%s]]\n"
-                                (car sid) (car sid) (second sid)))))
-
-          (message "%s" "Must in '.elfeed.org'")))
-
-      (bind-key "C-c fi" 'insert-stock-id-at-point)
-      ))
-#+END_SRC
 * Internet relative functions                                      :internet:
-** helm-google
+** eww (Emacs Web broWser)
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package helm-google
-    :bind ("C-c hg" . helm-google))
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package eww
+    :defer 0
+    :bind (("C-c b" . browse-at-point))
+    :config
+    <<eww-config>>)
 #+END_SRC
 
-** eww (Emacs Web broWser)
-*** eww basic
-#+BEGIN_SRC emacs-lisp
-  (req-package eww
-    :defer 1
-    :loader :built-in
-    :config
-    (progn
-      (setq browse-url-browser-function 'eww-browse-url)
+*** Using google chrome as generic browser
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
+  (setq browse-url-browser-function 'eww-browse-url)
 
-      (setq browse-url-generic-program (executable-find "google-chrome-stable")
-            shr-external-browser 'browse-url-generic)
+  (setq browse-url-generic-program (executable-find "google-chrome-stable")
+        shr-external-browser 'browse-url-generic)
+#+END_SRC
 
-      (add-hook 'eww-mode-hook '(lambda ()
-                                  (toggle-truncate-lines nil)))
+*** using google search
+ref: http://emacs.stackexchange.com/questions/2955/how-to-customize-background-color-for-some-web-pages-opened-with-eww
 
-      ;; (unbind-key "g" eww-mode-map)
-      ;; (unbind-key "o" eww-mode-map)
-      (bind-keys :map eww-mode-map
-                 ;; ("gg" . beginning-of-buffer)
-                 ;; ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("l" . forward-char)
-                 ("h" . backward-char)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
-                 ("B" . eww-browse-with-external-browser)
-                 ;; ("f" . ace-link-eww)
-                 ("m" . endless/toggle-image-display)
-                 ("q" . eww-quit-reset-image-flag)
-                 ("H" . eww-back-url)
-                 ("L" . eww-forward-url)
-                 ("ok" . eww-to-kindle)
-                 ("oo" . eww-to-org)
-                 ("yy" . eww-copy-page-url))
-      ))
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
+  (setq eww-search-prefix "https://www.google.com/search?q=")
+  (setq shr-color-visible-luminance-min 70)
+#+END_SRC
+
+*** truncate lines
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
+  (add-hook 'eww-mode-hook '(lambda ()
+                              (toggle-truncate-lines nil)))
+#+END_SRC
+
+*** keybindings
+
+F: (eww-toggle-fonts) can be used to toggle whether to use variable-pitch fonts or not.
+R: (eww-readable) will try do identify the main textual parts of a web page and display only that,
+    leaving menus and the like off the page.
+S: will list all eww buffers, and allow managing them.
+
+C-c ok: send current page to kindle
+C-c oo: write current page as org-mode file
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
+  (bind-keys :map eww-mode-map
+	     ("f" . link-hint-open-link)
+	     ("j" . next-line)
+	     ("k" . previous-line)
+	     ("l" . forward-char)
+	     ("h" . backward-char)
+	     ("d" . scroll-up-command)
+	     ("e" . scroll-down-command)
+	     ("B" . eww-browse-with-external-browser)
+	     ("m" . endless/toggle-image-display)
+	     ("q" . eww-quit-reset-image-flag)
+	     ("H" . eww-back-url)
+	     ("L" . eww-forward-url)
+	     ("ok" . eww-to-kindle-directly)
+	     ("oo" . eww-to-org)
+	     ("yy" . eww-copy-page-url)
+	     ("yt" . eww-copy-current-title)
+	     ("yo" . eww-copy-title-url-org)
+	     ("yu" . eww-copy-title-url))
 #+END_SRC
 
 *** toggle image display
@@ -1898,17 +2441,14 @@ Insert stock ids to '.elfeed.org' and read their RSS
     (interactive)
     (setq endless/display-images t)
     ;; (quit-window)
-    (kill-buffer "*eww*")
-    )
+    (kill-buffer "*eww*"))
 
   (defvar-local endless/display-images t)
 
   (defun endless/toggle-image-display ()
     "Toggle images display on current buffer."
     (interactive)
-
-    (setq endless/display-images
-          (null endless/display-images))
+    (setq endless/display-images (null endless/display-images))
     (endless/backup-display-property endless/display-images))
 
   (defun endless/backup-display-property (invert &optional object)
@@ -1924,71 +2464,46 @@ Insert stock ids to '.elfeed.org' and read their RSS
            (pos (point-min))
            left prop)
       (while (and pos (/= pos (point-max)))
-        (if (get-text-property pos from object)
+	(if (get-text-property pos from object)
             (setq left pos)
           (setq left (next-single-property-change pos from object)))
           (if (or (null left) (= left (point-max)))
             (setq pos nil)
           (setq prop (get-text-property left from object))
           (setq pos (or (next-single-property-change left from object)
-                        (point-max)))
+			(point-max)))
           (when (eq (car prop) 'image)
             (add-text-properties left pos (list from nil to prop) object))))))
 
 #+END_SRC
-
-*** eww to org
-save current web page to org-mode
+*** eww browse at point
 
 #+BEGIN_SRC emacs-lisp
-  (defun eww-to-org ()
-    "save current page to org file from eww"
+  (defun my/thing-at-point-to-eww ()
+    (if mark-active
+	(s-trim (buffer-substring-no-properties (region-beginning) (region-end)))
+      (unless (setq-local ret (thing-at-point 'url))
+	(unless (setq-local ret (thing-at-point 'symbol))
+	  (setq-local ret "")))
+      ret))
 
-    (interactive)
-    (if (eq (current-buffer-mode) 'eww-mode)
-        (let* ((back-current-url eww-current-url)
-               (default-directory "/mnt/lvm-data/Documents/eww/")
-               (org-file-name (expand-file-name (concat eww-current-title ".org") default-directory)))
-
-          (write-file org-file-name)
-          (eww back-current-url)
-          (message "write file: %s" eww-to-org-file-name)
-          )))
-#+END_SRC
-*** TODO eww browse at point (add prefix key to open eww directly)
-
-#+BEGIN_SRC emacs-lisp
-  (defun browse-at-point ()
+  (defun browse-at-point (arg)
     "browse at point: selected region or url or single word
   if cursor at whitespace then call eww wait for input some thing."
 
-    (interactive)
+    (interactive "P")
 
-    (defun thing-at-point-to-eww ()
-      (unless (setq ret (thing-at-point 'url))
-        (unless (setq ret (thing-at-point 'symbol))
-          (setq ret (thing-at-point 'whitespace))
-          ))
-
-      (if (null ret)
-          (setq ret ""))
-
-      (s-trim ret))
-
-    (if mark-active
-        (setq thing (buffer-substring-no-properties (region-beginning) (region-end)))
-      (setq thing (thing-at-point-to-eww)))
-
-    (if (string= "" thing)
-        (call-interactively 'eww)
-      (eww thing)))
-
-  (bind-key "C-c b" 'browse-at-point)
+    (if (consp arg)
+	(call-interactively 'eww)
+      (let ((thing (my/thing-at-point-to-eww)))
+	(if (string= "" thing)
+	    (call-interactively 'eww)
+	  (eww thing)))))
 #+END_SRC
 
 *** Yahoo! dictionary
-
-#+BEGIN_SRC emacs-lisp
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
   (defun dictionary-at-point ()
     "find the definition from Yahoo Dictionary."
 
@@ -2001,185 +2516,724 @@ save current web page to org-mode
   (bind-key "C-c y" 'dictionary-at-point)
 #+END_SRC
 
-** elfeed
-*** elfeed basic
+*** org-eww-mode
+
+using org-eww to save current web page to org-mode in eww-mode
+
 #+BEGIN_SRC emacs-lisp
-  (req-package elfeed
+  (use-package org-eww
+    :ensure nil
+    :config
+    (defun eww-to-org ()
+      "Save eww current page to an org file"
+      (interactive)
+      (require 'org-eww)
+
+      (let* ((eww-org-default-directory "/mnt/lvm-data/Documents/eww/")
+             (org-file-name (expand-file-name (concat
+                                               (replace-regexp-in-string "\[ :　/\]" "-" (eww-current-title))
+                                               ".org")
+                                              eww-org-default-directory)))
+	(org-eww-copy-for-org-mode)
+	(switch-to-buffer (get-buffer-create org-file-name))
+	(yank)
+	(goto-char (point-min))
+	(insert "#+TITLE:\n#+AUTHOR:\n#+DATE:\n\n")
+	(write-file org-file-name)
+	)))
+#+END_SRC
+
+*** TODO 簡繁互換 in eww buffer
+
+#+BEGIN_SRC emacs-lisp
+
+#+END_SRC
+
+*** eww to org
+save current web page to org-mode
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun eww-to-org ()
+    "save current page to org file from eww"
+
+    (interactive)
+    (if (eq (current-buffer-mode) 'eww-mode)
+        (let* ((back-current-url (eww-current-url))
+               (default-directory "/mnt/lvm-data/Documents/eww/")
+               (org-file-name-o (expand-file-name (concat (eww-current-title) ".org") default-directory))
+               (org-file-name (replace-regexp-in-string " " "-" org-file-name-o)))
+
+          (write-file org-file-name)
+          (goto-char (point-min))
+          (insert "#+TITLE:\n#+AUTHOR:\n#+DATE:\n\n")
+          (show-all)
+          (write-file org-file-name)
+
+          (eww back-current-url)
+          (message "write file: %s" eww-to-org-file-name)
+          )))
+#+END_SRC
+
+*** get current data/title/source on EWW buffer for EMACS 25+
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-current-title nil
+    "Return title of the Web page the current EWW buffer is visiting."
+    (plist-get eww-data :title))
+
+  (defun eww-current-source ()
+    "Return source of the Web page the current EWW buffer is visiting."
+    (plist-get eww-data :source))
+#+END_SRC
+
+*** eww copy current title and url to kill-ring
+
+#+BEGIN_SRC emacs-lisp
+
+  (defun eww-copy-current-title ()
+    (interactive)
+    (yank-url-or-title (eww-current-title)))
+
+  (defun eww-copy-title-url ()
+    (interactive)
+    (yank-url-or-title (concat (eww-current-title) "\n" (eww-current-url))))
+
+  (defun eww-copy-title-url-org ()
+    (interactive)
+    (yank-url-or-tilte (org-make-link-string (eww-current-url) (eww-current-title))))
+
+  (defun eww-copy-current-source ()
+    (interactive)
+
+    (yank-url-or-title (eww-current-source)))
+
+#+END_SRC
+
+** elfeed
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package elfeed
     :bind ("C-c e" . elfeed)
     :config
-    (progn
-      (custom-set-faces
-       '(elfeed-search-unread-title-face ((t :inherit default)))
-       '(elfeed-search-title-face ((t :inherit font-lock-comment-face)))
-       '(elfeed-search-date-face ((t (:inherit font-lock-string-face))))
-       '(elfeed-search-feed-face ((t (:inherit font-lock-doc-face))))
-       '(elfeed-search-tag-face ((t (:inherit font-lock-constant-face))))
-       )
+    <<elfeed-config>>)
+#+END_SRC
 
-      (setq elfeed-search-filter "@1-weeks-ago +unread")
-      (setf url-queue-timeout 30)
+*** set faces
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (custom-set-faces
+   '(elfeed-search-unread-title-face ((t :inherit default)))
+   '(elfeed-search-title-face ((t :inherit font-lock-comment-face)))
+   '(elfeed-search-date-face ((t (:inherit font-lock-string-face))))
+   '(elfeed-search-feed-face ((t (:inherit font-lock-doc-face))))
+   '(elfeed-search-tag-face ((t (:inherit font-lock-constant-face))))
+   )
 
-      (add-hook 'elfeed-search-mode-hook
-                '(lambda() (progn
-                             (elfeed-update))))
+  (defface elfeed-search-starred-title-face
+    '((t :foreground "#cc6666"))
+    "Marks a starred Elfeed entry.")
 
-      (add-hook 'elfeed-new-entry-hook
-                '(lambda() (progn
-                             (elfeed-make-tagger :before "1 week ago"
-                                                 :remove 'unread))))
+  (defface elfeed-search-mustread-title-face
+    '((t :foreground "#cc6666"))
+    "Marks a mustread Elfeed entry.")
 
-      (defun elfeed-search-mark-all-read ()
-        "mark all feed as read in elfeed search mode"
+  (defface elfeed-search-it-title-face
+    '((t :foreground "#b5bd68"))
+    "Marks a news Elfeed entry.")
 
-        (interactive)
-        (mark-whole-buffer)
-        (elfeed-search-untag-all-unread)
-        )
+  (defface elfeed-search-finace-title-face
+    '((t :foreground "#8abeb7"))
+    "Marks a finace news Elfeed entry.")
 
-      (defun elfeed-search-mark-read ()
-        "mark current line to read and scroll screen down in elfeed search mode"
+  (defface elfeed-search-read-title-face
+    '((t :inherit font-lock-comment-face))
+    "Marks a finace news Elfeed entry.")
 
-        (interactive)
-        (elfeed-search-untag-all-unread)
-        (when (< (smooth-scroll-lines-below-point) smooth-scroll-margin)
-          (scroll-up-line))
-        )
+  (defface elfeed-search-junk-title-face
+    '((t :inherit font-lock-comment-face))
+    "Marks a junk Elfeed entry.")
 
-      (defun elfeed-entry-url (entry)
-        (and entry (elfeed-entry-link entry)))
+  ;; (push '(it elfeed-search-it-title-face) elfeed-search-face-alist)
+  ;; (push '(emacs elfeed-search-it-title-face) elfeed-search-face-alist)
+  ;; (push '(finace elfeed-search-finace-title-face) elfeed-search-face-alist)
+  (push '(starred elfeed-search-starred-title-face) elfeed-search-face-alist)
+  (push '(star elfeed-search-starred-title-face) elfeed-search-face-alist)
+  (push '(mustread elfeed-search-mustread-title-face) elfeed-search-face-alist)
+  ;; (push '(read elfeed-search-read-title-face) elfeed-search-face-alist)
+  ;; (push '(junk elfeed-search-junk-title-face) elfeed-search-face-alist)
 
-      (defun get-elfeed-search-url ()
-        (elfeed-entry-url (elfeed-search-selected :ignore-region)))
+  ;; (theme-color
+  ;; (background . "#1d1f21")
+  ;; (current-line . "#282a2e")
+  ;; (selection . "#373b41")
+  ;; (foreground . "#c5c8c6")
+  ;; (comment . "#969896")
+  ;; (red . "#cc6666")
+  ;; (orange . "#de935f")
+  ;; (yellow . "#f0c674")
+  ;; (green . "#b5bd68")
+  ;; (aqua . "#8abeb7")
+  ;; (blue . "#81a2be")
+  ;; (purple . "#b294bb"))
 
-      (defun get-elfeed-show-url ()
-        (elfeed-entry-url elfeed-show-entry))
+#+END_SRC
 
-      (defun copy-elfeed-search-url ()
-        "copy url to clipboard"
+*** using curl to get feeds
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (setq elfeed-use-curl t)
+#+END_SRC
 
-        (interactive)
-        (setq return-url (get-elfeed-search-url))
-        (message "%s" return-url)
-        (kill-new return-url))
+*** update feeds when enter elfeed first time
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (add-hook 'elfeed-search-mode-hook
+            '(lambda() (progn
+                         (elfeed-update))))
+#+END_SRC
 
-      (defun copy-elfeed-show-url ()
-        "copy url to clipboard"
+*** TODO when enter elfeed-show-mode then refresh first
+dont work because elfeed-show-mode run elfeed-show-refresh already
+*useless*
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb-ref elfeed-config
+  (defun my/elfeed-show-mode-hook ()
+    (message "%s" "My elfeed show hook")
+    (call-interactively 'elfeed-show-refresh))
 
-        (interactive)
-        (setq return-url (get-elfeed-show-url))
-        (message "%s" return-url)
-        (kill-new return-url))
+  (add-hook 'elfeed-show-mode-hook 'my/elfeed-show-mode-hook)
+#+END_SRC
 
-      (defun elfeed-search-to-kindle ()
-        "send current content to kindle"
+*** remove tag 'unread' if news was 1 week ago
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (add-hook 'elfeed-new-entry-hook
+            '(lambda() (progn
+                         (elfeed-make-tagger :before "1 week ago"
+                                             :remove 'unread))))
+#+END_SRC
 
-        (interactive)
-        (url-to-kindle (get-elfeed-search-url)))
+*** remove some uninteresting topic
+#+BEGIN_SRC emacs-lisp :tangle no
+(add-hook 'elfeed-new-entry-hook
+          (elfeed-make-tagger :entry-title "集中市場認購*"
+                              :add 'junk
+                              :remove 'unread))
+#+END_SRC
 
-      (defun elfeed-show-to-kindle ()
-        "send current content to kindle"
+*** keybindings
 
-        (interactive)
-        (url-to-kindle (get-elfeed-show-url)))
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (unbind-key "y" elfeed-search-mode-map)
+  (bind-keys :map elfeed-search-mode-map
+	     ("m" . elfeed-toggle-star)
+	     ("j" . next-line)
+	     ("k" . previous-line)
+	     ("l" . forward-char)
+	     ("h" . backward-char)
+	     ("f" . avy-goto-line)
+	     ("d" . scroll-up-command)
+	     ("e" . scroll-down-command)
+	     ("g" . elfeed-update)
+	     ("a" . my/cycle-elfeed-search-filter)
+	     ("R" . elfeed-search-mark-all-read)
+	     ("B" . elfeed-search-external-browser)
+             ("C-<return>" . elfeed-search-browse-url)
+	     ("yy" . copy-elfeed-search-url)
+	     ("yt" . copy-elfeed-search-title)
+	     ("yu" . copy-elfeed-search-title-url)
+	     ("yo" . copy-elfeed-search-org)
+	     ("w" . copy-elfeed-search-url)
+	     ("ok" . elfeed-search-to-kindle))
 
-      (defun elfeed-search-external-browser ()
-        "open current url via extenal browser"
+  (unbind-key "y" elfeed-show-mode-map)
+  (bind-keys :map elfeed-show-mode-map
+	     ("j" . next-line)
+	     ("k" . previous-line)
+	     ("l" . forward-char)
+	     ("h" . backward-char)
+	     ("f" . link-hint-open-link)
+	     ("d" . scroll-up-command)
+	     ("e" . scroll-down-command)
+	     ("B" . elfeed-show-external-browser)
+	     ("C-<return>" . elfeed-show-visit)
+	     ("yy" . copy-elfeed-show-url)
+	     ("yt" . copy-elfeed-show-title)
+	     ("yu" . copy-elfeed-show-title-url)
+	     ("yo" . copy-elfeed-show-org)
+	     ("w" . copy-elfeed-show-url)
+	     ("ok" . elfeed-show-to-kindle))
+#+END_SRC
 
-        (interactive)
-        (elfeed-search-browse-url t))
+*** set default search-filter
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (setq elfeed-search-filter "@1-weeks-ago +unread")
+#+END_SRC
 
-      (defun elfeed-show-external-browser ()
-        "open current url via extenal browser"
+*** reset to default filter
+#+BEGIN_SRC emacs-lisp
+  (defun elfeed-reset-to-default-filter ()
+    (interactive)
+    (elfeed-search-set-filter "@1-week-ago +unread"))
+#+END_SRC
 
-        (interactive)
-        (elfeed-show-visit t))
+*** cycle filters
 
-      ;; (unbind-key "g" elfeed-search-mode-map)
-      (bind-keys :map elfeed-search-mode-map
-                 ;; ("gg" . beginning-of-buffer)
-                 ;; ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("l" . forward-char)
-                 ("h" . backward-char)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
-                 ("g" . elfeed-update)
-                 ("R" . elfeed-search-mark-all-read)
-                 ("B" . elfeed-search-external-browser)
-                 ("y" . copy-elfeed-search-url)
-                 ("w" . copy-elfeed-search-url)
-                 ("ok" . elfeed-search-to-kindle))
+#+BEGIN_SRC emacs-lisp
+  (defun my/cycle-elfeed-search-filter ()
+    (interactive)
 
-      ;; (unbind-key "g" elfeed-show-mode-map)
-      (bind-keys :map elfeed-show-mode-map
-                 ;; ("gg" . beginning-of-buffer)
-                 ;; ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("l" . forward-char)
-                 ("h" . backward-char)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
-                 ("B" . elfeed-show-external-browser)
-                 ("y" . copy-elfeed-show-url)
-                 ("w" . copy-elfeed-show-url)
-                 ("ok" . elfeed-show-to-kindle))
+    (let* ((filters ["" "+emacs" "+it" "+finace" "-news" "+news1" "+news2"])
+	   (index-before
+	    (if (get 'my/cycle-elfeed-search-filter 'filter-index)
+		(get 'my/cycle-elfeed-search-filter 'filter-index)
+	      0))
+	   (index-after (% (+ index-before 1) (length filters)))
+	   (next-filter (format "@1-week-ago %s +unread" (aref filters index-after))))
+
+      (put 'my/cycle-elfeed-search-filter 'filter-index index-after)
+      (elfeed-search-set-filter next-filter)
+      (beginning-of-buffer)
       ))
 #+END_SRC
 
-*** elfeed-org
+*** elfeed-search mark current entry
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (defun elfeed-search-mark-all-read ()
+    "mark all feed as read in elfeed search mode"
+
+    (interactive)
+    (mark-whole-buffer)
+    (elfeed-search-untag-all-unread))
+#+END_SRC
+
+*** elfeed toggle star
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+  (defalias 'elfeed-toggle-star
+    (elfeed-expose #'elfeed-search-toggle-all 'starred))
+#+END_SRC
+
+*** get url and/or title from elfeed entry
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun elfeed-entry-url (entry)
+    (and entry (elfeed-entry-link entry)))
+
+  (defun elfeed-link-title (entry)
+    (and entry (elfeed-entry-title entry)))
+
+  (defun elfeed-entry-title-url (entry)
+    (concat (elfeed-link-title entry) "\n" (elfeed-entry-url entry)))
+
+  (defun elfeed-entry-link-org (entry)
+    (concat "[[" (elfeed-entry-url entry) "][" (elfeed-link-title entry) "]]"))
+#+END_SRC
+
+*** get current url and/or title in elfeed-search
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun get-elfeed-search-url ()
+    (elfeed-entry-url (elfeed-search-selected :ignore-region)))
+
+  (defun get-elfeed-search-title ()
+    (elfeed-link-title (elfeed-search-selected :ignore-region)))
+
+  (defun get-elfeed-search-title-url ()
+    (elfeed-entry-title-url (elfeed-search-selected :ignore-region)))
+
+  (defun get-elfeed-search-org ()
+    (elfeed-entry-link-org (elfeed-search-selected :ignore-region)))
+#+END_SRC
+
+*** get current url and/or title in elfeed-show
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun get-elfeed-show-url ()
+    (elfeed-entry-url elfeed-show-entry))
+
+  (defun get-elfeed-show-title ()
+    (elfeed-link-title elfeed-show-entry))
+
+  (defun get-elfeed-show-title-url ()
+    (elfeed-entry-title-url elfeed-show-entry))
+
+  (defun get-elfeed-show-org ()
+    (elfeed-entry-link-org elfeed-show-entry))
+
+#+END_SRC
+
+*** yank url and/or title in elfeed search mode
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun yank-url-or-title (url-or-title)
+    (message "%s" url-or-title)
+    (kill-new url-or-title))
+
+  (defun copy-elfeed-search-url ()
+    "copy url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-search-url)))
+
+  (defun copy-elfeed-search-title ()
+    "copy title to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-search-title)))
+
+  (defun copy-elfeed-search-title-url ()
+    "copy title and url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-search-title-url)))
+
+  (defun copy-elfeed-search-org ()
+    "copy url to clipboard as org-mode formate"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-search-org)))
+#+END_SRC
+
+*** yank url and/or title in elfeed show mode
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun copy-elfeed-show-url ()
+    "copy url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-show-url)))
+
+  (defun copy-elfeed-show-title ()
+    "copy url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-show-title)))
+
+  (defun copy-elfeed-show-title-url ()
+    "copy title and url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-show-title-url)))
+
+  (defun copy-elfeed-show-org ()
+    "copy title and url to clipboard"
+
+    (interactive)
+    (yank-url-or-title (get-elfeed-show-org)))
+
+#+END_SRC
+
+*** open page by external browser
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+
+  (defun elfeed-search-external-browser ()
+    "open current url via extenal browser"
+
+    (interactive)
+    (elfeed-search-browse-url t))
+
+  (defun elfeed-show-external-browser ()
+    "open current url via extenal browser"
+
+    (interactive)
+    (elfeed-show-visit t))
+
+#+END_SRC
+
+** elfeed-goodies
+
+#+BEGIN_SRC emacs-lisp
+  (use-package elfeed-goodies
+    :init
+    (elfeed-goodies/setup))
+#+END_SRC
+
+** elfeed-org
 
 using org-mode to manage feed url
 
 #+BEGIN_SRC emacs-lisp
-  (req-package elfeed-org
-    :config (progn
-              (setq rmh-elfeed-org-files (list "~/.elfeed.org"))
-              (elfeed-org)
-              ))
+  (use-package elfeed-org
+    :init
+    (progn
+      (setq rmh-elfeed-org-files (list "~/.elfeed.org"))
+      (elfeed-org)))
 #+END_SRC
 
-*** TODO [#C] smooth scrolling
+*** Insert stock ids at point in elfeed.org
+Insert stock ids to '.elfeed.org' and read their RSS
+
+#+BEGIN_SRC emacs-lisp
+  (use-package esqlite
+    :config
+    (progn
+      (defun insert-stock-id-at-point ()
+        "Insert stock ids at point."
+
+        (interactive)
+
+        (if (string= ".elfeed.org" (buffer-name))
+            (let* ((db-name "/mnt/lvm-data/Programing/stock4/db/stock2.db")
+                   (sql-fetch-stock-ids "select s.sid, i.name from summary as s, stock_info as i where s.sid=i.sid and s.userid=\"mariolong\""))
+
+              (dolist (rec (esqlite-read db-name sql-fetch-stock-ids))
+                (insert (format "*** [[http://news.wearn.com/rss/%s][%s-%s]]\n"
+                                (s-trim (car rec))
+                                (s-trim (car rec))
+                                (s-trim (second rec))))))
+
+          (message "%s" "Must in '.elfeed.org'")))
+
+      (bind-key "C-c fi" 'insert-stock-id-at-point)
+      ))
+#+END_SRC
+
 ** hangups
+
 ref: https://github.com/jtamagnan/hangups.el
 
 #+BEGIN_SRC emacs-lisp
-  (req-package hangups
-    :loader :path
-    :require adaptive-wrap
-    :bind ("C-c h" . hangups)
+  (use-package hangups
+    :load-path
+    :ensure adaptive-wrap
+    :bind (("C-c h" . hangups-open-conversation-small-p)
+	   :map hangups-conv-mode-map
+	   ("j" . next-line)
+	   ("k" . previous-line)
+	   ("l" . forward-char)
+	   ("h" . backward-char)
+	   ("d" . scroll-up-command)
+	   ("e" . scroll-down-command)
+	   ("o" . browse-at-point))
     :config
     (progn
-      ;; (unbind-key "g" hangups-conv-mode-map)
-      (bind-keys :map hangups-conv-mode-map
-                 ;; ("gg" . beginning-of-buffer)
-                 ;; ("G" . end-of-buffer)
-                 ("j" . next-line)
-                 ("k" . previous-line)
-                 ("l" . forward-char)
-                 ("h" . backward-char)
-                 ("d" . scroll-up-command)
-                 ("e" . scroll-down-command)
-                 ("g" . hangups-conv-refresh)
-                 ("o" . browse-at-point)
-                 )))
+      (defun hangups-open-conversation-small-p ()
+	"Open conversation to small-p."
+	(interactive)
+
+	(hangups)
+	(let ((name "小p_葉"))
+	  (switch-to-buffer (get-buffer-create (hangups/buffer-name name)))
+	  (hangups-conv-mode)
+	  (hangups-conversation name hangups-messages))
+
+	(add-hook 'hangups-list-mode-hook
+		  (lambda () (run-with-timer 120 (* 1 60) 'hangups-list-refresh)))
+
+	(spaceline-define-segment hangups-lighter
+	  "hangups conversations"
+	  (when (> hangups/convs-unread 0)
+	    "\u2706")
+	  :face font-lock-warning-face)
+
+	(spaceline-spacemacs-theme '(hangups-lighter)))
+      ))
 #+END_SRC
 
-** TODO erc
-* Python
-*** elpy
-ref: https://github.com/jorgenschaefer/elpy
+** erc
+* Org and GTD                                                           :Org:
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+   (use-package org
+     :ensure nil
+     :mode ("\\.org\\'" . org-mode)
+     :config
+     <<org-config>>)
+#+END_SRC
+
+** basic setup
+ #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+   (setq org-src-fontify-natively t
+         org-src-window-setup 'current-window
+         org-confirm-babel-evaluate nil
+         org-startup-indented t)
+ #+END_SRC
+
+** Extend org-mode's easy templates
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+  (add-to-list 'org-structure-template-alist
+               '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:"))
+  (add-to-list 'org-structure-template-alist
+               '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
+  (add-to-list 'org-structure-template-alist
+               '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))
+#+END_SRC
+
+** Extend babel support languages
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (C . t)
+     (ditaa . t)
+     (dot . t)
+     (js . t)
+     (latex . t)
+     (perl . t)
+     (python . t)
+     (ruby . t)
+     (sh . t)
+     (clojure . t)
+     ))
+#+END_SRC
+
+** Capture and Agenda
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+  (setq org-agenda-window-setup 'current-window)
+  (add-hook 'org-agenda-mode-hook 'hl-line-mode)
+
+  (setq org-directory "~/Dropbox/GTD")
+  (setq org-default-notes-file (expand-file-name "notes.org" org-directory)
+	org-default-ideas-file (expand-file-name "0.Tasks.org" org-directory))
+
+  (setq org-capture-templates
+	'(("t" "Todo" entry (file org-default-ideas-file)
+	   "* TODO %?\n%T" :prepend t)
+	  ("e" "Emacs" entry (file+headline org-default-notes-file "emacs")
+	   "* TODO %?\n%T")
+	  ("n" "Note" entry (file+headline org-default-notes-file "Notes")
+	   "* %?\n%T")
+	  ))
+
+  (setq org-agenda-files (list org-default-notes-file
+			       org-default-ideas-file))
+
+  (setq org-refile-targets '((nil :maxlevel . 2)              ; refile to headings in the current buffer
+			     (org-agenda-files :maxlevel . 1) ; refile to any of these files
+			     ))
+
+  (add-hook 'org-agenda-mode-hook
+	    '(lambda ()
+	       (local-set-key (kbd "C-g") 'org-agenda-exit)))
+
+#+END_SRC
+
+** keybinds
+- =C-c '= 編輯原始碼
+- =C-Return= 增加一個標題
+- =C-c *= org-toggle-heading or table result
+- =C-<left>/<right>= 對標題設定 TODO keywords
+- =C-<up>/<down>= 對標題設定重要性
+- =<TAB>= 循環展開一個標題 (含子標題)
+- =S-<TAB>= 循環展開全檔的標題
+- =C-c C-o= open url link
+- =C-c C-c= 增加或修改 tags
+- =C-c \= 展開本檔相對應 tag 的標題，可用 & | 串接，做邏輯性查詢
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+  (bind-key "C-c l" 'org-store-link)
+  (bind-key "C-c c" 'org-capture)
+  (bind-key "C-c a" 'org-agenda)
+  (unbind-key "C-c [")
+  (unbind-key "C-c ]")
+#+END_SRC
+
+** Pretty Bullets
+ref: https://github.com/sabof/org-bullets
 
 #+BEGIN_SRC emacs-lisp
-  (req-package elpy
-    :require (flycheck company yasnippet)
-    :defer 2
+  (use-package org-bullets
+    :init
+    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+#+END_SRC
+
+** Present by reveal.js
+1. ref: https://github.com/hakimel/reveal.js
+2. ref: https://github.com/yjwen/org-reveal
+
+#+BEGIN_QUOTE
+Reveal.js is a tool for creating good-looking HTML presentations,
+authored by Hakim El Hattab.
+
+Org-Reveal exports your Org documents to reveal.js presentations.
+With Org-reveal, you can create beautiful presentations with 3D
+effects from simple but powerful Org contents.
+#+END_QUOTE
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ox-reveal
+    :ensure htmlize
+    :config
+    (progn
+      (setq org-reveal-root "file:///mnt/lvm-data/github/reveal.js")))
+#+END_SRC
+
+** pop up a new frame to do a capture
+
+#+BEGIN_SRC sh
+  $ emacsclient -ne "(make-capture-frame)"
+#+END_SRC
+
+press =C-x w= to close this frame
+
+#+BEGIN_SRC emacs-lisp
+  (defadvice org-capture-finalize
+      (after delete-capture-frame activate)
+    "Advise capture-finalize to close the frame"
+    (if (equal "capture" (frame-parameter nil 'name))
+	(delete-frame)))
+
+  (defadvice org-capture-destroy
+      (after delete-capture-frame activate)
+    "Advise capture-destroy to close the frame"
+    (if (equal "capture" (frame-parameter nil 'name))
+	(delete-frame)))
+
+  (defun make-capture-frame ()
+    "Create a new frame and run org-capture."
+    (interactive)
+    (make-frame '((name . "capture")))
+    (select-frame-by-name "capture")
+    (delete-other-windows)
+    (noflet ((switch-to-buffer-other-window (buf) (switch-to-buffer buf)))
+      (org-capture)))
+#+END_SRC
+
+** archive all the DONE/CNACELED tasks by one command
+ref: http://stackoverflow.com/questions/6997387/how-to-archive-all-the-done-tasks-using-a-single-command
+
+#+BEGIN_SRC emacs-lisp
+  (defun org-archive-done-tasks ()
+    (interactive)
+
+    (dolist (status '("/DONE" "/CANCELED"))
+      (org-map-entries (lambda ()
+			 (org-archive-subtree)
+			 (setq org-map-continue-from (outline-previous-heading)))
+		       status 'file)))
+#+END_SRC
+
+* Python
+Python 的 emacs 設定有太多的選擇，我的選擇是 =elpy= ，原因是單純，只要安裝好 =elpy= 就可。
+
+ref: https://github.com/jorgenschaefer/elpy
+ref: https://github.com/xiaohanyu/oh-my-emacs/blob/master/modules/ome-python.org
+
+First, install =elpy= and =jedi= on OS
+
+#+BEGIN_SRC sh
+  pip install elpy jedi
+#+END_SRC
+
+然後，參考 oh-my-emacs 簡單設定一下就好。
+
+ref: yasnippet http://longhorizon.org/blog/2013/03/31/improving-python-development-in-emacs-with-yasnippet/
+
+#+BEGIN_SRC emacs-lisp
+  (use-package elpy
+    :ensure t
+    :demand (flycheck company yasnippet)
+    :diminish "☀"
     :config
     (progn
       (elpy-enable)
       (setq elpy-rpc-backend "jedi")
 
+      (setq elpy-modules (delq 'elpy-module-highlight-indentation elpy-modules))
       (eval-after-load 'flycheck
         '(progn
            (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
@@ -2187,159 +3241,90 @@ ref: https://github.com/jorgenschaefer/elpy
 
       (add-to-list 'elpy-modules 'elpy-module-company)
       (add-to-list 'elpy-modules 'elpy-module-yasnippet)
+
+      (define-key python-mode-map (kbd "RET")
+        'newline-and-indent)
+
+      (add-hook 'python-mode-hook
+                (lambda ()
+                  (set (make-local-variable 'comment-inline-offset) 2)))
       ))
 #+END_SRC
 
-*** anaconda
+* Web mode
+** web-mode
 
-這個就可以了，不必再設定 company-jedi。
-會自動呼叫 jedi
+目前是為了 mako 使用的 web-mode，看起來還有一些問題需要微調，不知如何下手。
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package anaconda-mode
-    :require (jedi auto-complete popup)
-    :diminish anaconda-mode
-    :init (progn
-            (add-hook 'python-mode-hook 'anaconda-mode)
-            (add-hook 'python-mode-hook 'eldoc-mode)))
+Homepage: http://web-mode.org/
+Source: https://github.com/fxbois/web-mode
 
-    (req-package company-anaconda
-      :init (add-to-list 'company-backends 'company-anaconda))
-
-#+END_SRC
-
-*** jedi
-
-Linux 中安裝 jedi
-
-#+BEGIN_SRC sh
-   $ pip install jedi
-#+END_SRC
-
-Emacs 中，如果更新了 jedi，要再執行 =M-x jedi:install-server=
-
-如果有關於 =~/.emacs.d/.python-environments/default= 的錯誤訊息，刪了
-它，重新執行 =M-x jedi:install-server=
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package jedi
-  :require (python-environment)
-    :init
-    (progn
-      (add-hook 'python-mode-hook 'jedi:setup)
-      ;; (add-hook 'python-mode-hook 'eldoc-mode)
-
-      (setq jedi:complete-on-dot nil)
-      (setq jedi:tooltip-method nil)
-      ))
-#+END_SRC
-
-*** company-jedi
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package company-jedi
-    :init (add-to-list 'company-backends 'company-jedi))
-#+END_SRC
-* Org                                                                   :Org:
-*** basic setup
- #+BEGIN_SRC emacs-lisp
-   (req-package org
-     :loader :built-in
-     :mode ("\\.org\\'" . org-mode)
-     :config
-     (progn
-       (setq org-src-fontify-natively t
-             org-src-window-setup 'current-window
-             org-confirm-babel-evaluate nil
-             org-startup-indented t)
-       ))
- #+END_SRC
-
-*** Pretty Bullets
-ref: https://github.com/sabof/org-bullets
+ref: http://cestlaz.github.io/posts/using-emacs-21-web-mode/#.WCy93XeZOuU
 
 #+BEGIN_SRC emacs-lisp
-  (req-package org-bullets
+  (use-package web-mode
     :config
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+    (add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
+    (setq web-mode-engines-alist  '(("mako" . "\\.tmpl\\'")))
+    (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+
+    (setq web-mode-ac-sources-alist
+	  '(("css" . (ac-source-css-property))
+	    ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
+    (setq web-mode-enable-auto-closing t)
+    (setq web-mode-enable-auto-quoting t)
+
+    (defun my-web-mode-hook ()
+      "Hooks for Web mode."
+
+      (setq web-mode-markup-indent-offset 4)
+      (setq web-mode-code-indent-offset 4)
+      (setq web-mode-css-indent-offset 2))
+
+    (add-hook 'web-mode-hook  'my-web-mode-hook))
+
 #+END_SRC
 
-*** Extend org-mode's easy templates
+** emmet-mode
+
+類似 zencoding 的工具
+用類似 css 的語法寫 html 檔
+
+Homepage: http://emmet.io/
+Source: https://github.com/smihica/emmet-mode
 
 #+BEGIN_SRC emacs-lisp
-  (eval-after-load 'org
-    '(progn
-       (add-to-list 'org-structure-template-alist
-                    '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:"))
-       (add-to-list 'org-structure-template-alist
-                    '("E" "#+BEGIN_SRC emacs-lisp\n?\n#+END_SRC"))
-       (add-to-list 'org-structure-template-alist
-                    '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))))
+(use-package emmet-mode
+  :ensure t
+  :init
+    (progn
+      (add-hook 'sgml-mode-hook 'emmet-mode)
+      (add-hook 'css-mode-hook  'emmet-mode)
+      (add-hook 'emmet-mode-hook
+                (lambda () (setq emmet-indentation 4)))))
 #+END_SRC
 
-*** Extend babel support languages
+** js2-mode
+
+Source: https://github.com/mooz/js2-mode
 
 #+BEGIN_SRC emacs-lisp
-(eval-after-load 'org
-  '(progn
-     (org-babel-do-load-languages
-      'org-babel-load-languages
-      '((emacs-lisp . t)
-        (C . t)
-        (ditaa . t)
-        (dot . t)
-        (js . t)
-        (latex . t)
-        (perl . t)
-        (python . t)
-        (ruby . t)
-        (sh . t)
-        (clojure . t)
-        ))))
+(use-package js2-mode
+  :ensure t
+  :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+      (add-hook 'js2-mode-hook 'flycheck-mode)))
 #+END_SRC
 
-*** Capture and Agenda
-#+BEGIN_SRC emacs-lisp
-  (eval-after-load 'org
-    '(progn
-       (setq org-agenda-window-setup 'current-window)
-       (add-hook 'org-agenda-mode-hook 'hl-line-mode)
+** json-mode
 
-       (setq org-directory "~/org")
-       (setq org-default-notes-file (expand-file-name "notes.org" org-directory))
-
-       (setq org-capture-templates
-             '(("t" "Todo" entry (file+headline "~/org/notes.org" "Tasks")
-                "* TODO %?\n%T")
-               ("n" "Note" entry (file+headline "~/org/notes.org" "Notes")
-                "* TODO %?\n%T")
-               ))
-
-       (setq org-agenda-files (list emacs-init-org-file org-default-notes-file))
-
-       (add-hook 'org-agenda-mode-hook
-                 '(lambda ()
-                    (local-set-key (kbd "C-g") 'org-agenda-exit)))
-       ))
-#+END_SRC
-
-*** keybinds
-=C-c '= 編輯原始碼
-=C-Return= 增加一個標題
-=C-c C-c= 增加或修改 tags
-=C-<left>/<right>= 對標題設定 TODO keywords
-=C-<up>/<down>= 對標題設定重要性
-=<TAB>= 循環展開一個標題 (含子標題)
-=S-<TAB= 循環展開全檔的標題
-=C-c C-o= open url link
-=C-c \= 展開本檔相對應 tag 的標題，可用 & | 串接，做邏輯性查詢
+Source: https://github.com/joshwnj/json-mode
 
 #+BEGIN_SRC emacs-lisp
-  (bind-key "C-c l" 'org-store-link)
-  (bind-key "C-c c" 'org-capture)
-  (bind-key "C-c a" 'org-agenda)
-  (unbind-key "C-c [")
-  (unbind-key "C-c ]")
+(use-package json-mode
+  :ensure t
+  :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
 #+END_SRC
 
 * Other Modes
@@ -2359,7 +3344,7 @@ ref: https://github.com/sabof/org-bullets
 會自動以 company 補全，不必再設定。
 
 #+BEGIN_SRC emacs-lisp
-  (req-package systemd)
+  (use-package systemd)
 #+END_SRC
 
 *** keybindings
@@ -2370,7 +3355,7 @@ ref: https://github.com/sabof/org-bullets
 ** markdown-mode
 
 #+BEGIN_SRC emacs-lisp
-(req-package markdown-mode
+(use-package markdown-mode
   :init
     (progn
       (add-to-list 'auto-mode-alist '("\\.markdown\\'" . gfm-mode))
@@ -2388,8 +3373,8 @@ ref: https://github.com/sabof/org-bullets
 只是為了 xmonad 和 taffybar。
 
 #+BEGIN_SRC emacs-lisp
-  (req-package haskell-mode
-    :require (flycheck flycheck-haskell)
+  (use-package haskell-mode
+    :demand (flycheck flycheck-haskell)
     :mode "\\.hs$" "\\.l?hs$"
     :config
     (progn (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
@@ -2420,114 +3405,136 @@ ref: https://github.com/sabof/org-bullets
 *** flycheck-haskell
 
 #+BEGIN_SRC emacs-lisp
-  (req-package flycheck-haskell
+  (use-package flycheck-haskell
     :config (add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
 #+END_SRC
 
-** Emacs Lisp
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (req-package lisp-mode
-    :init
-    (add-hook 'emacs-lisp-mode-hook
-              (lambda ()
-                (setq mode-name " ξ "))))
-#+END_SRC
-
-** Web
-*** TODO web-mode
-
-目前是為了 mako 使用的 web-mode，看起來還有一些問題需要微調，不知如何下手。
-
-Homepage: http://web-mode.org/
-Source: https://github.com/fxbois/web-mode
-
-#+BEGIN_SRC emacs-lisp
-(req-package web-mode
-  :init
-    (progn
-      (add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
-      (setq web-mode-engines-alist  '(("mako" . "\\.tmpl\\'")))
-      (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))))
-
-(defun my-web-mode-hook ()
-  "Hooks for Web mode."
-  (setq web-mode-markup-indent-offset 4)
-  (setq web-mode-code-indent-offset 4)
-  (setq web-mode-css-indent-offset 2)
-)
-(add-hook 'web-mode-hook  'my-web-mode-hook)
-
-#+END_SRC
-
-*** emmet-mode
-
-類似 zencoding 的工具
-用類似 css 的語法寫 html 檔
-
-Homepage: http://emmet.io/
-Source: https://github.com/smihica/emmet-mode
-
-#+BEGIN_SRC emacs-lisp
-(req-package emmet-mode
-  :init
-    (progn
-      (add-hook 'sgml-mode-hook 'emmet-mode)
-      (add-hook 'css-mode-hook  'emmet-mode)
-      (add-hook 'emmet-mode-hook
-                (lambda () (setq emmet-indentation 4)))))
-#+END_SRC
-
-*** TODO js2-mode
-
-Source: https://github.com/mooz/js2-mode
-
-#+BEGIN_SRC emacs-lisp
-(req-package js2-mode
-  :init
-    (progn
-      (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
-      (add-hook 'js2-mode-hook 'flycheck-mode)))
-#+END_SRC
-
-*** json-mode
-
-Source: https://github.com/joshwnj/json-mode
-
-#+BEGIN_SRC emacs-lisp
-(req-package json-mode
-  :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
-#+END_SRC
 ** nginx-mode
 
 #+BEGIN_SRC emacs-lisp
-  (req-package nginx-mode)
+  (use-package nginx-mode)
+#+END_SRC
+
+** sdcv
+
+http://lifegoo.pluskid.org/wiki/EmacsStardict.html
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c d" 'kid-sdcv-to-buffer)
+
+  (defun kid-sdcv-to-buffer ()
+    (interactive)
+    (let ((word (if mark-active
+                    (buffer-substring-no-properties (region-beginning) (region-end))
+		  (current-word nil t))))
+      (setq word (read-string (format "Search the dictionary for (default %s): " word)
+                              nil nil word))
+
+      (set-buffer (get-buffer-create "*sdcv*"))
+      (buffer-disable-undo)
+      (erase-buffer)
+
+      (let ((process (start-process-shell-command "sdcv" "*sdcv*" "sdcv" "-n" word)))
+	(set-process-sentinel
+	 process
+	 (lambda (process signal)
+           (when (memq (process-status process) '(exit signal))
+             (unless (string= (buffer-name) "*sdcv*")
+               (setq kid-sdcv-window-configuration (current-window-configuration))
+               (switch-to-buffer-other-window "*sdcv*")
+               (local-set-key (kbd "d") 'kid-sdcv-to-buffer)
+               (local-set-key (kbd "q") (lambda ()
+                                          (interactive)
+                                          (bury-buffer)
+                                          (unless (null (cdr (window-list))) ; only one window
+                                            (delete-window)))))
+             (goto-char (point-min))))))))
+#+END_SRC
+** moedict 萌典
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :export code
+  (use-package moedict
+    :load-path
+    :ensure helm
+    :ensure esqlite
+    :bind ("C-c m" . moedict)
+    :config
+    <<moedict-config>>)
+#+END_SRC
+
+*** set browser program to google-chrome
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref moedict-config
+
+  (setq browse-url-chromium-program "google-chrome-stable")
+
+#+END_SRC
+
+*** using moedict by ivy
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref moedict-config
+  (defun counsel-moedict ()
+    "moedict"
+
+    (interactive)
+
+    (let ((initial-input (word-at-point)))
+      (ivy-read moedict-prompt
+		'(lambda (x) (counsel-moedict-function x))
+		:initial-input initial-input
+		:dynamic-collection t
+		:action #'moedict-lookup-and-show-in-buffer
+		)))
+
+  (defun counsel-moedict-function (&optional string)
+    (if (null string)
+	(setq string ""))
+    (or (unless (string= "" string)
+	  (moedict-get-candidates-list string))
+	(list nil)))
+#+END_SRC
+** pdf-tools
+
+如果出現「無安裝 epdfinfo」錯誤訊息，則執行一次 =M-x pdf-tools-install= 即可。
+或uninstall 後 re-install.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package pdf-tools
+    :bind (:map pdf-view-mode-map
+		("j" . pdf-view-next-line-or-next-page)
+		("k" . pdf-view-previous-line-or-previous-page)
+		("H" . pdf-view-next-page)
+		("L" . pdf-view-previous-page)
+		("e" . pdf-view-scroll-down-or-previous-page)
+            ("u" . pdf-view-scroll-down-or-previous-page)
+		("d" . pdf-view-scroll-up-or-next-page)
+		("=" . pdf-view-fit-width-to-window)
+		("-" . pdf-view-shrink)
+		("+" . pdf-view-enlarge))
+    :init
+    (progn
+      (add-to-list 'auto-mode-alist '("\\.pdf\\'" . pdf-view-mode))
+      (setq pdf-view-continuous t)
+      ))
 #+END_SRC
 
 * End of configuration
-** req-package finish
-
-At long last we need only call the following function to send =req-package= on
-its merry way.
-
-#+BEGIN_SRC emacs-lisp
-  (req-package-finish)
-#+END_SRC
 ** diminish some mode
 
 #+BEGIN_SRC emacs-lisp
   (diminish 'overwrite-mode)
   (diminish 'subword-mode)
   (eval-after-load 'org-indent
-    '(diminish 'org-indent-mode ""))
+    '(diminish 'org-indent-mode))
   (diminish 'org-src-mode)
 #+END_SRC
 
 ** Startup emacs as server
 #+BEGIN_SRC emacs-lisp
-  (unless (string-equal "root" (getenv "USER"))
-    (require 'server)
-    (unless (server-running-p) (server-start)))
+(use-package server
+:config
+  (unless (server-running-p)
+    (server-start)))
 #+END_SRC
 
 * The Final note
@@ -2547,3 +3554,11 @@ its merry way.
 [3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
 
 [4] https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-spell.el
+
+[5] https://github.com/zamansky/using-emacs/blob/master/myinit.org
+
+[6] http://pages.sachachua.com/.emacs.d/Sacha.html
+
+[7] https://github.com/itsjeyd/.emacs.d/blob/emacs24/init.el
+
+[8] https://github.com/aculich/.emacs.d/blob/master/init.el

@@ -1,2 +1,1 @@
-# emacs.d
-My emacs configuration
+emacs-init.org
