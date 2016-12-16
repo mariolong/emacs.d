@@ -1,7 +1,6 @@
 #+TITLE: Emacs Configuration
 #+AUTHOR: Mario Long
 #+EMAIL: mariolong5782@gmail.com
-#+LANGUAGE: en
 #+STARTUP: overview showstars
 #+BABEL: :cache yes
 #+OPTIONS: ^:nil
@@ -452,14 +451,14 @@ set color of parenttheses like spacemacs.
 #+END_SRC
 
 * Basic settings
-
+** use noflet no defer
 #+BEGIN_SRC emacs-lisp
-  (use-package noflet)
+  (use-package noflet
+    :defer 0)
 #+END_SRC
 
 ** Don't ask me when close emacs with process is running
 #+BEGIN_SRC emacs-lisp
-  (require 'noflet)
   (defadvice save-buffers-kill-emacs (around no-query-kill-emacs activate)
     "Prevent annoying \"Active processes exist\" query when you quit Emacs."
     (noflet ((process-list ())) ad-do-it))
