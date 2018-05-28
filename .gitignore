@@ -1,6 +1,5 @@
 *
 !.gitignore
-!init.el
 !emacs-init.org
 !tangle-init.el
 !makeinit.sh
