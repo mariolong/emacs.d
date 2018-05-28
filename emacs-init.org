@@ -20,6 +20,13 @@
 ** 2017-8-20
 文章結構重整
 
+* Testing this configuration
+
+執行 ~makeinit.sh~ 產生 ~init.el~
+#+BEGIN_SRC sh :tangle no
+./makeinit.sh
+#+END_SRC
+
 * Initialization
 ** Use lexical binding
 
