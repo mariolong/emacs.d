@@ -4517,23 +4517,6 @@ Some interactive commands for clojure-mode.
 
 因為，已經習慣自己一手打造出來，獨一無二，順手的工具。
 
-* Reference
-
-[1] https://github.com/coldnew/coldnew-emacs
-
-[2] https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
-
-[3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
-
-[4] https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-spell.el
-
-[5] https://github.com/zamansky/using-emacs/blob/master/myinit.org
-
-[6] http://pages.sachachua.com/.emacs.d/Sacha.html
-
-[7] https://github.com/itsjeyd/.emacs.d/blob/emacs24/init.el
-
-[8] https://github.com/aculich/.emacs.d/blob/master/init.el
 * WIP
 ** TODO 簡繁互換 in eww buffer
 
@@ -4642,6 +4625,7 @@ using =:delight= keyword for =use-package=
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package delight)
 #+END_SRC
+
 ** golden ratio
 
 ref: https://github.com/roman/golden-ratio.el
@@ -4691,3 +4675,21 @@ https://github.com/syohex/emacs-company-jedi
 
   (add-hook 'ibuffer-mode-hook 'my-ibuffer-auto-revert-setup)
 #+END_SRC
+
+* Reference
+
+[1] https://github.com/coldnew/coldnew-emacs
+
+[2] https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
+
+[3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
+
+[4] https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-spell.el
+
+[5] https://github.com/zamansky/using-emacs/blob/master/myinit.org
+
+[6] http://pages.sachachua.com/.emacs.d/Sacha.html
+
+[7] https://github.com/itsjeyd/.emacs.d/blob/emacs24/init.el
+
+[8] https://github.com/aculich/.emacs.d/blob/master/init.el
