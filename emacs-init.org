@@ -1086,9 +1086,8 @@ yaourt -S unzip unrar
 
 #+BEGIN_SRC emacs-lisp
   (use-package dired+
-    :defer 0
     :quelpa (:fetcher github :repo "emacsmirror/dired-plus")
-    :config
+    :init
     (diredp-toggle-find-file-reuse-dir 1)
     (setq dired-recursive-deletes 'always)
 
