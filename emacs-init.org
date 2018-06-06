@@ -2813,10 +2813,10 @@ important keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package iedit
-    :demand
-    :config
+    :defer 0
+    :init
     (custom-set-faces
-     '(iedit-occurrence ((t (:inherit isearch-lazy-highlight-face) )))))
+     '(iedit-occurrence ((t (:inherit isearch))))))
 #+END_SRC
 
 ** multi-cursor
