@@ -120,6 +120,14 @@ solution: http://www.cnblogs.com/aqing1987/p/4464106.html
   (defconst user-cache-directory
     (file-name-as-directory (expand-file-name ".cache" user-emacs-directory))
     "My emacs storage area for persistent files.")
+
+  (setq org-directory "~/Dropbox/GTD")
+  (setq org-default-notes-file (expand-file-name "myGTD.org" org-directory)
+        org-default-inbox-file (expand-file-name "inbox.org" org-directory)
+        org-my-notes-file (expand-file-name "notes.org" org-directory)
+        org-my-travel-file (expand-file-name "travel.org" org-directory)
+        org-my-food-file (expand-file-name "food.org" org-directory)
+        )
 #+END_SRC
 
 ** Create temporary file directory if it is not exist
@@ -1110,6 +1118,14 @@ yaourt -S unzip unrar
                          (car file)))))
 #+END_SRC
 
+*** dired-k
+
+SOURCE: [[https://github.com/syohex/emacs-dired-k/blob/master/README.md][emacs-dired-k/README.md at master · syohex/emacs-dired-k · GitHub]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired-k)
+#+END_SRC
+
 *** openwith
 
 SOURCE: https://github.com/emacsmirror/openwith
@@ -1316,6 +1332,7 @@ Just switch to another window and open target directory.
   (defun find-file-usually-files ()
     "open usually using files."
     (interactive)
+    ;; (require 'org)
     (require 'elfeed-org)
     (let ((usually-files (list user-emacs-init-org
                                org-default-inbox-file
@@ -2476,7 +2493,8 @@ https://github.com/remyhonig/elfeed-org
 
 #+BEGIN_SRC emacs-lisp
   (use-package elfeed-org
-    :ensure elfeed
+    :demand elfeed
+    :demand org
     :commands elfeed-org
     :init
     (progn
@@ -3089,10 +3107,11 @@ https://github.com/m00natic/vlfi
   (use-package org
     :mode ("\\.org\\'" . org-mode)
     :diminish org-src-mode
+    :bind (("C-c l" . org-store-link)
+           ("C-c c" . org-capture)
+           ("C-c a" . org-agenda))
     :config
     <<org-config>>)
-#+END_SRC
-
 #+END_SRC
 
 *** basic setup
@@ -3105,16 +3124,6 @@ https://github.com/m00natic/vlfi
 					(plain-list-item . t))
          org-startup-indented t)
  #+END_SRC
-
-*** org-chinese-utils
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref org-config
-  (use-package org-chinese-utils
-    :ensure org
-    :ensure ox
-    :config
-    (ocus-enable))
-#+END_SRC
 
 *** Extend org-mode's easy templates
 
@@ -3150,7 +3159,7 @@ https://github.com/m00natic/vlfi
 ref: http://orgmode.org/worg/org-contrib/babel/languages.html#langs
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
-  (require 'ob-sh)
+  (require 'ob-shell)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
@@ -3163,9 +3172,10 @@ ref: http://orgmode.org/worg/org-contrib/babel/languages.html#langs
      (python . t)
      (haskell . t)
      (clojure . t)
-     (sh . t)
+     (shell . t)
      (sqlite . t)
      (sql . t)
+     ;; (yaml . t)
      ))
 #+END_SRC
 
@@ -3260,7 +3270,9 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
 
 - =C-c [= 將目前檔案加入 agenda file list 中
 - =C-c ]= 將目前檔案從 agenda file list 中移出
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb-ref org-config
   (bind-key "C-c l" 'org-store-link)
   (bind-key "C-c c" 'org-capture)
   (bind-key "C-c a" 'org-agenda)
@@ -3291,14 +3303,6 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
 **** files for agenda/inbox/gtd
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
-  (setq org-directory "~/Dropbox/GTD")
-  (setq org-default-notes-file (expand-file-name "myGTD.org" org-directory)
-        org-default-inbox-file (expand-file-name "inbox.org" org-directory)
-        org-my-notes-file (expand-file-name "notes.org" org-directory)
-        org-my-travel-file (expand-file-name "travel.org" org-directory)
-        org-my-food-file (expand-file-name "food.org" org-directory)
-        )
-
   (setq org-capture-templates
         '(("t" "Todo" entry (file org-default-inbox-file)
            "* TODO %?\n%T")
@@ -3321,16 +3325,16 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
                                ))
 
 
-  ;; (setq org-agenda-current-span 'day)
-  ;; (setq org-agenda--span 2)
+    ;; (setq org-agenda-current-span 'day)
+    ;; (setq org-agenda--span 2)
 
-  (setq org-refile-targets '((nil :maxlevel . 2)  ; refile to headings in the current buffer
-                             (org-agenda-files :level . 1)
-                             ))
+    (setq org-refile-targets '((nil :maxlevel . 2)  ; refile to headings in the current buffer
+                               (org-agenda-files :level . 1)
+                               ))
 
-  (add-hook 'org-agenda-mode-hook
-            '(lambda ()
-               (local-set-key (kbd "C-g") 'org-agenda-exit)))
+    (add-hook 'org-agenda-mode-hook
+              '(lambda ()
+                 (local-set-key (kbd "C-g") 'org-agenda-exit)))
 #+END_SRC
 
 **** show dropbox status of GTD directory
