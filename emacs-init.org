@@ -279,7 +279,7 @@ ref: https://github.com/TheBB/spaceline
 
 *** Line Numbers
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package linum
     :init
     (add-hook 'prog-mode-hook
@@ -291,6 +291,12 @@ ref: https://github.com/TheBB/spaceline
 *** Relative Line Numbers
 
 #+BEGIN_SRC emacs-lisp
+  (add-hook 'prog-mode-hook
+            '(lambda ()
+               (setq display-line-numbers 'relative)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package linum-relative
     :commands linum-relative-mode
     :init
@@ -1122,7 +1128,7 @@ yaourt -S unzip unrar
 
 SOURCE: [[https://github.com/syohex/emacs-dired-k/blob/master/README.md][emacs-dired-k/README.md at master · syohex/emacs-dired-k · GitHub]]
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package dired-k)
 #+END_SRC
 
@@ -1394,6 +1400,7 @@ Recentf is a minor mode that builds a list of recently opened files.
 *** exit emacs nd kill-emacs to "C-x C-c C-c"
 
 #+BEGIN_SRC emacs-lisp
+  (setq confirm-kill-emacs 'y-or-n-p)
   (unbind-key "C-x C-c")
   (bind-key "C-x C-c C-c" 'kill-emacs)
 #+END_SRC
@@ -4495,7 +4502,7 @@ Some interactive commands for clojure-mode.
 
 ** Startup emacs as server
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package server
     :config
     (unless (server-running-p)
