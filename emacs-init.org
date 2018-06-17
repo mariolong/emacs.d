@@ -281,16 +281,7 @@ ref: https://github.com/TheBB/spaceline
 
 *** Line Numbers
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package linum
-    :init
-    (add-hook 'prog-mode-hook
-              '(lambda () (linum-mode 1))))
-
-  (setq column-number-mode t)
-#+END_SRC
-
-*** Relative Line Numbers
+from 26.1, using ~(setq display-line-numbers 'relative)~ to display line number.
 
 #+BEGIN_SRC emacs-lisp
   (add-hook 'prog-mode-hook
@@ -298,19 +289,9 @@ ref: https://github.com/TheBB/spaceline
                (setq display-line-numbers 'relative)))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package linum-relative
-    :commands linum-relative-mode
-    :init
-      (linum-relative-mode t)
-      (setq linum-relative-current-symbol "")
-      (setq linum-relative-format "%4s")
-      )
-#+END_SRC
-
 *** Highlight FIXME, TODO in program mode
 
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
   (defun font-lock-comment-annotations ()
     "Highlight a bunch of well known comment annotations.
   This functions should be added to the hooks of major modes for programming."
@@ -324,7 +305,7 @@ ref: https://github.com/TheBB/spaceline
      ))
 
   (add-hook 'prog-mode-hook 'font-lock-comment-annotations)
-#+end_src
+#+END_SRC
 
 *** Hind mouse point
 
@@ -576,7 +557,7 @@ for nikola blogger generator
 (defun opencc-region ())
 #+END_SRC
 
-** sdcv
+** TODO sdcv
 
 *copyright issue*
 
@@ -1724,26 +1705,6 @@ minibuffer history from ‘savehist-file’.
     (savehist-mode 1))
 #+END_SRC
 
-**** Increase Garbage Collector Value in minibuffer
-
-By binding this temporarily to a large number, you can effectively prevent garbage collection during a part of the program. I increase the value when enter minibuffer, this will help to improve minibuffer speed with large package like helm, flx.
-
-ref: http://bling.github.io/blog/2016/01/18/why-are-you-changing-gc-cons-threshold/
-*useless*
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref minibuffer-config
-  (eval-after-load 'minibuffer
-    '(progn
-       (lexical-let ((default-threshold gc-cons-threshold))
-         (defun my/minibuffer-gc-setup-hook ()
-           (setq gc-cons-threshold most-positive-fixnum))
-         (add-hook 'minibuffer-setup-hook #'my/minibuffer-gc-setup-hook)
-         ;; When exit, set back to default threshold
-         (defun my/minibuffer-gc-exit-hook ()
-           (setq gc-cons-threshold default-threshold))
-         (add-hook 'minibuffer-exit-hook #'my/minibuffer-gc-exit-hook))))
-#+END_SRC
-
 **** Setup Keybindings                                        :keybinding:
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
@@ -1819,7 +1780,7 @@ ref:
     <<term-config>>)
   #+END_SRC
 
-*** term-mode-hook
+*** TODO term-mode-hook
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
   (add-hook 'term-mode-hook
@@ -2980,7 +2941,7 @@ if want to use "hunspell", then must install hunspell and hunspell_en in OS.
       (setq ispell-silently-savep t)))
 #+END_SRC
 
-*** flyspell
+*** TODO flyspell
 
 =C-.= corrects word at point.
 =C-,​= to jump to next misspelled word.
@@ -3183,7 +3144,7 @@ ref: https://orgmode.org/worg/org-contrib/babel/languages.html
      ))
 #+END_SRC
 
-**** yaml
+**** TODO yaml
 
 https://tamouse.github.io/swaac/emacs/org-mode/2015/05/25/using-emacss-org-mode-and-editing-yaml-frontmatter-in-jekyll-posts/
 
@@ -3203,7 +3164,7 @@ https://tamouse.github.io/swaac/emacs/org-mode/2015/05/25/using-emacss-org-mode-
   ---
 #+end_src
 
-**** html
+**** TODO html
 
 SOURCE: https://github.com/krisajenkins/ob-browser
 
@@ -3222,7 +3183,7 @@ secondly, install ob-browser
 #+BEGIN_SRC browser :tangle no :out nil
 #+END_SRC
 
-#+BEGIN_SRC html
+#+BEGIN_SRC html tangle no
 <!DOCTYPE html>
 <html>
     <head>
@@ -3339,13 +3300,6 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
 
 - =C-c [= 將目前檔案加入 agenda file list 中
 - =C-c ]= 將目前檔案從 agenda file list 中移出
-
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref org-config
-  (bind-key "C-c l" 'org-store-link)
-  (bind-key "C-c c" 'org-capture)
-  (bind-key "C-c a" 'org-agenda)
-#+END_SRC
 
 ** Capture and Agenda
 
@@ -3946,7 +3900,7 @@ https://github.com/kuanyui/hexo.el
 (use-package hexo)
 #+END_SRC
 
-** pug mode
+** TODO pug mode
 
 https://github.com/hlissner/emacs-pug-mode
 
@@ -3970,8 +3924,9 @@ https://github.com/vladh/stylus-mode
 	:ensure pug-mode)
 #+END_SRC
 
-** Haskell
+** TODO Haskell
 
+using intero???
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package intero
     :demand haskell-mode
@@ -4071,7 +4026,7 @@ cabal install hindent
     (add-hook 'haskell-mode-hook #'hindent-mode))
 #+END_SRC
 
-*** flycheck-haskell
+*** TODO flycheck-haskell
 
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package flycheck-haskell
@@ -4090,6 +4045,7 @@ stack install hindent
     (add-hook 'haskell-mode-hook #'hindent-mode))
 #+END_SRC
 
+** TODO yaml mode
 ** elm
 
 [[https://github.com/jcollard/elm-mode/blob/master/README.md][elm-mode/README.md at master · jcollard/elm-mode · GitHub]]
@@ -4337,7 +4293,7 @@ ref: https://github.com/wwwjfy/emacs-fish
                 (add-hook 'before-save-hook 'fish_indent-before-save))))
 #+END_SRC
 
-** Clojure
+** TODO Clojure
 
 from: https://github.com/coldnew/coldnew-emacs
 
@@ -4704,7 +4660,7 @@ ref: https://github.com/jtamagnan/hangups.el
 
 ** TODO erc
 
-** Insert stock ids at point in elfeed.org
+** TODO Insert stock ids at point in elfeed.org
 
 Insert stock ids to '.elfeed.org' and read their RSS
 
@@ -4732,7 +4688,8 @@ Insert stock ids to '.elfeed.org' and read their RSS
       (bind-key "C-c fi" 'insert-stock-id-at-point)
       ))
 #+END_SRC
-** GitHub - bmag/emacs-purpose: Manage Windows and Buffers According to Purposes
+
+** TODO GitHub - bmag/emacs-purpose: Manage Windows and Buffers According to Purposes
 
 https://github.com/bmag/emacs-purpose
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -4741,7 +4698,8 @@ https://github.com/bmag/emacs-purpose
     (purpose-mode))
 
 #+END_SRC
-** smartparens
+
+** TODO smartparens
 
 ref: https://github.com/Fuco1/smartparens
 ref: https://ebzzry.github.io/emacs-pairs.html
@@ -4754,45 +4712,8 @@ ref: https://ebzzry.github.io/emacs-pairs.html
     (smartparens-global-mode 1)
     )
 #+END_SRC
-** delight
 
-using =:delight= keyword for =use-package=
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package delight)
-#+END_SRC
-
-** golden ratio
-
-ref: https://github.com/roman/golden-ratio.el
-
-issue: conflict with ace-window
-https://github.com/roman/golden-ratio.el/issues/42
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package golden-ratio
-    :diminish ""
-    :init
-      (setq-default golden-ratio-mode t)
-      (golden-ratio-mode t)
-    :config
-      (add-to-list 'golden-ratio-extra-commands 'ace-window)
-      (add-to-list 'golden-ratio-exclude-modes 'term-mode)
-    )
-#+END_SRC
-** company-jedi
-
-GitHub - syohex/emacs-company-jedi: Company backend for Python jedi
-https://github.com/syohex/emacs-company-jedi
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package company-jedi
-    :init
-    (add-hook 'python-mode-hook
-	      (lambda ()
-		(add-to-list 'company-backends 'company-jedi))))
-#+END_SRC
-** auto revert ibuffer
+** TODO auto revert ibuffer
 
 [[https://emacs.stackexchange.com/questions/2177/how-can-i-make-ibuffer-auto-refresh-the-list-of-buffers][ref: How can I make ibuffer auto-refresh the list of buffers? - Emacs Stack Exchange]]
 
