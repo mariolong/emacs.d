@@ -4574,15 +4574,6 @@ Some interactive commands for clojure-mode.
     '(diminish 'org-indent-mode))
 #+END_SRC
 
-** Startup emacs as server
-
-#+BEGIN_SRC emacs-lisp
-  (use-package server
-    :init
-    (unless (server-running-p)
-      (server-start)))
-#+END_SRC
-
 * 疑難雜症
 
 ** C-M-p don't work
