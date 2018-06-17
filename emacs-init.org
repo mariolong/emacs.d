@@ -4,6 +4,8 @@
 #+STARTUP: overview showstars
 #+BABEL: :cache yes
 #+OPTIONS: ^:nil
+#+DATE: 2018-06-15 21:56:46 UTC+08:00
+#+UID:mario-long-epub-uid-for-kindle-emacs-init.org
 
 * Preface
 
@@ -354,7 +356,7 @@ ref: https://github.com/TheBB/spaceline
 
     :config
     ;; disable pangu-space in some modes
-    (dolist (mm '(eww-mode elfeed-search-mode elfeed-show-mode))
+    (dolist (mm '(wdired-mode dired-mode eww-mode elfeed-search-mode elfeed-show-mode))
       (add-to-list 'pangu-spacing-inhibit-mode-alist mm))
 
     ;; Always insert `real' space
@@ -1106,6 +1108,10 @@ yaourt -S unzip unrar
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+  (use-package highlight
+    :quelpa (:fetcher url :url "https://www.emacswiki.org/emacs/download/highlight.el")
+    )
+
   (use-package dired+
     :quelpa (:fetcher github :repo "emacsmirror/dired-plus")
     :init
@@ -1114,7 +1120,7 @@ yaourt -S unzip unrar
 
     (dolist (file `(("unrar x" "rar")
                     ("aegisub-3.2" "ass" "srt")
-                    ("mpv"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm")
+                    ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
                     ("mpv -playlist" "list" "pls")
                     ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
                     ("google-chrome-stable" "xml" "xhtml" "html" "htm" "mht")
@@ -1122,14 +1128,6 @@ yaourt -S unzip unrar
       (add-to-list 'dired-guess-shell-alist-default
                    (list (concat "\\." (regexp-opt (cdr file) t) "$")
                          (car file)))))
-#+END_SRC
-
-*** dired-k
-
-SOURCE: [[https://github.com/syohex/emacs-dired-k/blob/master/README.md][emacs-dired-k/README.md at master · syohex/emacs-dired-k · GitHub]]
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package dired-k)
 #+END_SRC
 
 *** openwith
@@ -1400,7 +1398,6 @@ Recentf is a minor mode that builds a list of recently opened files.
 *** exit emacs nd kill-emacs to "C-x C-c C-c"
 
 #+BEGIN_SRC emacs-lisp
-  (setq confirm-kill-emacs 'y-or-n-p)
   (unbind-key "C-x C-c")
   (bind-key "C-x C-c C-c" 'kill-emacs)
 #+END_SRC
@@ -2604,11 +2601,10 @@ https://github.com/bbatsov/crux#keybindings
 
   (epm/add-mode-pairs 'python-mode-hook '((?\' . ?\')))
   (epm/add-mode-pairs 'web-mode-hook '((?\' . ?\')))
-  (epm/add-mode-pairs 'haskell-mode-hook '((?\' . ?\')))
   (epm/add-mode-pairs 'org-mode-hook '((?/ . ?/) (?= . ?=) (?~ . ?~) (?_ . ?_)))
 #+END_SRC
 
-** turn off electric-quote-~ in emacs 25.1 and above
+** turn off electric-quote-~ in emacs 25.1 and newer
 
 #+BEGIN_SRC emacs-lisp
   (electric-quote-mode -1)
@@ -3142,7 +3138,7 @@ https://github.com/m00natic/vlfi
                '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))
 
   (add-to-list 'org-structure-template-alist
-               '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:"))
+               '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:\n#+UID:mario-long-epub-uid-for-kindle"))
 
   (add-to-list 'org-structure-template-alist
                (list "N" (concat "#+BEGIN_COMMENT\n"
@@ -3163,27 +3159,85 @@ https://github.com/m00natic/vlfi
 
 *** Extend babel support languages
 
-ref: http://orgmode.org/worg/org-contrib/babel/languages.html#langs
+ref: https://orgmode.org/worg/org-contrib/babel/languages.html
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
   (require 'ob-shell)
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
+     (clojure . t)
      (ditaa . t)
      (dot . t)
-     (plantuml . t)
+     (haskell . t)
      (js . t)
      (latex . t)
+     (lisp . t)
      (org . t)
+     (plantuml . t)
      (python . t)
-     (haskell . t)
-     (clojure . t)
      (shell . t)
-     (sqlite . t)
      (sql . t)
-     ;; (yaml . t)
+     (sqlite . t)
+     (yaml . nil)
      ))
+#+END_SRC
+
+**** yaml
+
+https://tamouse.github.io/swaac/emacs/org-mode/2015/05/25/using-emacss-org-mode-and-editing-yaml-frontmatter-in-jekyll-posts/
+
+#+BEGIN_SRC emacs-lisp
+(defun org-babel-execute:yaml (body params) body)
+#+END_SRC
+
+#+begin_src yaml
+---
+  layout: post
+  title: test post with yaml source block frontmatter
+  gallery:
+    path: abc123
+    images:
+      - blah.png
+      - bloo.png
+  ---
+#+end_src
+
+**** html
+
+SOURCE: https://github.com/krisajenkins/ob-browser
+
+install ~phantomjs~ first.
+
+#+BEGIN_SRC shell
+yaourt -S phantomjs
+#+END_SRC
+
+secondly, install ob-browser
+#+BEGIN_SRC emacs-lisp
+  (use-package ob-browser)
+#+END_SRC
+
+例子：
+#+BEGIN_SRC browser :tangle no :out nil
+#+END_SRC
+
+#+BEGIN_SRC html
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+        <div class="row">
+            <div class="span6 offset1">
+                <h1>Rendered PNG</h1>
+
+                <button class="btn btn-primary">You Can't Press This</button>
+            </div>
+        </div>
+    </body>
+</html>
 #+END_SRC
 
 *** 去除 Org-mode 輸出 HTML 時多餘的空格
@@ -3236,6 +3290,14 @@ change =verbatim= to =kbd=
              (strike-through . "<del>%s</del>")
              (underline . "<span class=\"underline\">%s</span>")
              (verbatim . "<kbd>%s</kbd>"))))
+#+END_SRC
+
+*** 中文*加強*語法，或+刪除+一句話，不用加上空白
+
+#+BEGIN_SRC emacs-lisp
+(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
+(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
 
 *** TODO add new markup to org-mode HTML export
@@ -3484,6 +3546,14 @@ ref: https://github.com/sabof/org-bullets
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 #+END_SRC
 
+** ox-epub
+
+Ref: [[https://github.com/ofosos/ox-epub][GitHub - ofosos/ox-epub: Org mode epub export]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ox-epub)
+#+END_SRC
+
 ** TODO Present by reveal.js
 1. ref: https://github.com/hakimel/reveal.js
 2. ref: https://github.com/yjwen/org-reveal
@@ -3721,7 +3791,7 @@ ref: yasnippet http://longhorizon.org/blog/2013/03/31/improving-python-developme
 
 ** Python (elpy)
 
-emacs 中 Python 的設定有太多的選擇，我的選擇是 =elpy= ，原因是隻要安裝好 =elpy= 就可用。
+emacs 中 Python 的設定有太多的選擇，我的選擇是 =elpy= ，原因是只要安裝好 =elpy= 就可用。
 
 ref: https://github.com/jorgenschaefer/elpy
 
@@ -3902,7 +3972,7 @@ https://github.com/vladh/stylus-mode
 
 ** Haskell
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package intero
     :demand haskell-mode
     :config
@@ -3949,10 +4019,52 @@ https://github.com/vladh/stylus-mode
            (add-hook 'haskell-mode-hook 'my-haskell-hook)))
 #+END_SRC
 
+*** haskell-navigate-imports
+the editor will be focused on each of the
+import blocks in your file
+
+~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
+
+#+BEGIN_SRC emacs-lisp
+(eval-after-load 'haskell-mode
+          '(define-key haskell-mode-map [f8] 'haskell-navigate-imports))
+#+END_SRC
+
+*** hasktags
+
+~M-.~: jump to the definition
+
+#+BEGIN_SRC sh
+cabal update
+cabal install hasktags
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
+  (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
+  (add-to-list 'exec-path my-cabal-path))
+(custom-set-variables '(haskell-tags-on-save t))
+#+END_SRC
+
+*** stylish-haskell
+
+#+BEGIN_SRC sh
+cabal update
+cabal install happy alex
+cabal install stylish-haskell
+#+END_SRC
+
+~M-x haskell-mode-stylish-buffer~
+
 *** hindent
 
-poor format
-#+BEGIN_SRC emacs-lisp :tangle no
+~M-q~ : reformat the current declaration.
+
+#+BEGIN_SRC sh
+cabal install hindent
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
   (use-package hindent
     :ensure haskell-mode
     :config
@@ -4067,6 +4179,11 @@ must install following packages from CLI firstly.
     (setq edbi:completion-tool nil)
     (add-to-list 'company-backends 'company-edbi))
 #+END_SRC
+
+*** edbi mysql
+
+edbi-open-viewer
+data source -> dbi:mysql:stock:localhost
 
 *** edbi-sqlite
 
@@ -4224,7 +4341,8 @@ ref: https://github.com/wwwjfy/emacs-fish
 
 from: https://github.com/coldnew/coldnew-emacs
 
-#+BEGIN_SRC emacs-lisp :noweb no-export
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb no-export
   (use-package clojure-mode
     :ensure t
     :config
@@ -4390,7 +4508,7 @@ Now we can use =boot repl= to start clojure's repl for test
 
 GitHub: https://github.com/clojure-emacs/clj-refactor.el
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref clojure-config
   (use-package clj-refactor
     :ensure t
     :after clojure-mode
@@ -4409,7 +4527,7 @@ your =project.clj=.
 
 GitHub: https://github.com/joshuamiller/clojars.el
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref clojure-config
   (use-package clojars
     :ensure t)
 #+END_SRC
@@ -4502,9 +4620,9 @@ Some interactive commands for clojure-mode.
 
 ** Startup emacs as server
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
   (use-package server
-    :config
+    :init
     (unless (server-running-p)
       (server-start)))
 #+END_SRC
