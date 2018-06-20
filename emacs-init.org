@@ -4140,9 +4140,23 @@ must install following packages from CLI firstly.
 #+END_SRC
 
 *** edbi mysql
+#+BEGIN_SRC emacs-lisp
+  (defun edbi-open-stock-mysql ()
+    (interactive)
+    (let* ((uri "dbi:mysql:stock:localhost")
+           (data-source (edbi:data-source uri "stock" "stock"))
+           (conn (edbi:start)))
+      (edbi:connect conn data-source)
+      (edbi:dbview-open conn))
+    (make-frame)
+    (e2wm:dp-edbi))
 
-edbi-open-viewer
-data source -> dbi:mysql:stock:localhost
+  (defun edbi-close-stock-mysql ()
+    (interactive)
+    (e2wm:stop-management)
+    (delete-frame)
+    (kill-edbi-buffers))
+#+END_SRC
 
 *** edbi-sqlite
 
