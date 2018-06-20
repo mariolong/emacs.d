@@ -3064,6 +3064,9 @@ https://github.com/m00natic/vlfi
     )
 #+END_SRC
 
+* Blog
+** TODO nikola build from emacs
+
 * Org and GTD system
 ** Org
 
@@ -3208,7 +3211,7 @@ secondly, install ob-browser
 SOURCE: https://github.com/emacs-china/emacs-china.github.io/blob/master/blog/FengShu/org-remove-useless-space-between-chinese.org
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
-  (require 'ox-html)
+(require 'ox-html)
   (defun eh-org-clean-space (text backend info)
     "在 export 為 HTML 時，刪除中文之間不必要的空格"
     (when (org-export-derived-backend-p backend 'html)
@@ -4291,6 +4294,12 @@ ref: https://github.com/wwwjfy/emacs-fish
     (add-hook 'fish-mode-hook
               (lambda ()
                 (add-hook 'before-save-hook 'fish_indent-before-save))))
+#+END_SRC
+
+** yaml-mode
+
+#+BEGIN_SRC emacs-lisp
+  (use-package yaml-mode)
 #+END_SRC
 
 * Finalization
