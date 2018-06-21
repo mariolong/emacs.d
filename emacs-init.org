@@ -3920,18 +3920,24 @@ https://github.com/kuanyui/hexo.el
 (use-package hexo)
 #+END_SRC
 
-** TODO pug mode
+** pug mode
 
 https://github.com/hlissner/emacs-pug-mode
 
 must install pug-cli first.
 
-#+BEGIN_SRC sh :tangle no
-  $ sudo npm install pug-cli -g
+#+BEGIN_SRC sh
+sudo npm install pug-cli -g
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package pug-mode)
+  (use-package pug-mode
+    :config
+    (defun pug-compile-saved-file()
+      (when (and (stringp buffer-file-name)
+                 (string-match "\\.pug\\'" buffer-file-name))
+        (pug-compile)))
+    (add-hook 'after-save-hook 'pug-compile-saved-file))
 #+END_SRC
 
 ** stylus mode
@@ -3940,8 +3946,7 @@ https://github.com/vladh/stylus-mode
 
 #+BEGIN_SRC emacs-lisp
   (use-package stylus-mode
-    :quelpa (:fetcher github :repo "vladh/stylus-mode")
-	:ensure pug-mode)
+    :quelpa (:fetcher github :repo "vladh/stylus-mode"))
 #+END_SRC
 
 ** TODO Haskell
