@@ -1310,7 +1310,36 @@ Just switch to another window and open target directory.
       (find-file new-directory-name)))
 #+END_SRC
 
-*** find-file usually files
+*** Create and switch to *scratch*
+
+#+BEGIN_SRC emacs-lisp
+  (defun switch-to-scratch-buffer ()
+    "switch buffer to scratch if not exist then create new one"
+    (interactive)
+    (unless (get-buffer "*scratch*")
+      (with-current-buffer (get-buffer-create "*scratch*")
+        (insert initial-scratch-message)
+        (lisp-interaction-mode)))
+    (switch-to-buffer "*scratch*"))
+#+END_SRC
+
+*** open usually files by hotkey
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fs" 'switch-to-scratch-buffer)
+  (bind-key "C-c fi" 'find-file-init-org)
+  (bind-key "C-c fm" 'find-file-message)
+
+  (defun find-file-message ()
+    (interactive)
+    (find-file-or-buffer "*Messages*"))
+
+  (defun find-file-init-org ()
+    (interactive)
+    (find-file user-emacs-init-org))
+#+END_SRC
+
+*** find-file usually files by ivy
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-c ff" 'find-file-usually-files)
@@ -1339,6 +1368,7 @@ Just switch to another window and open target directory.
      (t
       (message "Not found %s" file-or-buffer-name))))
 #+END_SRC
+
 *** save-place
 
 自動記錄每一個檔案，cursor 所在的位置。
@@ -1482,19 +1512,6 @@ by git project etc., and show file state]]
                   " "
                   filename-and-process)))
     )
-#+END_SRC
-
-*** Create and switch to *scratch*
-
-#+BEGIN_SRC emacs-lisp
-  (defun switch-to-scratch-buffer ()
-    "switch buffer to scratch if not exist then create new one"
-    (interactive)
-    (unless (get-buffer "*scratch*")
-      (with-current-buffer (get-buffer-create "*scratch*")
-        (insert initial-scratch-message)
-        (lisp-interaction-mode)))
-    (switch-to-buffer "*scratch*"))
 #+END_SRC
 
 *** persistent-scratch
