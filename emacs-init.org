@@ -4070,16 +4070,17 @@ stack install hindent
     (add-hook 'haskell-mode-hook #'hindent-mode))
 #+END_SRC
 
-** TODO yaml mode
-** elm
+** yaml mode
 
-[[https://github.com/jcollard/elm-mode/blob/master/README.md][elm-mode/README.md at master · jcollard/elm-mode · GitHub]]
+https://github.com/yoshiki/yaml-mode
 
 #+BEGIN_SRC emacs-lisp
-(use-package elm-mode
-:ensure company
-:config
-(add-to-list 'company-backends 'company-elm))
+  (use-package yaml-mode
+    :mode "\\.yaml\\'" "\\.yml\\'"
+    :config
+    (add-hook 'yaml-mode-hook
+              '(lambda ()
+                 (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
 #+END_SRC
 
 ** lispy
