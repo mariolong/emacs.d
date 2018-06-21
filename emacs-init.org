@@ -4094,16 +4094,6 @@ https://github.com/abo-abo/lispy/blob/master/README.md
               (lambda () (lispy-mode 1))))
 #+END_SRC
 
-** SQL
-
-在 SQL 視窗中，自動轉行，能看到所有資料
-
-#+BEGIN_SRC emacs-lisp
-(add-hook 'sql-interactive-mode-hook
-          (lambda ()
-            (toggle-truncate-lines nil)))
-#+END_SRC
-
 ** edbi for database management
 
 ref: [[https://github.com/kiwanami/emacs-edbi][GitHub - kiwanami/emacs-edbi: Database Interface for Emacs Lisp]]
