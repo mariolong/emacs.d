@@ -4151,7 +4151,6 @@ for stock project to use mySQL.
 
   (defun edbi-open-stock-mysql ()
     (interactive)
-<<<<<<< HEAD
     (if (opened-edbi-frame-p)
         (message "edbi already open")
       (progn
@@ -4162,15 +4161,6 @@ for stock project to use mySQL.
           (edbi:connect conn data-source)
           (edbi:dbview-open conn))
         (e2wm:dp-edbi))))
-=======
-    (make-frame)
-    (let* ((uri "dbi:mysql:stock:localhost")
-           (data-source (edbi:data-source uri "stock" "stock"))
-           (conn (edbi:start)))
-      (edbi:connect conn data-source)
-      (edbi:dbview-open conn))
-    (e2wm:dp-edbi))
->>>>>>> a3d88402ba40a2206c162fb2afebae69ccb77a93
 
   (defun edbi-close-stock-mysql ()
     (interactive)
@@ -4182,11 +4172,7 @@ for stock project to use mySQL.
       (message "%s" "Please switch to edbi frame!")))
 
   (bind-key "C-c so" 'edbi-open-stock-mysql)
-<<<<<<< HEAD
   (bind-key "C-c sk" 'edbi-close-stock-mysql)
-=======
-  (bind-key "C-c sc" 'edbi-close-stock-mysql)
->>>>>>> a3d88402ba40a2206c162fb2afebae69ccb77a93
 #+END_SRC
 
 *** edbi-sqlite
