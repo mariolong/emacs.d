@@ -4102,7 +4102,7 @@ must install following packages from CLI firstly.
     (autoload 'e2wm:dp-edbi "e2wm-edbi.el" nil t))
 #+END_SRC
 
-** binding
+*** key binding
 
 #+BEGIN_SRC ditaa :file edbi-keybings.png :cmdline -E
        move cursor: hjklnpfbae
@@ -4140,22 +4140,31 @@ must install following packages from CLI firstly.
 #+END_SRC
 
 *** edbi mysql
+
+for stock project to use mySQL.
+
 #+BEGIN_SRC emacs-lisp
   (defun edbi-open-stock-mysql ()
     (interactive)
+    (make-frame)
     (let* ((uri "dbi:mysql:stock:localhost")
            (data-source (edbi:data-source uri "stock" "stock"))
            (conn (edbi:start)))
       (edbi:connect conn data-source)
       (edbi:dbview-open conn))
-    (make-frame)
     (e2wm:dp-edbi))
 
   (defun edbi-close-stock-mysql ()
     (interactive)
-    (e2wm:stop-management)
-    (delete-frame)
-    (kill-edbi-buffers))
+    (if (e2wm:managed-p)
+        (progn
+          (e2wm:stop-management)
+          (delete-frame)
+          (kill-edbi-buffers))
+      (message "%s" "Please switch to edbi frame!")))
+
+  (bind-key "C-c so" 'edbi-open-stock-mysql)
+  (bind-key "C-c sc" 'edbi-close-stock-mysql)
 #+END_SRC
 
 *** edbi-sqlite
