@@ -3076,16 +3076,36 @@ https://github.com/m00natic/vlfi
 #+END_SRC
 
 * Blog
-** nikola build from emacs
+** nikola new post
 
+#+BEGIN_SRC emacs-lisp
+  (defun nikola-new-post ()
+    "Create a new post or open an old post for nikola."
+
+    (interactive)
+    (let* ((default-directory "/mnt/lvm-data/Documents/blog-2018/posts/")
+           (file-name (call-interactively 'find-file)))
+      (when (not (file-exists-p (buffer-name file-name)))
+        (progn
+          (insert (car (cdr (assoc "N" org-structure-template-alist))))
+          (goto-char (point-min))))))
+
+  (bind-key "C-c nn" 'nikola-new-post)
+#+END_SRC
+
+** nikola build/deploy blogger site from emacs
 
 #+BEGIN_SRC emacs-lisp
   (defun nikola-build ()
+    "build blogger site by nikola build"
+
     (interactive)
     (message "nikola build")
     (async-shell-command "nikola build"))
 
   (defun nikola-deploy ()
+    "deploy to github by nikola github_deploy"
+
     (interactive)
     (message "nikola deploy")
     (async-shell-command "nikola github_deploy"))
@@ -4353,6 +4373,11 @@ for stock project to use mySQL.
 #+BEGIN_SRC emacs-lisp
   (use-package yaml-mode)
 #+END_SRC
+
+** TODO haskell frontend
+
+http://blog.vmchale.com/article/haskell-frontend
+<2018-06-21 四 17:09>
 
 * Finalization
 ** diminish some mode
