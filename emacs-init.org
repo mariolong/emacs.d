@@ -194,7 +194,8 @@ You need to do this for any non-package.el packag
 #+END_SRC
 
 *** Install ~quelpa-use-package~
-SOURCE: https://github.com/quelpa/quelpa-use-package
+
+[[https://github.com/quelpa/quelpa-use-package][GitHub - quelpa/quelpa-use-package]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package quelpa-use-package
@@ -206,7 +207,8 @@ SOURCE: https://github.com/quelpa/quelpa-use-package
 
 Project for modernizing Emacs' Package Menu.
 With package ratings, usage statistics, customizability, and more.
-https://github.com/Malabarba/paradox
+
+[[https://github.com/Malabarba/paradox][GitHub - Malabarba/paradox: Project for modernizing Emacs' Package Menu.]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package paradox
@@ -226,7 +228,7 @@ https://github.com/Malabarba/paradox
 
 *** spaceline
 
-ref: https://github.com/TheBB/spaceline
+[[https://github.com/TheBB/spaceline][GitHub - TheBB/spaceline: Powerline theme from Spacemacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package spaceline-config
@@ -402,7 +404,7 @@ from 26.1, using ~(setq display-line-numbers 'relative)~ to display line number.
 *** ethan-wspace
 
 Takes care of trailing whitespaces (removal, highlighting)
-https://github.com/glasserc/ethan-wspace
+[[https://github.com/glasserc/ethan-wspace][GitHub - glasserc/ethan-wspace: the definitive emacs customizations for people who are OCD about whitespace]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package ethan-wspace
@@ -632,7 +634,7 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
 ** epub reader
 
-SOURCE: https://github.com/wasamasa/nov.el
+[[https://github.com/wasamasa/nov.el][GitHub - wasamasa/nov.el: Major mode for reading EPUBs in Emacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package nov
@@ -903,11 +905,10 @@ SOURCE: https://github.com/wasamasa/nov.el
 ** File System Management
 *** Dired: the most powerfull file management tool
 
-https://github.com/lunaryorn/.emacs.d/blob/master/init.el
-
-http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
-
-http://pragmaticemacs.com/category/dired/
+Ref:
+- https://github.com/lunaryorn/.emacs.d/blob/master/init.el
+- http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
+- http://pragmaticemacs.com/category/dired/
 
 We recently looked at replacing text in buffers.
 Using dired, it is possible to do this in many files in a directory.
@@ -1113,7 +1114,7 @@ yaourt -S unzip unrar
 
 *** openwith
 
-SOURCE: https://github.com/emacsmirror/openwith
+[[https://github.com/emacsmirror/openwith][GitHub - emacsmirror/openwith: Open files with external programs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package openwith
@@ -1131,7 +1132,7 @@ SOURCE: https://github.com/emacsmirror/openwith
 
 *** dired-async
 
-SOURCE: https://github.com/jwiegley/emacs-async
+[[https://github.com/jwiegley/emacs-async][GitHub - jwiegley/emacs-async: Simple library for asynchronous processing in Emacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package async
@@ -1485,10 +1486,9 @@ list up to date. I turn it on in my ibuffer-mode-hook:
                (ibuffer-auto-mode 1)))
 #+END_SRC
 
-*** ibuffer-vc
+*** TODO ibuffer-vc
 
-ref: [[https://github.com/purcell/ibuffer-vc][GitHub - purcell/ibuffer-vc: Let Emacs' ibuffer-mode group files
-by git project etc., and show file state]]
+[[https://github.com/purcell/ibuffer-vc][GitHub - purcell/ibuffer-vc: Let Emacs' ibuffer-mode group files by git project etc., and show file state]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package ibuffer-vc
@@ -1510,14 +1510,12 @@ by git project etc., and show file state]]
                   " "
                   (vc-status 16 16 :left)
                   " "
-                  filename-and-process)))
-    )
+                  filename-and-process))))
 #+END_SRC
 
 *** persistent-scratch
 
-A persistent scratch buffer form Pragmatic Emacs
-http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/
+ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
 
 #+BEGIN_SRC emacs-lisp
 (use-package persistent-scratch
@@ -1633,7 +1631,7 @@ Undo/redo window configuration with C-c <left>/<right>
 
 *** ace-window
 
-https://github.com/abo-abo/ace-wimndow
+[[https://github.com/abo-abo/ace-window][GitHub - abo-abo/ace-window: Quickly switch windows in Emacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package ace-window
@@ -2074,8 +2072,7 @@ using org-eww to save current web page to org-mode in eww-mode
 
 ** elfeed
 
-GitHub - skeeto/elfeed: An Emacs web feeds client
-https://github.com/skeeto/elfeed
+[[https://github.com/skeeto/elfeed][GitHub - skeeto/elfeed: An Emacs web feeds client]]
 
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package elfeed
@@ -2456,8 +2453,7 @@ there is no new post for a long time.
 
 ** elfeed-goodies
 
-GitHub - algernon/elfeed-goodies: Various goodies for Elfeed
-https://github.com/algernon/elfeed-goodies
+[[https://github.com/algernon/elfeed-goodies][GitHub - algernon/elfeed-goodies: Various goodies for Elfeed]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package elfeed-goodies
@@ -2470,8 +2466,7 @@ https://github.com/algernon/elfeed-goodies
 
 ** elfeed-org
 
-GitHub - remyhonig/elfeed-org: Configure the Elfeed RSS reader with an Orgmode file
-https://github.com/remyhonig/elfeed-org
+[[https://github.com/remyhonig/elfeed-org][GitHub - remyhonig/elfeed-org: Configure the Elfeed RSS reader with an Orgmode file]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package elfeed-org
@@ -2543,8 +2538,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
 ** crux
 
-GitHub - bbatsov/crux: A Collection of Ridiculously Useful eXtensions for Emacs
-https://github.com/bbatsov/crux#keybindings
+[[https://github.com/bbatsov/crux#keybindings][GitHub - bbatsov/crux: A Collection of Ridiculously Useful eXtensions for Emacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package crux
@@ -2706,7 +2700,7 @@ ref: http://stackoverflow.com/questions/3156450/shift-a-region-or-line-in-emacs
 + C-- C-= 縮減
 + C-0 C-= 還原
 
-ref: https://github.com/magnars/expand-region.el
+[[https://github.com/magnars/expand-region.el][GitHub - magnars/expand-region.el: Emacs extension to increase selected region by semantic units.]]
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "M-SPC" 'set-mark-command)
@@ -3082,7 +3076,23 @@ https://github.com/m00natic/vlfi
 #+END_SRC
 
 * Blog
-** TODO nikola build from emacs
+** nikola build from emacs
+
+
+#+BEGIN_SRC emacs-lisp
+  (defun nikola-build ()
+    (interactive)
+    (message "nikola build")
+    (async-shell-command "nikola build"))
+
+  (defun nikola-deploy ()
+    (interactive)
+    (message "nikola deploy")
+    (async-shell-command "nikola github_deploy"))
+
+  (bind-key "C-c nb" 'nikola-build)
+  (bind-key "C-c nd" 'nikola-deploy)
+#+END_SRC
 
 * Org and GTD system
 ** Org
@@ -3522,7 +3532,7 @@ ref: https://github.com/sabof/org-bullets
 
 ** ox-epub
 
-Ref: [[https://github.com/ofosos/ox-epub][GitHub - ofosos/ox-epub: Org mode epub export]]
+[[https://github.com/ofosos/ox-epub][GitHub - ofosos/ox-epub: Org mode epub export]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package ox-epub)
@@ -3721,7 +3731,7 @@ Using =call-meld= to find the differences of current buffer from last commit.
 
 ** diff-hl
 
-ref: [[https://github.com/dgutov/diff-hl][GitHub - dgutov/diff-hl: Emacs package for highlighting uncommitted changes]]
+[[https://github.com/dgutov/diff-hl][GitHub - dgutov/diff-hl: Emacs package for highlighting uncommitted changes]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package diff-hl
@@ -3922,7 +3932,7 @@ https://github.com/kuanyui/hexo.el
 
 ** pug mode
 
-https://github.com/hlissner/emacs-pug-mode
+[[https://github.com/hlissner/emacs-pug-mode][GitHub - hlissner/emacs-pug-mode: Pug support for Emacs, based on slim-mode.]]
 
 must install pug-cli first.
 
@@ -3942,7 +3952,7 @@ sudo npm install pug-cli -g
 
 ** stylus mode
 
-https://github.com/vladh/stylus-mode
+[[https://github.com/vladh/stylus-mode][GitHub - vladh/stylus-mode: Stylus support for Emacs, based on pug-mode.]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package stylus-mode
@@ -4072,7 +4082,7 @@ stack install hindent
 
 ** yaml mode
 
-https://github.com/yoshiki/yaml-mode
+[[https://github.com/yoshiki/yaml-mode][GitHub - yoshiki/yaml-mode: The emacs major mode for editing files in the YAML data serialization format.]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package yaml-mode
@@ -4085,7 +4095,7 @@ https://github.com/yoshiki/yaml-mode
 
 ** lispy
 
-https://github.com/abo-abo/lispy/blob/master/README.md
+[[https://github.com/abo-abo/lispy][GitHub - abo-abo/lispy: Short and sweet LISP editing]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package lispy
@@ -4096,7 +4106,7 @@ https://github.com/abo-abo/lispy/blob/master/README.md
 
 ** edbi for database management
 
-ref: [[https://github.com/kiwanami/emacs-edbi][GitHub - kiwanami/emacs-edbi: Database Interface for Emacs Lisp]]
+[[https://github.com/kiwanami/emacs-edbi][GitHub - kiwanami/emacs-edbi: Database Interface for Emacs Lisp]]
 
 must install following packages from CLI firstly.
 
@@ -4275,10 +4285,8 @@ for stock project to use mySQL.
 
 *** flycheck for edbi
 
-GitHub - purcell/sqlint: Simple SQL linter
-https://github.com/purcell/sqlint
-
-ref: http://emacs.stackexchange.com/questions/20273/setting-up-flycheck-in-pair-with-different-mode-is-not-working
+[[https://github.com/purcell/sqlint][GitHub - purcell/sqlint: Simple SQL linter]]
+[[https://emacs.stackexchange.com/questions/20273/setting-up-flycheck-in-pair-with-different-mode-is-not-working][Setting up flycheck in pair with different mode is not working - Emacs Stack Exchange]]
 
 1. install ruby for sqlint
    #+BEGIN_SRC sh
@@ -4314,11 +4322,8 @@ ref: http://emacs.stackexchange.com/questions/20273/setting-up-flycheck-in-pair-
 ** markdown-mode
 
 #+BEGIN_SRC emacs-lisp
-(use-package markdown-mode
-  :init
-    (progn
-      (add-to-list 'auto-mode-alist '("\\.markdown\\'" . gfm-mode))
-      (add-to-list 'auto-mode-alist '("\\.md\\'" . gfm-mode))))
+  (use-package markdown-mode
+    :mode "\\.markdown\\'" "\\.md\\'")
 #+END_SRC
 
 ** nginx-mode
@@ -4329,7 +4334,7 @@ ref: http://emacs.stackexchange.com/questions/20273/setting-up-flycheck-in-pair-
 
 ** fish-mode
 
-ref: https://github.com/wwwjfy/emacs-fish
+[[https://github.com/wwwjfy/emacs-fish][GitHub - wwwjfy/emacs-fish: fish-mode for emacs]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package fish-mode
@@ -4340,7 +4345,10 @@ ref: https://github.com/wwwjfy/emacs-fish
                 (add-hook 'before-save-hook 'fish_indent-before-save))))
 #+END_SRC
 
+
 ** yaml-mode
+
+[[https://github.com/yoshiki/yaml-mode][GitHub - yoshiki/yaml-mode: The emacs major mode for editing files in the YAML data serialization format.]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package yaml-mode)
@@ -4358,15 +4366,16 @@ ref: https://github.com/wwwjfy/emacs-fish
 
 * 疑難雜症
 
-** C-M-p don't work
+** ~C-M-p~ don't work
 
 原因：fcitx 按鍵衝突
 解法：http://sudodev.cn/emacs-backward-list-shortcut/
 
-「配置 Fcitx」這一項，點選彈出輸入法配置視窗，點開「全域性設定」頁籤，勾選底下的「顯示高階
-選項」之後多出來一些內容，往下擼，找到設定有「Ctrl+Alt+P」這一項的設定，點這個按鈕，回車，就置為空了。
+「配置 Fcitx」這一項，點選彈出輸入法配置視窗，點開「全域性設定」頁籤，
+勾選底下的「顯示高階選項」之後多出來一些內容，往下擼，找到設定有
+「Ctrl+Alt+P」這一項的設定，點這個按鈕，回車，就置為空了。
 
-** install ditaa
+** TODO install ditaa
 
 #+BEGIN_SRC sh
   $ mkdir -p ~/.emacs.d/elpa/contrib/scripts
