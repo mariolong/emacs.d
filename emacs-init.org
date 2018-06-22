@@ -2573,7 +2573,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
   (epm/add-mode-pairs 'python-mode-hook '((?\' . ?\')))
   (epm/add-mode-pairs 'web-mode-hook '((?\' . ?\')))
-  (epm/add-mode-pairs 'org-mode-hook '((?/ . ?/) (?= . ?=) (?~ . ?~) (?_ . ?_)))
+  (epm/add-mode-pairs 'org-mode-hook '((?/ . ?/) (?= . ?=) (?~ . ?~) (?* . ?*) (?+ . ?+) (?_ . ?_)))
 #+END_SRC
 
 ** turn off electric-quote-~ in emacs 25.1 and newer
@@ -3309,8 +3309,9 @@ change =verbatim= to =kbd=
 *** 中文*加強*語法，或+刪除+一句話，不用加上空白
 
 #+BEGIN_SRC emacs-lisp
-(setcar org-emphasis-regexp-components " \t('\"{[:alpha:]")
-(setcar (nthcdr 1 org-emphasis-regexp-components) "[:alpha:]- \t.,:!?;'\")}\\")
+(setq my-full-punctuation "。，：！？；、（）「」【】《》")
+(setcar org-emphasis-regexp-components (concat " \t('\"{[:alpha:]" my-full-punctuation))
+(setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:alpha:]- \t.,:!?;'\")}\\" my-full-punctuation))
 (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
 
@@ -4367,7 +4368,6 @@ for stock project to use mySQL.
               (lambda ()
                 (add-hook 'before-save-hook 'fish_indent-before-save))))
 #+END_SRC
-
 
 ** yaml-mode
 
