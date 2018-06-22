@@ -3012,7 +3012,8 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
 #+BEGIN_SRC emacs-lisp
   (use-package avy
     :bind (("M-g c" . avy-goto-char)
-           ("M-g f" . avy-goto-line)))
+           ("M-g l" . avy-goto-line)
+           ("M-g w" . avy-goto-word-1)))
 #+END_SRC
 
 ** ace-pinyin
@@ -3026,9 +3027,8 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
     :diminish ""
     :commands ace-pinyin-global-mode
     :init
-    (ace-pinyin-global-mode +1)
-    :config
-    (setq ace-pinyin-simplified-chinese-only-p nil))
+    (setq ace-pinyin-simplified-chinese-only-p nil)
+    (ace-pinyin-global-mode 1))
 #+END_SRC
 
 ** link-hint
