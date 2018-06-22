@@ -3150,7 +3150,9 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
                '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))
 
   (add-to-list 'org-structure-template-alist
-               '("T" "#+TITLE:?\n#+AUTHOR:\n#+DATE:\n#+UID:mario-long-epub-uid-for-kindle"))
+               (list "T" (concat "#+TITLE:?\n#+AUTHOR:\n#+DATE: "
+                             (current-date-time-nikola)
+                             "\n#+UID: mario-long-epub-uid-for-kindle")))
 
   (add-to-list 'org-structure-template-alist
                (list "N" (concat "#+BEGIN_COMMENT\n"
