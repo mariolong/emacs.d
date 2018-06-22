@@ -2921,7 +2921,7 @@ When the completion candidates are shown,
 - <f1> to dispaly the documentation
 - <C-w> to see its source
 
-** Spell checking
+** TODO Spell checking
 *** Ispell
 
 if want to use "hunspell", then must install hunspell and hunspell_en in OS.
@@ -3085,12 +3085,11 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
     "Create a new post or open an old post for nikola."
 
     (interactive)
-    (let* ((default-directory "/mnt/lvm-data/Documents/blog-2018/posts/")
-           (file-name (call-interactively 'find-file)))
-      (when (not (file-exists-p (buffer-name file-name)))
-        (progn
-          (insert (car (cdr (assoc "N" org-structure-template-alist))))
-          (goto-char (point-min))))))
+    (let ((default-directory "/mnt/lvm-data/Documents/blog-2018/posts/"))
+      (call-interactively 'find-file)
+      (when (= 0 (buffer-size))
+        (insert (car (cdr (assoc "N" org-structure-template-alist))))
+        (goto-char (point-min)))))
 
   (bind-key "C-c nn" 'nikola-new-post)
 #+END_SRC
