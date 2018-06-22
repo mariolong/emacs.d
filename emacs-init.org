@@ -3005,19 +3005,19 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
        ))
 #+END_SRC
 
-** avy
+** avy keybindings
 
-ref: https://github.com/abo-abo/avy
+[[https://github.com/abo-abo/avy][GitHub - abo-abo/avy: Jump to things in Emacs tree-style]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package avy
-    :bind (("M-g M-c" . avy-goto-char)
-           ("M-g M-l" . avy-goto-line)))
+    :bind (("M-g c" . avy-goto-char)
+           ("M-g f" . avy-goto-line)))
 #+END_SRC
 
 ** ace-pinyin
 
-ref: https://github.com/cute-jumper/ace-pinyin
+[[https://github.com/cute-jumper/ace-pinyin][GitHub - cute-jumper/ace-pinyin: Jump to Chinese character by pinyin with `avy' or `ace-jump-mode`]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package ace-pinyin
@@ -3033,7 +3033,7 @@ ref: https://github.com/cute-jumper/ace-pinyin
 
 ** link-hint
 
-ref: https://github.com/noctuid/link-hint.el
+[[https://github.com/noctuid/link-hint.el][GitHub - noctuid/link-hint.el: Pentadactyl-like Link Hinting in Emacs with Avy]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package link-hint
@@ -3048,7 +3048,9 @@ ref: https://github.com/noctuid/link-hint.el
 移動 cursor 到目前 buffer 合理的首/尾。
 至少支援 ibuffer, dired, elfeed-search.
 
-ref: https://emacs.cafe/emacs/package/2017/08/01/beginend.html
+[[https://github.com/DamienCassou/beginend][GitHub - DamienCassou/beginend: Emacs package to redefine M-< and M-> for some modes]]
+
+ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package beginend
@@ -3064,7 +3066,7 @@ ref: https://emacs.cafe/emacs/package/2017/08/01/beginend.html
 
 ** edit very large file
 
-https://github.com/m00natic/vlfi
+[[https://github.com/m00natic/vlfi][GitHub - m00natic/vlfi: View Large Files in Emacs]]
 
 ~C-c C-v~
 
