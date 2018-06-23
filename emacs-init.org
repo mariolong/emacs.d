@@ -4421,9 +4421,11 @@ http://blog.vmchale.com/article/haskell-frontend
 
 ** TODO install ditaa
 
+步驟：
 1. linux 中安裝 ditaa, 也會先安裝 java
-2. 用 ~find /. -name "ditaa*"~ 找 ditaa.jar 在哪？
-3. 建 ditaa 的連結到 =~/.emacs.d/elpa/contrib/scripts= 中
+2. 建立目錄：=~/.emacs.d/elpa/contrib/scripts=
+3. 用 ~find /. -name "ditaa*"~ 找 ditaa.jar 在哪？
+4. 建 ~ditaa.jar~ 的連結到 =~/.emacs.d/elpa/contrib/scripts= 中
 
 #+BEGIN_SRC sh
 yaourt -S ditaa
