@@ -3260,7 +3260,8 @@ secondly, install ob-browser
 
 SOURCE: https://github.com/emacs-china/emacs-china.github.io/blob/master/blog/FengShu/org-remove-useless-space-between-chinese.org
 
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+#+BEGIN_SRC emacs-lisp :tangle no :exports no
+
 (require 'ox-html)
   (defun eh-org-clean-space (text backend info)
     "在 export 為 HTML 時，刪除中文之間不必要的空格"
@@ -3286,6 +3287,21 @@ SOURCE: https://github.com/emacs-china/emacs-china.github.io/blob/master/blog/Fe
 
   (add-to-list 'org-export-filter-paragraph-functions
                'eh-org-clean-space)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+;; https://coldnew.github.io/a1ed40e3/
+(defadvice org-html-paragraph (before org-html-paragraph-advice
+                                      (paragraph contents info) activate)
+  "Join consecutive Chinese lines into a single long line without
+unwanted space when exporting org-mode to html."
+  (let* ((origin-contents (ad-get-arg 1))
+         (fix-regexp "[[:multibyte:]]")
+         (fixed-contents
+          (replace-regexp-in-string
+           (concat
+            "\\(" fix-regexp "\\) *\n *\\(" fix-regexp "\\)") "\\1\\2" origin-contents)))
+	(ad-set-arg 1 fixed-contents)))
 #+END_SRC
 
 *** Convert inline verbatim to kbd when HTML export
@@ -4405,10 +4421,15 @@ http://blog.vmchale.com/article/haskell-frontend
 
 ** TODO install ditaa
 
+1. linux 中安裝 ditaa, 也會先安裝 java
+2. 用 ~find /. -name "ditaa*"~ 找 ditaa.jar 在哪？
+3. 建 ditaa 的連結到 =~/.emacs.d/elpa/contrib/scripts= 中
+
 #+BEGIN_SRC sh
-  $ mkdir -p ~/.emacs.d/elpa/contrib/scripts
-  $ find /. -name "ditaa*"
-  $ ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
+yaourt -S ditaa
+mkdir -p ~/.emacs.d/elpa/contrib/scripts
+find /. -name "ditaa*"
+ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
 #+END_SRC
 
 * The Final note
