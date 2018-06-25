@@ -115,9 +115,9 @@ solution: http://www.cnblogs.com/aqing1987/p/4464106.html
 
   (setq org-directory "~/Dropbox/GTD")
   (setq org-default-notes-file (expand-file-name "myGTD.org" org-directory)
-        org-default-inbox-file (expand-file-name "inbox.org" org-directory)
+        org-default-inbox-file (expand-file-name "myGTD.org" org-directory)
         org-my-notes-file (expand-file-name "notes.org" org-directory)
-        org-my-travel-file (expand-file-name "travel.org" org-directory)
+        ;; org-my-travel-file (expand-file-name "travel.org" org-directory)
         org-my-food-file (expand-file-name "food.org" org-directory)
         )
 #+END_SRC
@@ -1337,7 +1337,7 @@ Just switch to another window and open target directory.
     (require 'elfeed-org)
     (let ((usually-files (list user-emacs-init-org
                                org-default-inbox-file
-                               org-default-notes-file
+                               ;; org-default-notes-file
                                "*Messages*"
                                "*scratch*")))
 
@@ -1745,7 +1745,7 @@ popwin for undo-tree and multi-term only
     ;; ("^\*helm.+\*$" :regexp t :height 15)))
     :config
     (popwin-mode 1)
-    (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config)
+    (push '(" *undo-tree*" :width 0.168 :position right) popwin:special-display-config)
     )
 #+END_SRC
 
@@ -1761,7 +1761,7 @@ call external terminal and cd to working directory of current buffer.
                                      "export SHELL=/usr/bin/fish; export XTERM_SHELL=$SHELL; fish")))
 #+END_SRC
 
-** popup multi-term
+** TODO popup multi-term
 
 ref:
 1. http://blog.jobbole.com/51598/
@@ -1781,7 +1781,7 @@ ref:
     <<term-config>>)
   #+END_SRC
 
-*** TODO term-mode-hook
+*** term-mode-hook
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
   (add-hook 'term-mode-hook
@@ -3399,35 +3399,27 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
   (setq org-capture-templates
         '(("t" "Todo" entry (file org-default-inbox-file)
            "* TODO %?\n%T")
-          ("e" "Emacs" entry (file+headline org-default-notes-file "emacs")
+          ("e" "Emacs" entry (file+headline org-default-inbox-file "emacs")
            "* TODO %?\n%T")
           ("n" "Note" entry (file org-my-notes-file)
            "* %?\n%T")
-          ("r" "tRavel" entry (file org-my-travel-file)
-           "* %?\n%T")
-          ("f" "Food" entry (file org-my-food-file)
-           "* %?\n%T")
           ))
 
-  (setq org-agenda-files (list org-default-notes-file
-                               org-default-inbox-file
+  (setq org-agenda-files (list org-default-inbox-file
                                org-my-notes-file
-                               org-my-travel-file
-                               org-my-food-file
                                user-emacs-init-org
                                ))
 
+  ;; (setq org-agenda-current-span 'day)
+  ;; (setq org-agenda--span 2)
 
-    ;; (setq org-agenda-current-span 'day)
-    ;; (setq org-agenda--span 2)
+  (setq org-refile-targets '((nil :maxlevel . 2)  ; refile to headings in the current buffer
+                             (org-agenda-files :level . 1)
+                             ))
 
-    (setq org-refile-targets '((nil :maxlevel . 2)  ; refile to headings in the current buffer
-                               (org-agenda-files :level . 1)
-                               ))
-
-    (add-hook 'org-agenda-mode-hook
-              '(lambda ()
-                 (local-set-key (kbd "C-g") 'org-agenda-exit)))
+  (add-hook 'org-agenda-mode-hook
+            '(lambda ()
+               (local-set-key (kbd "C-g") 'org-agenda-exit)))
 #+END_SRC
 
 **** show dropbox status of GTD directory
@@ -3570,11 +3562,47 @@ ref: https://github.com/sabof/org-bullets
     (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
 #+END_SRC
 
+** org-kindle
+
+#+BEGIN_SRC emacs-lisp
+  (defun org-kindle-export-as-html ()
+    (interactive)
+
+    (setq-local org-html-doctype "html5")
+    (setq-local org-export-default-language "zh_TW")
+    (setq-local org-html-head-include-default-style nil)
+    (setq-local org-html-postamble nil)
+    (setq-local org-html-head-include-scripts nil)
+    (org-html-export-as-html))
+
+  (defun org-kindle-export-to-html ()
+    (interactive)
+
+    (let* ((fname (buffer-file-name))
+           (fn-html (concat fname ".html"))
+           (fn-epub (concat fname ".epub"))
+           (fn-mobi (concat fname ".mobi")))
+      (save-window-excursion
+        (org-kindle-export-as-html)
+        (write-file fn-html)
+        (kill-buffer)
+
+        (shell-command (concat "pandoc -f html -o " fn-epub " -i " fn-html))
+        (shell-command (concat "kindlegen " fn-epub))
+        (async-shell-command (concat "kmail " fn-mobi)))))
+
+  (bind-key "C-c nk" #'org-kindle-export-to-html org-mode-map)
+#+END_SRC
+
+*** stylesheet.css for pandoc to export epub
+
+edit ~/home/mario/.pandoc/epub.css~
+
 ** ox-epub
 
 [[https://github.com/ofosos/ox-epub][GitHub - ofosos/ox-epub: Org mode epub export]]
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package ox-epub
     :config
     (setq org-epub-style-default
