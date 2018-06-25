@@ -2554,6 +2554,8 @@ GitHub: https://github.com/steckerhalter/discover-my-major
   (bind-key "C-S-d" 'delete-pair)
 #+END_SRC
 
+*** TODO move cursor to Corresponding brackets.
+
 ** turn on electric-pair-mode
 
 #+BEGIN_SRC emacs-lisp
@@ -2675,6 +2677,10 @@ ref: http://stackoverflow.com/questions/3156450/shift-a-region-or-line-in-emacs
 ** undo-tree
 
 用 M-x undo-tree-visualize (C-x u) 看 undo-tree，很直覺。
+
+- undo-tree: ~C-x u~
+- undo: ~C-_~
+- redo: ~C-?~
 
 #+BEGIN_SRC emacs-lisp
   (use-package undo-tree
