@@ -471,12 +471,12 @@ ref: http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-
 ** Utilities
 *** text scale adjust
 
-C-x C-0: text scale adjust to 100%
-C-+: text-scale-increase
+~C-+~ 進入文字大小調整模式
+用 +, -, 0 調整
 
 #+BEGIN_SRC emacs-lisp
   (setq-default text-scale-mode-step 1.1)
-  (bind-key "C-+" 'text-scale-increase)
+  (bind-key "C-+" 'text-scale-adjust)
 #+END_SRC
 
 *** string/starts-with and ends-with
@@ -1115,18 +1115,16 @@ ref: http://stackoverflow.com/questions/3156450/shift-a-region-or-line-in-emacs
 
 ** expand-region
 
++ M-= 擴充
++ 以 =, -, 0 調整大小
 + =M-SPC= 設定 mark
-+ C-= 擴充
-+ C-- C-= 縮減
-+ C-0 C-= 還原
 
 [[https://github.com/magnars/expand-region.el][GitHub - magnars/expand-region.el: Emacs extension to increase selected region by semantic units.]]
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "M-SPC" 'set-mark-command)
-
   (use-package expand-region
-    :bind ("C-=" . er/expand-region))
+    :bind ("M-=" . er/expand-region))
 #+END_SRC
 
 ** narrow or widen dwim
@@ -1657,7 +1655,16 @@ Using =call-meld= to find the differences of current buffer from last commit.
     )
 #+END_SRC
 
-** diff-hl
+** TODO ediff
+
+#+BEGIN_SRC emacs-lisp
+  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (setq ediff-split-window-function 'split-window-vertically)
+  (setq ediff-merge-split-window-function 'split-window-vertically)
+  (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
+#+END_SRC
+
+** TODO diff-hl
 
 [[https://github.com/dgutov/diff-hl][GitHub - dgutov/diff-hl: Emacs package for highlighting uncommitted changes]]
 
@@ -1677,16 +1684,6 @@ Using =call-meld= to find the differences of current buffer from last commit.
 - C-x v n  diff-hl-revert-hunk    :: Revert the diff hunk with changes at or above the point.
 - C-x v [  diff-hl-previous-hunk  :: Go to the beginning of the previous hunk in the current buffer.
 - C-x v ]  diff-hl-next-hunk      :: Go to the beginning of the next hunk in the current buffer.
-
-** TODO ediff
-
-#+BEGIN_SRC emacs-lisp
-  (setq ediff-window-setup-function 'ediff-setup-windows-plain)
-  (setq ediff-split-window-function 'split-window-vertically)
-  (setq ediff-merge-split-window-function 'split-window-vertically)
-  (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
-#+END_SRC
-
 ** projectile
 
 #+BEGIN_SRC emacs-lisp
@@ -1763,12 +1760,11 @@ ref: https://github.com/jorgenschaefer/elpy
             (lambda ()
               (set (make-local-variable 'comment-inline-offset) 2)))
 #+END_SRC
-
-** web-mode
+** TODO web-mode
 
 目前是為了 mako 使用的 web-mode，看起來還有一些問題需要微調，不知如何下手。
 
-Homepage: http://web-mode.org/
+Homepage: [[http://web-mode.org/][web-mode.el - html template editing for emacs]]
 Source: https://github.com/fxbois/web-mode
 
 ref: http://cestlaz.github.io/posts/using-emacs-21-web-mode/#.WCy93XeZOuU
@@ -1811,6 +1807,12 @@ useful keybindings
 
 #+END_SRC
 
+** css-mode
+#+BEGIN_SRC emacs-lisp
+(use-package css-mode
+  :init (setq css-indent-offset 2))
+#+END_SRC
+
 ** js2-mode
 
 ref: https://github.com/mooz/js2-mode
@@ -1823,12 +1825,6 @@ ref: https://github.com/mooz/js2-mode
       (add-hook 'js2-mode-hook
 		(lambda () (setq js2-basic-offset 4)))
       (add-hook 'js2-mode-hook 'flycheck-mode)))
-#+END_SRC
-
-** css-mode
-#+BEGIN_SRC emacs-lisp
-(use-package css-mode
-  :init (setq css-indent-offset 2))
 #+END_SRC
 ** company-tern
 
@@ -1887,27 +1883,15 @@ sudo npm install pug-cli -g
     :quelpa (:fetcher github :repo "vladh/stylus-mode"))
 #+END_SRC
 
-** TODO Haskell
-
-using intero???
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package intero
-    :demand haskell-mode
-    :config
-    (add-hook 'haskell-mode-hook 'intero-mode)
-    )
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package haskell-mode
-    :init
-    (haskell-indentation-mode t)
-    )
-#+END_SRC
-
+** TODO haskell-mode
 #+BEGIN_SRC emacs-lisp
   (use-package haskell-mode
     :mode "\\.hs$" "\\.l?hs$"
+    :bind (:map haskell-mode-map
+                ("[F5]" . (lambda () (interactive) (compile "stack build --fast")))
+                ("M-g i" . haskell-navigate-imports)
+                ("M-g M-i" . haskell-navigate-imports))
+
     :config
     (progn (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
            (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
@@ -1929,26 +1913,21 @@ using intero???
 
              (turn-on-haskell-decl-scan)
              (setq evil-auto-indent nil))
-
-           ;;(setq haskell-font-lock-symbols 'unicode)
-           ;;(setq haskell-literate-default 'tex)
-           ;;(setq haskell-stylish-on-save t)
-           ;;(setq haskell-tags-on-save t)
            (add-hook 'haskell-mode-hook 'my-haskell-hook)))
 #+END_SRC
 
-*** haskell-navigate-imports
+** TODO haskell-navigate-imports
 the editor will be focused on each of the
 import blocks in your file
 
 ~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (eval-after-load 'haskell-mode
           '(define-key haskell-mode-map [f8] 'haskell-navigate-imports))
 #+END_SRC
 
-*** hasktags
+** TODO hasktags
 
 ~M-.~: jump to the definition
 
@@ -1957,14 +1936,14 @@ cabal update
 cabal install hasktags
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
   (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
   (add-to-list 'exec-path my-cabal-path))
 (custom-set-variables '(haskell-tags-on-save t))
 #+END_SRC
 
-*** stylish-haskell
+** stylish-haskell
 
 #+BEGIN_SRC sh
 cabal update
@@ -1974,38 +1953,55 @@ cabal install stylish-haskell
 
 ~M-x haskell-mode-stylish-buffer~
 
-*** hindent
-
-~M-q~ : reformat the current declaration.
-
-#+BEGIN_SRC sh
-cabal install hindent
-#+END_SRC
-
+** flycheck-haskell
 #+BEGIN_SRC emacs-lisp
-  (use-package hindent
-    :ensure haskell-mode
-    :config
-    (add-hook 'haskell-mode-hook #'hindent-mode))
-#+END_SRC
-
-*** TODO flycheck-haskell
-
-#+BEGIN_SRC emacs-lisp :tangle no
   (use-package flycheck-haskell
     :config (add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
 #+END_SRC
 
-*** hindent
+** intero-mode
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package intero
+    :demand haskell-mode
+    :config
+    (add-hook 'haskell-mode-hook 'intero-mode)
+    (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package intero
+    :hook (haskell-mode . intero-mode)
+    :config (setq flycheck-check-syntax-automatically '(save mode-enabled)))
+#+END_SRC
+
+** hindent
+
+~M-q~ : reformat the current declaration.
 
 #+BEGIN_SRC sh
 stack install hindent
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package hindent
-    :config
-    (add-hook 'haskell-mode-hook #'hindent-mode))
+  (when (executable-find "hindent")
+    (use-package hindent
+      :diminish hindent-mode " ↹"
+      :hook (haskell-mode . hindent-mode)
+      :config
+      (setq hindent-reformat-buffer-on-save t)))
+#+END_SRC
+
+** haskell-snippets
+#+BEGIN_SRC emacs-lisp
+   (use-package haskell-snippets)
+#+END_SRC
+
+** TODO hlint-refactor
+
+#+BEGIN_SRC emacs-lisp
+   (use-package hlint-refactor
+   :hook (haskell-mode . hlint-refactor-mode)
+   :diminish "")
 #+END_SRC
 
 ** yaml mode
@@ -2021,18 +2017,60 @@ stack install hindent
                  (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
 #+END_SRC
 
-** lispy
+** TODO lispy
 
 [[https://github.com/abo-abo/lispy][GitHub - abo-abo/lispy: Short and sweet LISP editing]]
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package lispy
-    :config
-    (add-hook 'emacs-lisp-mode-hook
-              (lambda () (lispy-mode 1))))
+    :diminish "lispy"
+    :hook (emacs-lisp-mode . lispy-mode))
+#+END_SRC
+** systemd-mode
+
+會自動以 company 補全，不必再設定。
+
+#+BEGIN_SRC emacs-lisp
+  (use-package systemd)
 #+END_SRC
 
-** edbi for database management
+*** keybindings
+
+(define-key map (kbd "C-c C-d") 'systemd-doc-directives)
+(define-key map (kbd "C-c C-o") 'systemd-doc-open)
+** ReStructure
+
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.rst\\'" . rst-mode))
+#+END_SRC
+
+** markdown-mode
+
+#+BEGIN_SRC emacs-lisp
+  (use-package markdown-mode
+    :mode "\\.markdown\\'" "\\.md\\'")
+#+END_SRC
+
+** nginx-mode
+
+#+BEGIN_SRC emacs-lisp
+  (use-package nginx-mode)
+#+END_SRC
+
+** fish-mode
+
+[[https://github.com/wwwjfy/emacs-fish][GitHub - wwwjfy/emacs-fish: fish-mode for emacs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package fish-mode
+    :mode ("\\.fish\\'" . fish-mode)
+    :config
+    (add-hook 'fish-mode-hook
+              (lambda ()
+                (add-hook 'before-save-hook 'fish_indent-before-save))))
+#+END_SRC
+
+** TODO edbi for database management
 
 [[https://github.com/kiwanami/emacs-edbi][GitHub - kiwanami/emacs-edbi: Database Interface for Emacs Lisp]]
 
@@ -2229,62 +2267,6 @@ for stock project to use mySQL.
        '(progn
           (flycheck-add-mode 'sql-sqlint 'edbi:sql-mode)))
    #+END_SRC
-** systemd-mode
-
-會自動以 company 補全，不必再設定。
-
-#+BEGIN_SRC emacs-lisp
-  (use-package systemd)
-#+END_SRC
-
-*** keybindings
-
-(define-key map (kbd "C-c C-d") 'systemd-doc-directives)
-(define-key map (kbd "C-c C-o") 'systemd-doc-open)
-** ReStructure
-
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.rst\\'" . rst-mode))
-#+END_SRC
-
-** markdown-mode
-
-#+BEGIN_SRC emacs-lisp
-  (use-package markdown-mode
-    :mode "\\.markdown\\'" "\\.md\\'")
-#+END_SRC
-
-** nginx-mode
-
-#+BEGIN_SRC emacs-lisp
-  (use-package nginx-mode)
-#+END_SRC
-
-** fish-mode
-
-[[https://github.com/wwwjfy/emacs-fish][GitHub - wwwjfy/emacs-fish: fish-mode for emacs]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package fish-mode
-    :mode ("\\.fish\\'" . fish-mode)
-    :config
-    (add-hook 'fish-mode-hook
-              (lambda ()
-                (add-hook 'before-save-hook 'fish_indent-before-save))))
-#+END_SRC
-
-** yaml-mode
-
-[[https://github.com/yoshiki/yaml-mode][GitHub - yoshiki/yaml-mode: The emacs major mode for editing files in the YAML data serialization format.]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package yaml-mode)
-#+END_SRC
-
-** TODO haskell frontend
-
-http://blog.vmchale.com/article/haskell-frontend
-<2018-06-21 四 17:09>
 * Operation system
 ** File System Management
 *** Dired: the most powerfull file management tool
@@ -3402,28 +3384,20 @@ ref: http://emacs.stackexchange.com/questions/2955/how-to-customize-background-c
 *** eww browse at point
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
-  (defun my/thing-at-point-to-eww ()
-    (if mark-active
-        (s-trim (buffer-substring-no-properties (region-beginning) (region-end)))
-      (unless (setq-local ret (thing-at-point 'url))
-        (unless (setq-local ret (thing-at-point 'symbol))
-          (setq-local ret "")))
-      ret))
-
   (defun browse-at-point (arg)
     "browse at point: selected region or url or single word.
-      if cursor at whitespace then call eww wait for input some thing."
+   if cursor at whitespace then call eww wait for input some thing."
     (interactive "P")
+
     (if (consp arg)
         (call-interactively 'eww)
-      (let ((thing (my/thing-at-point-to-eww)))
-        (if (string= "" thing)
-            (call-interactively 'eww)
-          (eww thing)))))
+      (if (string= "link" (car (org-thing-at-point)))
+          (org-open-at-point)
+        (unless (setq-local thing (thing-at-point 'url))
+          (unless (setq-local thing (thing-at-point 'symbol))
+            (call-interactively 'eww)))
+        (eww thing))))
 #+END_SRC
-
-**** TODO add org-open-at-point to browse-at-point (try...capture...except)
-*(when (eq "user-error: No link found" (org-open-at-point))
 
 *** get current data/title/source on EWW buffer for EMACS 25+
 
