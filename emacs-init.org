@@ -3,7 +3,8 @@
 #+EMAIL: mariolong5782@gmail.com
 #+STARTUP: overview showstars
 #+BABEL: :cache yes
-#+OPTIONS: ^:nil
+#+OPTIONS: ^:nil toc:2
+#+LANGUAGE: zh-TW
 #+DATE: 2018-06-25 17:42:36 UTC+08:00
 #+TODO: TODO(t) WAITING(w) MAYBE(m) BLOG(b) | DONE(d) CANCELED(c)
 
@@ -2903,12 +2904,13 @@ ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persisten
         (progn
           (let* ((file-name (buffer-file-name (current-buffer)))
                  (f-attr (file-attributes file-name))
-                 (f-size (nth 7 f-attr))  ; ファイルサイズ
-                 (f-mode (nth 8 f-attr))  ; ファイル屬性
+                 (f-size (nth 7 f-attr))
+                 (f-mode (nth 8 f-attr))
                  (mes1 (format "file path: %s\n" file-name))
                  (mes2 (format "file size: %s byte\n" f-size))
-                 (mes3 (format "file type: %s" f-mode))
-                 (mess (concat mes1 mes2 mes3)))
+                 (mes3 (format "file type: %s\n" f-mode))
+                 (mes4 (count-words--message "this file" (point-min) (point-max)))
+                 (mess (concat mes1 mes2 mes3 mes4)))
             (message "%s" mess)))
       nil))
 #+END_SRC
@@ -3923,7 +3925,9 @@ must know the content
     :diminish org-src-mode
     :bind (("C-c l" . org-store-link)
            ("C-c c" . org-capture)
-           ("C-c a" . org-agenda))
+           ("C-c a" . org-agenda)
+           (:map org-mode-map
+                 ("C-c ok" . org-kindle-export-to-html)))
     :config
     <<org-config>>)
 #+END_SRC
@@ -4390,7 +4394,7 @@ ref: https://github.com/sabof/org-bullets
         (shell-command (concat "kindlegen " fn-epub))
         (async-shell-command (concat "kmail " fn-mobi)))))
 
-  (bind-key "C-c nk" #'org-kindle-export-to-html org-mode-map)
+  (bind-key "C-c ok" #'org-kindle-export-to-html org-mode-map)
 #+END_SRC
 
 *** stylesheet.css for pandoc to export epub
