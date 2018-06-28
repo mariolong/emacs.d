@@ -2680,19 +2680,6 @@ Just switch to another window and open target directory.
       (find-file new-directory-name)))
 #+END_SRC
 
-*** Create and switch to *scratch*
-
-#+BEGIN_SRC emacs-lisp
-  (defun switch-to-scratch-buffer ()
-    "switch buffer to scratch if not exist then create new one"
-    (interactive)
-    (unless (get-buffer "*scratch*")
-      (with-current-buffer (get-buffer-create "*scratch*")
-        (insert initial-scratch-message)
-        (lisp-interaction-mode)))
-    (switch-to-buffer "*scratch*"))
-#+END_SRC
-
 *** open usually files by hotkey
 
 #+BEGIN_SRC emacs-lisp
@@ -2781,42 +2768,6 @@ Recentf is a minor mode that builds a list of recently opened files.
 #+BEGIN_SRC emacs-lisp
   (unbind-key "C-x C-c")
   (bind-key "C-x C-c C-c" 'kill-emacs)
-#+END_SRC
-
-*** kill all buffer except current buffer
-
-http://stackoverflow.com/questions/3417438/closing-all-other-buffers-in-emacs
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x C-c c" 'kill-other-buffers)
-
-  (defun kill-other-buffers ()
-    (interactive)
-    (mapc 'kill-buffer (cdr (buffer-list (current-buffer))))
-    (delete-other-windows))
-#+END_SRC
-
-*** kill all buffer except some buffer name
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x C-c s" 'kill-all-buffer-except-scratch-messages)
-
-  (defun kill-all-buffer-but-ibuffer ()
-    "kill all buffer except message and scratch in ibuffer."
-    (interactive)
-    (call-interactively 'kill-all-buffer-except-scratch-messages)
-    )
-
-  (defun kill-all-buffer-except-scratch-messages ()
-    "clean opened buffer"
-    (interactive)
-    (mapc 'kill-buffer
-          (kb/get-buffer-list-except-some (list "*scratch*" "*Messages*" "*Ibuffer*")))
-    (delete-other-windows))
-
-  (defun kb/get-buffer-list-except-some (buf-names)
-    (remove-if (lambda (x) (member (buffer-name x) buf-names))
-               (buffer-list)))
 #+END_SRC
 
 ** Buffer Management                                                :buffer:
@@ -2985,6 +2936,55 @@ http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
 
 <2017-02-04 六 18:10>
 
+*** kill all buffer except some buffer name
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x C-c s" 'kill-all-buffer-except-scratch-messages)
+
+  (defun kill-all-buffer-but-ibuffer ()
+    "kill all buffer except message and scratch in ibuffer."
+    (interactive)
+    (call-interactively 'kill-all-buffer-except-scratch-messages)
+    )
+
+  (defun kill-all-buffer-except-scratch-messages ()
+    "clean opened buffer"
+    (interactive)
+    (mapc 'kill-buffer
+          (kb/get-buffer-list-except-some (list "*scratch*" "*Messages*" "*Ibuffer*")))
+    (delete-other-windows))
+
+  (defun kb/get-buffer-list-except-some (buf-names)
+    (remove-if (lambda (x) (member (buffer-name x) buf-names))
+               (buffer-list)))
+#+END_SRC
+
+*** kill all buffer except current buffer
+
+http://stackoverflow.com/questions/3417438/closing-all-other-buffers-in-emacs
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x C-c c" 'kill-other-buffers)
+
+  (defun kill-other-buffers ()
+    (interactive)
+    (mapc 'kill-buffer (cdr (buffer-list (current-buffer))))
+    (delete-other-windows))
+#+END_SRC
+
+*** Create and switch to *scratch*
+
+#+BEGIN_SRC emacs-lisp
+  (defun switch-to-scratch-buffer ()
+    "switch buffer to scratch if not exist then create new one"
+    (interactive)
+    (unless (get-buffer "*scratch*")
+      (with-current-buffer (get-buffer-create "*scratch*")
+        (insert initial-scratch-message)
+        (lisp-interaction-mode)))
+    (switch-to-buffer "*scratch*"))
+#+END_SRC
+
 ** Window Management                                                :window:
 *** eyebrowse
 
@@ -3141,8 +3141,7 @@ popwin for undo-tree and multi-term only
     ;; ("^\*helm.+\*$" :regexp t :height 15)))
     :config
     (popwin-mode 1)
-    (push '(" *undo-tree*" :width 0.168 :position right) popwin:special-display-config)
-    )
+    (push '(" *undo-tree*" :width 0.2 :position right) popwin:special-display-config))
 #+END_SRC
 
 ** call external terminal
@@ -4128,10 +4127,10 @@ change =verbatim= to =kbd=
 *** 中文*加強*語法，或+刪除+一句話，不用加上空白
 
 #+BEGIN_SRC emacs-lisp
-(setq my-full-punctuation "。，：！？；、（）「」【】《》")
-(setcar org-emphasis-regexp-components (concat " \t('\"{[:alpha:]" my-full-punctuation))
-(setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:alpha:]- \t.,:!?;'\")}\\" my-full-punctuation))
-(org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
+  (setq my-full-punctuation "[:multibyte:]")
+  (setcar org-emphasis-regexp-components (concat " \t('\"{[:alpha:]" my-full-punctuation))
+  (setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:alpha:]- \t.,:!?;'\")}\\" my-full-punctuation))
+  (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
 
 *** TODO add new markup to org-mode HTML export
