@@ -3982,88 +3982,18 @@ ref: https://orgmode.org/worg/org-contrib/babel/languages.html
   (org-babel-do-load-languages
    'org-babel-load-languages
    '((emacs-lisp . t)
-     (clojure . t)
      (ditaa . t)
      (dot . t)
-     (haskell . t)
-     (js . t)
-     (latex . t)
-     (lisp . t)
-     (org . t)
-     (plantuml . t)
-     (python . t)
-     (shell . t)
-     (sql . t)
-     (sqlite . t)
-     (yaml . nil)
      ))
-#+END_SRC
-
-**** TODO yaml
-
-https://tamouse.github.io/swaac/emacs/org-mode/2015/05/25/using-emacss-org-mode-and-editing-yaml-frontmatter-in-jekyll-posts/
-
-#+BEGIN_SRC emacs-lisp
-(defun org-babel-execute:yaml (body params) body)
-#+END_SRC
-
-#+begin_src yaml
----
-  layout: post
-  title: test post with yaml source block frontmatter
-  gallery:
-    path: abc123
-    images:
-      - blah.png
-      - bloo.png
-  ---
-#+end_src
-
-**** TODO html
-
-SOURCE: https://github.com/krisajenkins/ob-browser
-
-install ~phantomjs~ first.
-
-#+BEGIN_SRC shell
-yaourt -S phantomjs
-#+END_SRC
-
-secondly, install ob-browser
-#+BEGIN_SRC emacs-lisp
-  (use-package ob-browser)
-#+END_SRC
-
-例子：
-#+BEGIN_SRC browser :tangle no :out nil
-#+END_SRC
-
-#+BEGIN_SRC html tangle no
-<!DOCTYPE html>
-<html>
-    <head>
-        <link href="http://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/2.3.2/css/bootstrap.min.css" rel="stylesheet" media="screen">
-    </head>
-    <body>
-        <div class="row">
-            <div class="span6 offset1">
-                <h1>Rendered PNG</h1>
-
-                <button class="btn btn-primary">You Can't Press This</button>
-            </div>
-        </div>
-    </body>
-</html>
 #+END_SRC
 
 *** 去除 Org-mode 輸出 HTML 時多餘的空格
 
-這個只對 html/pdf/nikola 有效，對 hexo/pandoc 無效。
+對 pandoc 無效。
 
 SOURCE: https://github.com/emacs-china/emacs-china.github.io/blob/master/blog/FengShu/org-remove-useless-space-between-chinese.org
 
 #+BEGIN_SRC emacs-lisp :tangle no :exports no
-
 (require 'ox-html)
   (defun eh-org-clean-space (text backend info)
     "在 export 為 HTML 時，刪除中文之間不必要的空格"
