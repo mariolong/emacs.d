@@ -1665,15 +1665,12 @@ Using =call-meld= to find the differences of current buffer from last commit.
   (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
 #+END_SRC
 
-** TODO diff-hl
+** diff-hl
 
 [[https://github.com/dgutov/diff-hl][GitHub - dgutov/diff-hl: Emacs package for highlighting uncommitted changes]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package diff-hl
-    :bind (:map diff-hl-mode-map
-                ("C-x v p" . diff-hl-previous-hunk)
-                ("C-x v n" . diff-hl-next-hunk))
     :init
     (progn (global-diff-hl-mode +1)
            (diff-hl-dired-mode 1)))
@@ -1685,6 +1682,7 @@ Using =call-meld= to find the differences of current buffer from last commit.
 - C-x v n  diff-hl-revert-hunk    :: Revert the diff hunk with changes at or above the point.
 - C-x v [  diff-hl-previous-hunk  :: Go to the beginning of the previous hunk in the current buffer.
 - C-x v ]  diff-hl-next-hunk      :: Go to the beginning of the next hunk in the current buffer.
+
 ** projectile
 
 #+BEGIN_SRC emacs-lisp
