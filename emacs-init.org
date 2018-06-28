@@ -1882,64 +1882,43 @@ sudo npm install pug-cli -g
     :quelpa (:fetcher github :repo "vladh/stylus-mode"))
 #+END_SRC
 
-** TODO haskell-mode
+** haskell-mode
+
+~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
+
 #+BEGIN_SRC emacs-lisp
   (use-package haskell-mode
     :mode "\\.hs$" "\\.l?hs$"
     :bind (:map haskell-mode-map
-                ("[F5]" . (lambda () (interactive) (compile "stack build --fast")))
+                ([f5] . my/haskell-stack-build)
                 ("M-g i" . haskell-navigate-imports)
                 ("M-g M-i" . haskell-navigate-imports))
+    :init
+    (defun my/haskell-stack-build ()
+      (interactive)
+      (compile "stack build --fast"))
 
+    (defun my/haskell-hook ()
+      (setq mode-name "λ")
+      (turn-on-haskell-doc-mode)
+      (turn-on-haskell-indent)
+      (turn-on-eldoc-mode))
+
+    (add-hook 'haskell-mode-hook 'my/haskell-hook))
+#+END_SRC
+
+** intero-mode
+
+http://commercialhaskell.github.io/intero/
+
+#+BEGIN_SRC emacs-lisp
+  (use-package intero
+    :requires (haskell-mode)
+    :init
+    (add-hook 'haskell-mode-hook 'intero-mode)
     :config
-    (progn (add-hook 'haskell-mode-hook 'turn-on-haskell-doc-mode)
-           (add-hook 'haskell-mode-hook 'turn-on-haskell-indent)
-           (add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
-
-           (defun my-haskell-hook ()
-             (setq mode-name " λ ")
-
-             (haskell-indentation-mode t)
-
-             (turn-on-haskell-doc)
-             (diminish 'haskell-doc-mode "")
-
-             (subword-mode)
-             (diminish 'subword-mode "")
-
-             (turn-on-eldoc-mode)
-             (diminish 'eldoc-mode "")
-
-             (turn-on-haskell-decl-scan)
-             (setq evil-auto-indent nil))
-           (add-hook 'haskell-mode-hook 'my-haskell-hook)))
-#+END_SRC
-
-** TODO haskell-navigate-imports
-the editor will be focused on each of the
-import blocks in your file
-
-~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(eval-after-load 'haskell-mode
-          '(define-key haskell-mode-map [f8] 'haskell-navigate-imports))
-#+END_SRC
-
-** TODO hasktags
-
-~M-.~: jump to the definition
-
-#+BEGIN_SRC sh
-cabal update
-cabal install hasktags
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(let ((my-cabal-path (expand-file-name "~/.cabal/bin")))
-  (setenv "PATH" (concat my-cabal-path path-separator (getenv "PATH")))
-  (add-to-list 'exec-path my-cabal-path))
-(custom-set-variables '(haskell-tags-on-save t))
+    (setq flycheck-check-syntax-automatically '(save mode-enabled))
+    :diminish "λ")
 #+END_SRC
 
 ** stylish-haskell
@@ -1953,24 +1932,10 @@ cabal install stylish-haskell
 ~M-x haskell-mode-stylish-buffer~
 
 ** flycheck-haskell
+
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck-haskell
     :config (add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
-#+END_SRC
-
-** intero-mode
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package intero
-    :demand haskell-mode
-    :config
-    (add-hook 'haskell-mode-hook 'intero-mode)
-    (flycheck-add-next-checker 'intero '(warning . haskell-hlint)))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (use-package intero
-    :hook (haskell-mode . intero-mode)
-    :config (setq flycheck-check-syntax-automatically '(save mode-enabled)))
 #+END_SRC
 
 ** hindent
@@ -1997,7 +1962,7 @@ stack install hindent
 
 ** TODO hlint-refactor
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
    (use-package hlint-refactor
    :hook (haskell-mode . hlint-refactor-mode)
    :diminish "")
