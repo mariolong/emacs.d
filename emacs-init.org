@@ -118,7 +118,6 @@ solution: http://www.cnblogs.com/aqing1987/p/4464106.html
   (setq org-default-notes-file (expand-file-name "myGTD.org" org-directory)
         org-default-inbox-file (expand-file-name "myGTD.org" org-directory)
         org-my-notes-file (expand-file-name "notes.org" org-directory)
-        ;; org-my-travel-file (expand-file-name "travel.org" org-directory)
         org-my-food-file (expand-file-name "food.org" org-directory)
         )
 #+END_SRC
@@ -446,6 +445,7 @@ Takes care of trailing whitespaces (removal, highlighting)
 
 #+BEGIN_SRC emacs-lisp
   (global-subword-mode 1)
+  (diminish 'subword-mode)
 #+END_SRC
 
 *** Clipboard
@@ -457,7 +457,7 @@ Takes care of trailing whitespaces (removal, highlighting)
 
 *** Add the system clipboard to the Emacs kill-ring
 
-ref: http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
+http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
 
 #+BEGIN_SRC emacs-lisp
   (setq save-interprogram-paste-before-kill t)
@@ -469,6 +469,7 @@ ref: http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-
   (setq make-backup-files nil)
   (setq auto-save-default nil)
 #+end_src
+
 ** Utilities
 *** text scale adjust
 
@@ -489,28 +490,14 @@ https://www.emacswiki.org/emacs/ElispCookbook
   (defun string/starts-with (string prefix)
     "Return t if STRING starts with prefix."
     (and (string-match (rx-to-string `(: bos ,prefix) t)
-		       string)
-	 t))
+               string)
+     t))
 
   (defun string/ends-with (string suffix)
     "Return t if STRING ends with SUFFIX."
     (and (string-match (rx-to-string `(: ,suffix eos) t)
-		       string)
-	 t))
-#+END_SRC
-
-*** insert current date time
-
-for nikola blogger generator
-
-#+BEGIN_SRC emacs-lisp
-  (defun current-date-time-nikola ()
-    (format-time-string "%Y-%m-%d %H:%M:%S UTC+08:00"))
-
-  (defun insert-current-date-time ()
-    "insert current date time at point"
-    (interactive)
-    (insert (current-date-time-nikola)))
+               string)
+     t))
 #+END_SRC
 
 *** opencc-buffer
@@ -659,8 +646,6 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
       (setq pdf-view-continuous t)
       ))
 #+END_SRC
-
-#+RESULTS:
 
 *** Send file to kindle by wpub
 **** utility for async send file by wpub
@@ -1495,6 +1480,12 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
     (require 'vlf-setup)
     )
 #+END_SRC
+
+** unfill
+
+#+BEGIN_SRC emacs-lisp
+  (use-package unfill)
+#+END_SRC
 * Programming
 ** comment/uncomment a line or region
 
@@ -1527,10 +1518,7 @@ ref: [[http://endlessparentheses.com/permanent-auto-indentation.html][Aggressive
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-mode
 	:diminish rainbow-mode
-	:init
-	(progn
-	  (add-hook 'prog-mode-hook 'rainbow-mode)
-	  (add-hook 'css-mode-hook 'rainbow-mode)))
+    :hook (prog-mode css-mode))
 #+END_SRC
 
 ** rainbow-delimiters
@@ -1539,10 +1527,7 @@ ref: https://github.com/Fanael/rainbow-delimiters
 
 #+BEGIN_SRC emacs-lisp
   (use-package rainbow-delimiters
-    :init
-    (progn
-      (add-hook 'prog-mode-hook 'rainbow-delimiters-mode)
-      (add-hook 'org-mode-hook 'rainbow-delimiters-mode)))
+    :hook ((prog-mode text-mode) . rainbow-delimiters-mode))
 #+END_SRC
 
 ** highlight-parentheses
@@ -1553,8 +1538,8 @@ https://github.com/tsdh/highlight-parentheses.el
 #+BEGIN_SRC emacs-lisp
   (use-package  highlight-parentheses
     :diminish ""
+    :hook (prog-mode . highlight-parentheses-mode)
     :init
-    (add-hook 'prog-mode-hook #'highlight-parentheses-mode)
     (setq hl-paren-colors '("Springgreen3"
                             "IndianRed1"
                             "IndianRed3"
@@ -1638,7 +1623,7 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
 #+BEGIN_SRC emacs-lisp
     (use-package magit-filenotify
-      :init (add-hook 'magit-status-mode-hook 'magit-filenotify-mode))
+      :hook ('magit-status-mode . magit-filenotify-mode))
 #+END_SRC
 
 ** meld
@@ -1798,7 +1783,7 @@ useful keybindings
 
       (setq web-mode-markup-indent-offset 4)
       (setq web-mode-code-indent-offset 4)
-      (setq web-mode-css-indent-offset 4)
+      (setq web-mode-css-indent-offset 2)
       (setq web-mode-style-padding 4)
       (setq web-mode-script-padding 4))
 
@@ -1914,8 +1899,9 @@ http://commercialhaskell.github.io/intero/
 #+BEGIN_SRC emacs-lisp
   (use-package intero
     :requires (haskell-mode)
-    :init
-    (add-hook 'haskell-mode-hook 'intero-mode)
+    :hook (haskell-mode . intero-mode)
+    ;; :init
+    ;; (add-hook 'haskell-mode-hook 'intero-mode)
     :config
     (setq flycheck-check-syntax-automatically '(save mode-enabled))
     :diminish "λ")
@@ -1935,7 +1921,7 @@ cabal install stylish-haskell
 
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck-haskell
-    :config (add-hook 'flycheck-mode-hook #'flycheck-haskell-setup))
+    :hook (flycheck-mode . flycheck-haskell-setup))
 #+END_SRC
 
 ** hindent
@@ -3187,6 +3173,8 @@ C-! 以 popup window 的方式在下方開一個 term 視窗
 ** reload emacs' "init.el"
 
 #+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fR" 'reload-emacs)
+
   (defun reload-emacs ()
     "reload my emacs settings"
     (interactive)
@@ -3878,6 +3866,20 @@ must know the content
   (bind-key "C-c nb" 'nikola-build)
   (bind-key "C-c nd" 'nikola-deploy)
 #+END_SRC
+** insert current date time
+
+for nikola blogger generator
+
+#+BEGIN_SRC emacs-lisp
+  (defun current-date-time-nikola ()
+    (format-time-string "%Y-%m-%d %H:%M:%S UTC+08:00"))
+
+  (defun insert-current-date-time ()
+    "insert current date time at point"
+    (interactive)
+    (insert (current-date-time-nikola)))
+#+END_SRC
+
 * Org and GTD system
 ** Org
 
@@ -4019,10 +4021,16 @@ change =verbatim= to =kbd=
 
 *** 中文*加強*語法，或+刪除+一句話，不用加上空白
 
+the _quick_ *fox* jumped over a brown +lazy+ dog.
+
+dir/subdir/
+dir /subdir/
+an*emphasis*word
+an *emphasis* word
+
 #+BEGIN_SRC emacs-lisp
-  (setq my-full-punctuation "[:multibyte:]")
-  (setcar org-emphasis-regexp-components (concat " \t('\"{[:alpha:]" my-full-punctuation))
-  (setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:alpha:]- \t.,:!?;'\")}\\" my-full-punctuation))
+  (setcar org-emphasis-regexp-components (concat " \t('\"{[:multibyte:]"))
+  (setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:multibyte:]- \t.,:!?;'\")}\\"))
   (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
 
@@ -4178,7 +4186,7 @@ ref: https://github.com/myuhe/org-gcal.el
 ref: [[http://cestlaz.github.io/posts/using-emacs-26-gcal/#.WaQM4nUjHRY][Using Emacs - 26 - Google Calendar, Org Agenda | C'est la Z]]
 ref: [[http://www.iperiusbackup.net/en/how-to-enable-google-drive-api-and-get-client-credentials/][How to enable Google Drive API and get client credentials]]
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package org-gcal
     :ensure
     :ensure request
@@ -4253,11 +4261,12 @@ ref: https://github.com/sabof/org-bullets
 
 #+BEGIN_SRC emacs-lisp
   (use-package org-bullets
-    :init
-    (add-hook 'org-mode-hook (lambda () (org-bullets-mode 1))))
+    :hook (org-mode . org-bullets-mode))
 #+END_SRC
 
 ** org-kindle
+
+push file.org to my kindle via htmlize, pandoc, kindlegen, kmail
 
 #+BEGIN_SRC emacs-lisp
   (defun org-kindle-export-as-html ()
@@ -4274,10 +4283,10 @@ ref: https://github.com/sabof/org-bullets
     (interactive)
 
     (let* ((fname (buffer-file-name))
-           (fn-html (concat fname ".html"))
-           (fn-epub (concat fname ".epub"))
-           (fn-mobi (concat fname ".mobi")))
-      (save-window-excursion
+           (fn-html (expand-file-name (concat fname ".html") temporary-file-directory))
+           (fn-epub (expand-file-name (concat fname ".epub") temporary-file-directory))
+           (fn-mobi (expand-file-name (concat fname ".mobi") temporary-file-directory)))
+      (save-excursion
         (org-kindle-export-as-html)
         (write-file fn-html)
         (kill-buffer)
@@ -4287,351 +4296,12 @@ ref: https://github.com/sabof/org-bullets
         (async-shell-command (concat "kmail " fn-mobi)))))
 
   (bind-key "C-c ok" #'org-kindle-export-to-html org-mode-map)
+
 #+END_SRC
 
 *** stylesheet.css for pandoc to export epub
 
-edit ~/home/mario/.pandoc/epub.css~
-
-** ox-epub
-
-[[https://github.com/ofosos/ox-epub][GitHub - ofosos/ox-epub: Org mode epub export]]
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package ox-epub
-    :config
-    (setq org-epub-style-default
-          "
-    html, body, div, h1, h2, h3, h4, h5, h6, ul, ol, dl, li, dt, dd, p, pre, table, th, td, tr { margin: 0; padding: 0; font-style: normal;}
-    body { background-color: #d0ffff; font-size:medium; text-align: justify }
-    h1 { text-align: center; font-size: xx-large; }
-    h2 { text-align: center; font-style: italic; font-size: x-small; }
-    h3 { text-align: center; font-weight: bold; font-size: large; }
-    h4 { text-align: center; font-size: x-large; font-weight: bold; font-style: italic; }
-    h5 { text-align: center; font-weight: bold; font-size: medium; }
-    p { !! this causes the first line of a paragraph to be indented !! by 8 percent text-indent: 8%; }
-    b {font-weight: bold;}
-    i {font-style: italic;}
-    table.center {margin-left:auto; margin-right:auto;}
-    table { border: 3px solid black; }
-    table th, td { border: 1px solid black; }
-    td, th { font-size: x-small; font-weight: normal; text-align:center; }
-    .break { page-break-before: always; }
-    ")
-
-    (setq org-epub-style-default
-          "
-  @page {margin: 10px;}
-
-  /*===Reset code to prevent cross-reader strangeness===*/
-  html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       margin: 0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       padding: 0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       border: 0;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       font-size: 100%;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       vertical-align: baseline;
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   }
-  table
-  {
-      border-collapse: collapse;
-      border-spacing: 0;
-  }
-
-  ol, ul, li, dl, dt, dd
-                          {
-                              margin: 0;
-                              padding: 0;
-                              border: 0;
-                              font-size: 100%;
-                              vertical-align: baseline;
-                          }
-
-  /*===GENERAL PRESENTATION===*/
-
-  /*===Body Presentation and Margins===*/
-  /* Text alignment is still a matter of debate. Feel free to change to text-align: left; */
-  body
-  {
-      text-align: justify;
-      line-height: 120%;
-  }
-
-
-  /*===Headings===*/
-  /* After page breaks, eReaders sometimes do not render margins above the content. Adjusting padding-top can help */
-
-
-  h1
-  {
-      text-indent: 0;
-      text-align: center;
-      margin: 100px 0 0 0;
-      font-size: 2.0em;
-      font-weight: bold;
-      page-break-before: always;
-      line-height: 150%; /*gets squished otherwise on ADE */
-  }
-
-  h2
-  {
-      text-indent: 0;
-      text-align: center;
-      margin: 50px 0 0 0;
-      font-size: 1.5em;
-      font-weight: bold;
-      page-break-before: always;
-      line-height: 135%; /*get squished otherwise on ADE */
-  }
-
-  h3
-  {
-      text-indent: 0;
-      text-align: left;
-      font-size: 1.4em;
-      font-weight: bold;
-  }
-
-  h4
-  {
-      text-indent: 0;
-      text-align: left;
-      font-size: 1.2em;
-      font-weight: bold;
-  }
-
-  h5
-  {
-      text-indent: 0;
-      text-align: left;
-      font-size: 1.1em;
-      font-weight: bold;
-  }
-
-  h6
-  {
-      text-indent: 0;
-      text-align: left;
-      font-size: 1.0em;
-      font-weight: bold;
-  }
-
-  /* Hyphen and pagination Fixer */
-  /* Note: Do not try on the Kindle, it does not recognize the hyphens property */
-  h1, h2, h3, h4, h5, h6
-                          {
-                              -webkit-hyphens: none !important;
-                              hyphens: none;
-                              page-break-after: avoid;
-                              page-break-inside: avoid;
-                          }
-
-  /*===Paragraph Elements===*/
-  /* Margins are usually added on the top, left, and right, but not on the bottom to prevent certain eReaders not collapsing white space properly */
-
-  /*first-line indent paragraph for fiction*/
-  p
-  {
-      text-indent: 1em;
-      margin: 0;
-      widows: 2;
-      orphans: 2;
-      margin-top:0.8em;
-  }
-
-  /* block type paragraph for non-fiction* /
-  /*
-  p
-  {
-  text-indent: 0;
-  margin: 1.0em 0 0 0;
-  widows: 2;
-  orphans: 2;
-  }
-  ,*/
-
-  /* for centered text and wrappers on images */
-  p.centered
-  {
-      text-indent: 0;
-      margin: 1.0em 0 0 0;
-      text-align: center;
-  }
-
-  /* section Breaks (can use centered-style for non-fiction) */
-  p.centeredbreak
-  {
-      text-indent: 0;
-      margin: 1.0em 0 1.0em 0;
-      text-align: center;
-  }
-
-  /* First sentence in chapters following heading */
-  p.texttop
-  {
-      margin: 1.5em 0 0 0;
-      text-indent: 0;
-  }
-
-  /* Use for second sentence to clear drop cap's float */
-  p.clearit
-  {
-      clear: both;
-  }
-
-  /* 1st level TOC */
-  p.toctext
-  {
-      margin: 0 0 0 1.5em;
-      text-indent: 0;
-  }
-
-  /* 2nd level TOC */
-  p.toctext2
-  {
-      margin: 0 0 0 2.5em;
-      text-indent: 0;
-  }
-
-
-  /*==LISTS==*/
-  ul
-  {
-      margin: 1em 0 0 2em;
-      text-align: left;
-  }
-
-  ol
-  {
-      margin: 1em 0 0 2em;
-      text-align: left;
-  }
-
-  /*===IN-LINE STYLES===*/
-  /* Recommend avoiding use of <b>, <i>, and <u>. Use span tags instead */
-  span.i
-  {
-      font-style: italic;
-  }
-
-  span.b
-  {
-      font-weight: bold;
-  }
-
-  span.u
-  {
-      text-decoration: underline;
-  }
-
-  span.st
-  {
-      text-decoration: line-through;
-  }
-
-
-  /*==in-line combinations==*/
-  span.ib
-  {
-      font-style: italic;
-      font-weight: bold;
-  }
-
-  span.iu
-  {
-      font-style: italic;
-      text-decoration: underline;
-  }
-
-  span.bu
-  {
-      font-weight: bold;
-      text-decoration: underline;
-  }
-
-  span.ibu
-  {
-      font-style: italic;
-      font-weight: bold;
-      text-decoration: underline;
-  }
-
-  span.ipadcenterfix
-  {
-      text-align: center;
-  }
-
-  /*==IMAGES==*/
-  img
-  {
-      max-width: 100%;
-  }
-
-  /*==TABLES==*/
-  table
-  {
-      margin: 1.0em auto;
-  }
-
-  tr, th, td
-              {
-                  margin: 0;
-                  padding: 2px;
-                  border: 1px solid black;
-                  font-size: 100%;
-                  vertical-align: baseline;
-              }
-
-  /* Superscripted Footnote Text */
-  .footnote
-  {
-      vertical-align: super;
-      font-size: 0.75em;
-      text-decoration: none;
-  }
-
-
-  /*==DROP CAPS==*/
-  span.dropcap {
-      font-size: 300%;
-      font-weight: bold;
-      height: 1em;
-      float: left;
-      margin: 0.3em 0.125em -0.4em 0.1em;
-  }
-
-  /*==PULL QUOTE==*/
-  div.pullquote
-  {
-      margin: 2em 2em 0 2em;
-      text-align: left;
-  }
-
-  div.pullquote p
-  {
-      font-weight: bold;
-      font-style: italic;
-  }
-
-  div.pullquote hr
-  {
-      width: 100%;
-      margin: 0;
-      height: 3px;
-      color: #2E8DE0;
-      background-color: #2E8DE0;
-      border: 0;
-  }
-
-  /*==BLOCK QUOTE==*/
-  div.blockquote
-  {
-      margin: 1em 1.5em 0 1.5em;
-      text-align: left;
-      font-size: 1em;
-      font-style: italic;
-  }"
-          ))
-#+END_SRC
+edit ~~/.pandoc/epub.css~
 
 ** TODO Present by reveal.js
 1. ref: https://github.com/hakimel/reveal.js
@@ -4667,7 +4337,7 @@ http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
 
 #+BEGIN_SRC emacs-lisp
   (diminish 'overwrite-mode)
-  (diminish 'subword-mode)
+
   (eval-after-load 'org-indent
     '(diminish 'org-indent-mode))
 #+END_SRC
