@@ -893,6 +893,893 @@ https://www.emacswiki.org/emacs/ElispCookbook
   (defun temporary-file-name (fname)
     (expand-file-name fname temporary-file-directory))
 #+END_SRC
+* Operation system
+** File System Management
+*** Dired: the most powerfull file management tool
+
+Ref:
+- https://github.com/lunaryorn/.emacs.d/blob/master/init.el
+- http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
+- http://pragmaticemacs.com/category/dired/
+
+We recently looked at replacing text in buffers.
+Using dired, it is possible to do this in many files in a directory.
+Start dired and mark files as described here.
+Then use Q to run query-replace on all marked files.
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package dired
+    :ensure nil
+    :bind (:map dired-mode-map
+		("s" . my/counsel-dired-sort)
+		("f" . dired-find-name-in-current-directory)
+		("\)" . dired-omit-and-remember))
+    :config
+    <<dired-config>>)
+#+END_SRC
+**** usefull keybinding
+
+***** copy file name
+
+- w selected file name
+- M-0 w 絶對路徑
+
+**** Dired tries to guess a default target directory
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-dwim-target t)
+#+END_SRC
+
+**** Revert on re-visiting
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-auto-revert-buffer t)
+#+END_SRC
+
+**** -F marks links with @
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-ls-F-marks-symlinks t)
+#+END_SRC
+
+**** set dired listing switches
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  ;; dired-listing-switches "-alh"
+  (setq dired-listing-switches "--group-directories-first -alh")
+  ;; dired-listing-switches "-lFaGh1v --group-directories-first"
+#+END_SRC
+
+**** Don't ask me question when recursively copy/delete file(s)
+
+always: 表示永不詢問。
+top: 表示同一批檔案只詢問一次。
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (setq dired-recursive-copies  'always
+	dired-recursive-deletes 'top)
+#+END_SRC
+
+**** sorting current directoy
+
+會先問你要根據什麼屬性排序，而且紀錄下排序狀態，不會跨 buffer 就不見了。
+
+#+BEGIN_SRC emacs-lisp
+  (defconst sorting-action '(("name" "")
+			     ("size" "S")
+			     ("extension" "X")
+			     ("access time" "ut")
+			     ("modified time" "t")
+			     ("status change time" "ct")))
+
+  (defun sort-dir (sort-item)
+    (dired-sort-other
+     (concat dired-listing-switches
+	     (car (cdr (assoc sort-item sorting-action))))))
+
+  (defun my/counsel-dired-sort ()
+    (interactive)
+
+    (let ((sort-cmd (mapcar 'car sorting-action))
+	  (sort-dir (lambda (sort-item)
+		      (dired-sort-other
+		       (concat dired-listing-switches
+			       (car (cdr (assoc sort-item sorting-action))))))))
+
+      (ivy-read "sort by" sort-cmd
+		:preselect "name"
+		:initial-input "^"
+		:action #'sort-dir)))
+#+END_SRC
+
+**** dired omit mode enhancement
+
+;; Dired Omit 加強:
+;; 簡單來說，這個能夠紀錄下目前的「隱藏狀態」，所以當你按
+;; C-x M-o 隱藏以.為開頭的檔案後，即使到了不同目錄下，以.開頭的檔案
+;; 依舊是處於隱藏狀態，直到你重新按 C-x M-o 為止。
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+(setq dired-omit-files "^\\...+$")
+
+(defvar v-dired-omit t
+  "If dired-omit-mode enabled by default. Don't setq me.")
+
+(defun dired-omit-and-remember ()
+  "This function is a small enhancement for `dired-omit-mode', which will
+        \"remember\" omit state across Dired buffers."
+
+  (interactive)
+  (setq v-dired-omit (not v-dired-omit))
+  (dired-omit-auto-apply)
+  (revert-buffer))
+
+(defun dired-omit-auto-apply ()
+  (setq dired-omit-mode v-dired-omit))
+
+(add-hook 'dired-mode-hook 'dired-omit-auto-apply)
+#+END_SRC
+
+**** recursively find files under current directory
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+(defun dired-find-name-in-current-directory ()
+  (interactive)
+  (find-name-dired default-directory
+                   (format "*%s*" (read-from-minibuffer "Pattern: ")))
+  (set-buffer-multibyte t))
+(setq find-name-arg "-iname")
+(setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
+#+END_SRC
+
+**** TODO dired-rainbow
+
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb-ref dired-config
+(use-package dired-rainbow
+    :commands dired-rainbow-define dired-rainbow-define-chmod
+    :init
+    (dired-rainbow-define dotfiles "gray" "\\..*")
+
+    (dired-rainbow-define web "#4e9a06" ("htm" "html" "xhtml" "xml" "xaml" "css" "js"
+                                         "json" "asp" "aspx" "haml" "php" "jsp" "ts"
+                                         "coffee" "scss" "less" "phtml"))
+    (dired-rainbow-define prog "yellow3" ("el" "l" "ml" "py" "rb" "pl" "pm" "c"
+                                          "cpp" "cxx" "c++" "h" "hpp" "hxx" "h++"
+                                          "m" "cs" "mk" "make" "swift" "go" "java"
+                                          "asm" "robot" "yml" "yaml" "rake" "lua"))
+    (dired-rainbow-define sh "green yellow" ("sh" "bash" "zsh" "fish" "csh" "ksh"
+                                             "awk" "ps1" "psm1" "psd1" "bat" "cmd"))
+    (dired-rainbow-define text "yellow green" ("txt" "md" "org" "ini" "conf" "rc"
+                                               "vim" "vimrc" "exrc"))
+    (dired-rainbow-define doc "spring green" ("doc" "docx" "ppt" "pptx" "xls" "xlsx"
+                                              "csv" "rtf" "wps" "pdf" "texi" "tex"
+                                              "odt" "ott" "odp" "otp" "ods" "ots"
+                                              "odg" "otg"))
+    (dired-rainbow-define misc "gray50" ("DS_Store" "projectile" "cache" "elc"
+                                         "dat" "meta"))
+    (dired-rainbow-define media "#ce5c00" ("mp3" "mp4" "MP3" "MP4" "wav" "wma"
+                                           "wmv" "mov" "3gp" "avi" "mpg" "mkv"
+                                           "flv" "ogg" "rm" "rmvb"))
+    (dired-rainbow-define picture "purple3" ("bmp" "jpg" "jpeg" "gif" "png" "tiff"
+                                             "ico" "svg" "psd" "pcd" "raw" "exif"
+                                             "BMP" "JPG" "PNG"))
+    (dired-rainbow-define archive "saddle brown" ("zip" "tar" "gz" "tgz" "7z" "rar"
+                                                  "gzip" "xz" "001" "ace" "bz2" "lz"
+                                                  "lzma" "bzip2" "cab" "jar" "iso"))
+
+    ;; boring regexp due to lack of imagination
+    (dired-rainbow-define log (:inherit default :italic t) ".*\\.log")
+
+    ;; highlight executable files, but not directories
+    (dired-rainbow-define-chmod executable-unix "green" "-[rw-]+x.*"))
+#+END_SRC
+
+*** dired+
+
+#+BEGIN_SRC sh
+yaourt -S unzip unrar
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package highlight
+    :quelpa (:fetcher url :url "https://www.emacswiki.org/emacs/download/highlight.el")
+    )
+
+  (use-package dired+
+    :quelpa (:fetcher github :repo "emacsmirror/dired-plus")
+    :init
+    (diredp-toggle-find-file-reuse-dir 1)
+    (setq dired-recursive-deletes 'always)
+
+    (dolist (file `(("unrar x" "rar")
+                    ("aegisub-3.2" "ass" "srt")
+                    ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
+                    ("mpv -playlist" "list" "pls")
+                    ("kindlegen" "epub")
+                    ("kmail" "mobi")
+                    ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
+                    ("google-chrome-stable" "xml" "xhtml" "html" "htm" "mht")
+                    ))
+      (add-to-list 'dired-guess-shell-alist-default
+                   (list (concat "\\." (regexp-opt (cdr file) t) "$")
+                         (car file)))))
+#+END_SRC
+
+*** openwith
+
+[[https://github.com/emacsmirror/openwith][GitHub - emacsmirror/openwith: Open files with external programs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package openwith
+    :init
+    (openwith-mode t)
+    (setq openwith-associations
+          (list
+           (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
+                 "mpv" '(file))
+           (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts" "webm"
+                                                   "mpeg" "mpg" "ogg" "wmv" "mkv"))
+                 "mpv" '(file)))
+          ))
+#+END_SRC
+
+*** dired-async
+
+[[https://github.com/jwiegley/emacs-async][GitHub - jwiegley/emacs-async: Simple library for asynchronous processing in Emacs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package async
+    :init
+    (autoload 'dired-async-mode "dired-async.el" nil t)
+    (dired-async-mode 1)
+    (async-bytecomp-package-mode 1)
+    (setq async-bytecomp-allowed-packages '(all)))
+#+END_SRC
+
+*** peep-dired
+
+dired preview on other window
+
+#+BEGIN_SRC emacs-lisp
+  (use-package peep-dired
+    :bind (:map dired-mode-map
+                ("P" . peep-dired))
+    :config
+    (setq peep-dired-enable-on-directories t)
+    (add-to-list 'peep-dired-ignored-extensions "m2ts"))
+#+END_SRC
+
+*** Making directories on the fly
+
+SOURCE: http://mbork.pl/2016-07-25_Making_directories_on_the_fly
+
+#+BEGIN_SRC emacs-lisp
+  (defun make-parent-directory ()
+    "Make sure the directory of `buffer-file-name' exists."
+    (make-directory (file-name-directory buffer-file-name) t))
+
+  (add-hook 'find-file-not-found-functions #'make-parent-directory)
+#+END_SRC
+
+*** narrow dired to match filter binding to "/"
+
+SOURCE: http://pragmaticemacs.com/emacs/dynamically-filter-directory-listing-with-dired-narrow/
+
+/: enter filter mode
+q: exit filter mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-narrow
+  :bind (:map dired-mode-map
+              ("/" . dired-narrow)))
+#+END_SRC
+
+*** Edit current buffer as root
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fR" 'edit-current-file-as-root)
+  (defun edit-current-file-as-root ()
+    "Edit the file that is associated with the current buffer as root"
+    (interactive)
+    (if (buffer-file-name)
+        (progn
+          (setq file (concat "/sudo:root@localhost:" (buffer-file-name)))
+          (find-file file))
+      (message "Current buffer does not have an associated file.")))
+#+END_SRC
+
+*** Delete current buffer file
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fD" 'delete-current-buffer-file)
+  (defun delete-current-buffer-file ()
+    "Removes file connected to current buffer and kills buffer."
+    (interactive)
+    (let ((filename (buffer-file-name))
+          (buffer (current-buffer))
+          (name (buffer-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (ido-kill-buffer)
+        (when (yes-or-no-p "Are you sure you want to remove this file? ")
+          (delete-file filename)
+          (kill-buffer buffer)
+          (message "File '%s' successfully removed" filename)))))
+#+END_SRC
+
+*** Rename current Buffer and file
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fr"  'rename-current-buffer-file)
+  (defun rename-current-buffer-file ()
+    "Renames current buffer and file it is visiting."
+    (interactive)
+    (let ((name (buffer-name))
+          (filename (buffer-file-name)))
+      (if (not (and filename (file-exists-p filename)))
+          (error "Buffer '%s' is not visiting a file!" name)
+        (let ((new-name (read-file-name "New name: " filename)))
+          (if (get-buffer new-name)
+              (error "A buffer named '%s' already exists!" new-name)
+            (rename-file filename new-name 1)
+            (rename-buffer new-name)
+            (set-visited-file-name new-name)
+            (set-buffer-modified-p nil)
+            (message "File '%s' successfully renamed to '%s'"
+                     name (file-name-nondirectory new-name)))))))
+#+END_SRC
+
+*** Clone current Buffer and file
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fc"  'clone-file-and-open)
+  (defun clone-file-and-open (filename)
+    "Clone the current buffer writing it into FILENAME and open it"
+    (interactive "FClone to file: ")
+    (save-restriction
+      (widen)
+      (write-region (point-min) (point-max) filename nil nil nil 'confirm))
+    (find-file filename))
+#+END_SRC
+
+*** Add executable attribute to file
+
+Actually this command is the same as =chmod +x= but it doesn't use any shell
+command, it use emacs's logior function to change file attribute.
+
+I only make =owener= can has executable permission, not change it for gourp or
+others user.
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fx" 'set-file-executable)
+  (defun set-file-executable()
+    "Add executable permissions on current file."
+
+    (interactive)
+    (when (buffer-file-name)
+      (set-file-modes buffer-file-name
+                      (logior (file-modes buffer-file-name) #o100))
+      (message (concat "Made " buffer-file-name " executable"))))
+#+END_SRC
+
+*** Open recent directory with dired by ivy
+
+Use fasd to open directory in current window.
+
+#+BEGIN_SRC emacs-lisp
+  (defun counsel-goto-recent-directory ()
+    "Open recent directory with dired"
+    (interactive)
+    (unless recentf-mode (recentf-mode 1))
+    (let ((collection
+           (delete-dups
+            (append (mapcar 'file-name-directory recentf-list)
+                    ;; fasd history
+                    (if (executable-find "fasd")
+                        (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
+      (ivy-read "directories:" collection :action 'dired)))
+
+  (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
+#+END_SRC
+
+*** Open recent directory with dired in other window
+
+Use fasd to open directory in another window and switch cursor to new
+window.
+
+if there are two panel already, then don't open the other window.
+Just switch to another window and open target directory.
+
+#+BEGIN_SRC emacs-lisp
+  (defun counsel-goto-recent-directory-other-window ()
+    "goto recnet directory other window."
+    (interactive)
+    (let ((old-buffer-name (buffer-name))
+          (new-directory-name (counsel-goto-recent-directory)))
+      (message "open recent dir old:%s new:%s" old-buffer-name new-directory-name)
+      (if (eq (count-windows) 1)
+          (split-window-right))
+
+      (switch-to-buffer old-buffer-name)
+      (other-window 1)
+      (find-file new-directory-name)))
+#+END_SRC
+
+*** open usually files by hotkey
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fs" 'switch-to-scratch-buffer)
+  (bind-key "C-c fi" 'find-file-init-org)
+  (bind-key "C-c fm" 'find-file-message)
+
+  (defun find-file-message ()
+    (interactive)
+    (find-file-or-buffer "*Messages*"))
+
+  (defun find-file-init-org ()
+    (interactive)
+    (find-file user-emacs-init-org))
+#+END_SRC
+
+*** find-file usually files by ivy
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c ff" 'find-file-usually-files)
+  (defun find-file-usually-files ()
+    "open usually using files."
+    (interactive)
+    ;; (require 'org)
+    (require 'elfeed-org)
+    (let ((usually-files (list user-emacs-init-org
+                               org-default-inbox-file
+                               ;; org-default-notes-file
+                               "*Messages*"
+                               "*scratch*")))
+
+      (ivy-read "find file:" usually-files
+                :action #'find-file-or-buffer)))
+
+  (defun find-file-or-buffer (file-or-buffer-name)
+    (cond
+     ((string= file-or-buffer-name "*scratch*")
+      (switch-to-scratch-buffer))
+     ((get-buffer file-or-buffer-name)
+      (switch-to-buffer file-or-buffer-name))
+     ((file-exists-p file-or-buffer-name)
+      (find-file file-or-buffer-name))
+     (t
+      (message "Not found %s" file-or-buffer-name))))
+#+END_SRC
+
+*** save-place
+
+自動記錄每一個檔案，cursor 所在的位置。
+下次再開啟這個檔案時，cursor 會自動回到上次的地方。
+
+#+BEGIN_SRC emacs-lisp
+  (use-package saveplace
+    :init
+    (progn
+      (setq save-place-file (expand-file-name "places" user-cache-directory))
+      (save-place-mode 1)))
+#+end_src
+
+*** recentf
+
+Recentf is a minor mode that builds a list of recently opened files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package recentf
+  :init
+  (progn
+    (setq recentf-save-file (expand-file-name "recentf" user-cache-directory))
+    (recentf-mode 1)
+  :config
+    (setq recentf-max-saved-items 500
+          recentf-max-menu-items 10)))
+#+end_src
+
+*** dired
+**** TODO Dired bookmarks
+
+are especially handy if you use Bookmark+
+<2016-12-01 Thu 18:16>
+
+**** TODO dired hacks                                            :READING:
+
+ranger copy/paste files
+
+https://github.com/Fuco1/dired-hacks
+<2017-08-02 三 09:51>
+
+**** TODO ibuffer/dired binding consistent
+
+<2017-08-11 Fri 20:26:37>
+
+**** TODO dired color theme monika?
+
+**** TODO Using Emacs 38 - dired http://cestlaz.github.io/posts/using-emacs-38-dired/
+
+** Buffer Management                                                :buffer:
+*** ibuffer
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package ibuffer
+    :bind (("C-x C-b" . ibuffer)
+           :map ibuffer-mode-map
+           ("c" . kill-all-buffer-but-ibuffer))
+    :config
+    <<ibuffer-config>>)
+#+END_SRC
+
+**** turn off ibuffer-show-empty-filter-groups
+
+ref: [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
+
+Turning off ibuffer-show-empty-filter-groups is particularly useful,
+because the empty filter groups can really clutter things up.
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ibuffer-config
+  (setq ibuffer-show-empty-filter-groups nil)
+#+END_SRC
+
+**** ibuffer-auto-mode
+
+ref: [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
+
+ibuffer-auto-mode is a minor mode that automatically keeps the buffer
+list up to date. I turn it on in my ibuffer-mode-hook:
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ibuffer-config
+  (add-hook 'ibuffer-mode-hook
+            '(lambda ()
+               (ibuffer-auto-mode 1)))
+#+END_SRC
+
+*** ibuffer-vc
+
+[[https://github.com/purcell/ibuffer-vc][GitHub - purcell/ibuffer-vc: Let Emacs' ibuffer-mode group files by git project etc., and show file state]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ibuffer-vc
+    :init
+    (add-hook 'ibuffer-hook
+              (lambda ()
+                (ibuffer-vc-set-filter-groups-by-vc-root)
+                (unless (eq ibuffer-sorting-mode
+                            'alphabetic)
+                  (ibuffer-do-sort-by-alphabetic))))
+
+    (setq ibuffer-formats
+          '((mark modified read-only vc-status-mini " "
+                  (name 18 18 :left :elide)
+                  " "
+                  (size 9 -1 :right)
+                  " "
+                  (mode 16 16 :left :elide)
+                  " "
+                  (vc-status 16 16 :left)
+                  " "
+                  filename-and-process))))
+#+END_SRC
+
+*** persistent-scratch
+
+ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
+
+#+BEGIN_SRC emacs-lisp
+(use-package persistent-scratch
+  :init
+  (persistent-scratch-setup-default))
+#+END_SRC
+
+*** Show current buffer-file information
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fn" 'my/file-info)
+
+  (defun my/file-info ()
+    "Show current buffer information."
+    (interactive)
+    (if (buffer-file-name (current-buffer))
+        (progn
+          (let* ((file-name (buffer-file-name (current-buffer)))
+                 (f-attr (file-attributes file-name))
+                 (f-size (nth 7 f-attr))
+                 (f-mode (nth 8 f-attr))
+                 (mes1 (format "file path: %s\n" file-name))
+                 (mes2 (format "file size: %s byte\n" f-size))
+                 (mes3 (format "file type: %s\n" f-mode))
+                 (mes4 (count-words--message "this file" (point-min) (point-max)))
+                 (mess (concat mes1 mes2 mes3 mes4)))
+            (message "%s" mess)))
+      nil))
+#+END_SRC
+
+*** set buffer to utf-8-unix
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fu" 'buffer-to-utf-8-unix)
+
+  (defun buffer-to-utf-8-unix()
+    (interactive)
+    (set-buffer-file-coding-system 'utf-8-unix))
+#+END_SRC
+
+*** cycle revert buffer decoding
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fa" 'my/cycle-revert-buffer-decoding)
+
+  (defun my/cycle-revert-buffer-decoding ()
+    (interactive)
+
+    (let* ((decoders [utf-8 gb18030 big5 gbk])
+	   (index-before
+	    (if (get 'my/cycle-revert-buffer-decoding 'state)
+		(get 'my/cycle-revert-buffer-decoding 'state)
+	      0))
+	   (index-after (% (+ index-before 1) (length decoders)))
+	   (next-decoder (aref decoders index-after)))
+      (message "%s %s" decoders next-decoder)
+      (put 'my/cycle-revert-buffer-decoding 'state index-after)
+      (revert-buffer-with-coding-system next-decoder)))
+#+END_SRC
+
+*** revert-buffer
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fv" 'revert-buffer)
+
+  (global-auto-revert-mode 1)
+  (setq global-auto-revert-non-file-buffers t)
+  (setq auto-revert-verbose nil)
+  (setq revert-without-query '(".*"))
+#+END_SRC
+
+*** set unique buffer name
+
+Add parts of each file's directory to the buffer name if not unique
+
+#+BEGIN_SRC emacs-lisp
+(use-package uniquify
+  :ensure nil
+  :init
+    (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
+#+END_SRC
+
+*** TODO Next/Previous User Buffer
+
+http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
+<2016-06-19 日 16:23>
+
+**** TODO cycle switch buffer in current project/directory or user buffer.
+
+<2017-02-04 六 18:10>
+*** Switch to previous buffer
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "M-o" 'mode-line-other-buffer)
+#+END_SRC
+
+*** Save files and exit (current file or emacs)
+
+#+begin_src emacs-lisp
+  (bind-key "C-x k" 'kill-this-buffer)
+  (bind-key "C-x C-c" 'save-buffers-kill-emacs)
+#+END_SRC
+
+*** Create and switch to *scratch*
+
+#+BEGIN_SRC emacs-lisp
+  (defun switch-to-scratch-buffer ()
+    "switch buffer to scratch if not exist then create new one"
+    (interactive)
+    (unless (get-buffer "*scratch*")
+      (with-current-buffer (get-buffer-create "*scratch*")
+        (insert initial-scratch-message)
+        (lisp-interaction-mode)))
+    (switch-to-buffer "*scratch*"))
+#+END_SRC
+
+** Window Management                                                :window:
+*** eyebrowse
+
+default keybindings
+
++ M-x eyebrowse-mode  -- toggle eyebrowse mode
++ C-x C-w 0..9 -- switch to workspace 0..9
++ C-x C-w '    -- switch to last workspace
++ C-x C-w "    -- close current workspace
++ C-x C-w .    -- switch to workspace N via ivy
++ C-x C-w ,    -- rename workspace
++ C-x C-w </>  -- switch to previous/next workspace
+
+#+BEGIN_SRC emacs-lisp
+(use-package eyebrowse
+:bind ("C-x C-w" . eyebrowse-mode))
+#+END_SRC
+
+*** winner-mode
+
+Undo/redo window configuration with C-c <left>/<right>
+
+#+BEGIN_SRC emacs-lisp
+(use-package winner)
+#+END_SRC
+
+*** ace-window
+
+[[https://github.com/abo-abo/ace-window][GitHub - abo-abo/ace-window: Quickly switch windows in Emacs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ace-window
+    :bind ("C-x o" . ace-window)
+    :init
+    (custom-set-faces
+       '(aw-leading-char-face
+         ((t (:inherit ace-jump-face-foreground :height 2.0))))))
+#+END_SRC
+
+*** swap-windows
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x x" 'z/swap-windows)
+  (defun z/swap-windows ()
+    "swap windows"
+    (interactive)
+    (ace-swap-window)
+    (aw-flip-window))
+#+END_SRC
+
+*** Minibuffer                                                 :minibuffer:
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package minibuffer
+  :ensure nil
+  :config
+  <<minibuffer-config>>)
+#+END_SRC
+
+**** Make cursor in minibufer use bar shape
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (add-hook 'minibuffer-setup-hook '(lambda () (setq cursor-type 'bar)))
+#+END_SRC
+
+**** Some helper function to let me insert quick in minibuffer
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+
+  (defun my/minibuffer-insert (p)
+    (kill-line 0) (insert p))
+
+  (defun my/minibuffer-switch-to-ramdisk ()
+    "Insert ramdisk path according to system type"
+    (interactive)
+    (my/minibuffer-insert user-ramdisk-directory))
+
+  (defun my/minibuffer-switch-to-home ()
+    "Insert $HOME path."
+    (interactive)
+    (my/minibuffer-insert (file-name-as-directory (getenv "HOME"))))
+
+  (defun my/minibuffer-switch-to-rootdir ()
+    "Insert / path."
+    (interactive)
+    (my/minibuffer-insert "/"))
+
+  (defun my/minibuffer-switch-to-tramp ()
+    "Insert /ssh:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:"))
+
+  (defun my/minibuffer-switch-to-vm ()
+    "Insert /ssh:vm:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:vm:"))
+
+  (defun my/minibuffer-switch-to-cluster ()
+    "Insert /ssh:cluster:."
+    (interactive)
+    (my/minibuffer-insert "/ssh:cluster:"))
+#+END_SRC
+
+**** Save history of minibuffer :tangle no :noweb-ref minibuffer-config
+
+When Savehist mode is enabled, minibuffer history is saved
+periodically and when exiting Emacs.  When Savehist mode is enabled
+for the first time in an Emacs session, it loads the previous
+minibuffer history from ‘savehist-file’.
+
+#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref minibuffer-config
+  (use-package savehist
+    :init
+    (setq savehist-file (expand-file-name "savehist.dat" user-cache-directory))
+    (savehist-mode 1))
+#+END_SRC
+
+**** Setup Keybindings                                        :keybinding:
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (bind-keys :map minibuffer-local-map
+             ("C-w" . backward-kill-word)
+             ("M-p" . previous-history-element)
+             ("M-n" . next-history-element)
+             ("C-g" . minibuffer-keyboard-quit)
+             ("M-t" . my/minibuffer-switch-to-ramdisk)
+             ("M-h" . my/minibuffer-switch-to-home)
+             ("M-/" . my/minibuffer-switch-to-rootdir)
+             ("M-s" . my/minibuffer-switch-to-tramp)
+             ("M-v" . my/minibuffer-switch-to-vm)
+             ("M-c" . my/minibuffer-switch-to-cluster))
+#+END_SRC
+
+**** Save minibuffer history
+
+When Savehist mode is enabled, minibuffer history is saved
+periodically and when exiting Emacs.
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (savehist-mode 1)
+  (setq history-length 1000)
+#+END_SRC
+
+*** popwin
+
+popwin for undo-tree and multi-term only
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popwin
+    ;; :init
+    ;; (setq helm-popwin
+    ;; '(("*Flycheck errors*" :height 10)
+    ;; ("*Helm Find Files*" :height 0.3)
+    ;; ("^\*helm.+\*$" :regexp t :height 15)))
+    :config
+    (popwin-mode 1)
+    (push '(" *undo-tree*" :width 0.2 :position right) popwin:special-display-config))
+#+END_SRC
+
+** call external terminal
+
+call external terminal and cd to working directory of current buffer.
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x t" '(lambda()
+                       (interactive)
+                       (call-process "xterm" nil 0 nil
+                                     "-e"
+                                     "export SHELL=/usr/bin/fish; export XTERM_SHELL=$SHELL; fish")))
+#+END_SRC
+
+** reload emacs' "init.el"
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c fR" 'reload-emacs)
+
+  (defun reload-emacs ()
+    "reload my emacs settings"
+    (interactive)
+    (load-file emacs-init-el)
+    (delete-other-windows))
+#+END_SRC
+
+** Evaluate buffer until error occured
+
+#+BEGIN_SRC emacs-lisp
+  (defun eval-buffer-until-error ()
+    "Evaluate emacs buffer until error occured."
+    (interactive)
+    (goto-char (point-min))
+    (while t (eval (read (current-buffer)))))
+#+END_SRC
+
+** keybinding of delete frame
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-x w" 'delete-frame)
+#+END_SRC
 
 * Text editing
 ** Bindings
@@ -1481,7 +2368,6 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
 #+BEGIN_SRC emacs-lisp
   (use-package unfill)
 #+END_SRC
-
 * Programming
 ** comment/uncomment a line or region
 
@@ -2214,942 +3100,6 @@ for stock project to use mySQL.
        '(progn
           (flycheck-add-mode 'sql-sqlint 'edbi:sql-mode)))
    #+END_SRC
-* Operation system
-** File System Management
-*** Dired: the most powerfull file management tool
-
-Ref:
-- https://github.com/lunaryorn/.emacs.d/blob/master/init.el
-- http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
-- http://pragmaticemacs.com/category/dired/
-
-We recently looked at replacing text in buffers.
-Using dired, it is possible to do this in many files in a directory.
-Start dired and mark files as described here.
-Then use Q to run query-replace on all marked files.
-
-#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
-  (use-package dired
-    :ensure nil
-    :bind (:map dired-mode-map
-		("s" . my/counsel-dired-sort)
-		("f" . dired-find-name-in-current-directory)
-		("\)" . dired-omit-and-remember))
-    :config
-    <<dired-config>>)
-#+END_SRC
-**** usefull keybinding
-
-***** copy file name
-
-- w selected file name
-- M-0 w 絶對路徑
-
-**** Dired tries to guess a default target directory
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-  (setq dired-dwim-target t)
-#+END_SRC
-
-**** Revert on re-visiting
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-  (setq dired-auto-revert-buffer t)
-#+END_SRC
-
-**** -F marks links with @
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-  (setq dired-ls-F-marks-symlinks t)
-#+END_SRC
-
-**** set dired listing switches
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-  ;; dired-listing-switches "-alh"
-  (setq dired-listing-switches "--group-directories-first -alh")
-  ;; dired-listing-switches "-lFaGh1v --group-directories-first"
-#+END_SRC
-
-**** Don't ask me question when recursively copy/delete file(s)
-
-always: 表示永不詢問。
-top: 表示同一批檔案只詢問一次。
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-  (setq dired-recursive-copies  'always
-	dired-recursive-deletes 'top)
-#+END_SRC
-
-**** sorting current directoy
-
-會先問你要根據什麼屬性排序，而且紀錄下排序狀態，不會跨 buffer 就不見了。
-
-#+BEGIN_SRC emacs-lisp
-  (defconst sorting-action '(("name" "")
-			     ("size" "S")
-			     ("extension" "X")
-			     ("access time" "ut")
-			     ("modified time" "t")
-			     ("status change time" "ct")))
-
-  (defun sort-dir (sort-item)
-    (dired-sort-other
-     (concat dired-listing-switches
-	     (car (cdr (assoc sort-item sorting-action))))))
-
-  (defun my/counsel-dired-sort ()
-    (interactive)
-
-    (let ((sort-cmd (mapcar 'car sorting-action))
-	  (sort-dir (lambda (sort-item)
-		      (dired-sort-other
-		       (concat dired-listing-switches
-			       (car (cdr (assoc sort-item sorting-action))))))))
-
-      (ivy-read "sort by" sort-cmd
-		:preselect "name"
-		:initial-input "^"
-		:action #'sort-dir)))
-#+END_SRC
-
-**** dired omit mode enhancement
-
-;; Dired Omit 加強:
-;; 簡單來說，這個能夠紀錄下目前的「隱藏狀態」，所以當你按
-;; C-x M-o 隱藏以.為開頭的檔案後，即使到了不同目錄下，以.開頭的檔案
-;; 依舊是處於隱藏狀態，直到你重新按 C-x M-o 為止。
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-(setq dired-omit-files "^\\...+$")
-
-(defvar v-dired-omit t
-  "If dired-omit-mode enabled by default. Don't setq me.")
-
-(defun dired-omit-and-remember ()
-  "This function is a small enhancement for `dired-omit-mode', which will
-        \"remember\" omit state across Dired buffers."
-
-  (interactive)
-  (setq v-dired-omit (not v-dired-omit))
-  (dired-omit-auto-apply)
-  (revert-buffer))
-
-(defun dired-omit-auto-apply ()
-  (setq dired-omit-mode v-dired-omit))
-
-(add-hook 'dired-mode-hook 'dired-omit-auto-apply)
-#+END_SRC
-
-**** recursively find files under current directory
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-(defun dired-find-name-in-current-directory ()
-  (interactive)
-  (find-name-dired default-directory
-                   (format "*%s*" (read-from-minibuffer "Pattern: ")))
-  (set-buffer-multibyte t))
-(setq find-name-arg "-iname")
-(setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
-#+END_SRC
-
-**** TODO dired-rainbow
-
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref dired-config
-(use-package dired-rainbow
-    :commands dired-rainbow-define dired-rainbow-define-chmod
-    :init
-    (dired-rainbow-define dotfiles "gray" "\\..*")
-
-    (dired-rainbow-define web "#4e9a06" ("htm" "html" "xhtml" "xml" "xaml" "css" "js"
-                                         "json" "asp" "aspx" "haml" "php" "jsp" "ts"
-                                         "coffee" "scss" "less" "phtml"))
-    (dired-rainbow-define prog "yellow3" ("el" "l" "ml" "py" "rb" "pl" "pm" "c"
-                                          "cpp" "cxx" "c++" "h" "hpp" "hxx" "h++"
-                                          "m" "cs" "mk" "make" "swift" "go" "java"
-                                          "asm" "robot" "yml" "yaml" "rake" "lua"))
-    (dired-rainbow-define sh "green yellow" ("sh" "bash" "zsh" "fish" "csh" "ksh"
-                                             "awk" "ps1" "psm1" "psd1" "bat" "cmd"))
-    (dired-rainbow-define text "yellow green" ("txt" "md" "org" "ini" "conf" "rc"
-                                               "vim" "vimrc" "exrc"))
-    (dired-rainbow-define doc "spring green" ("doc" "docx" "ppt" "pptx" "xls" "xlsx"
-                                              "csv" "rtf" "wps" "pdf" "texi" "tex"
-                                              "odt" "ott" "odp" "otp" "ods" "ots"
-                                              "odg" "otg"))
-    (dired-rainbow-define misc "gray50" ("DS_Store" "projectile" "cache" "elc"
-                                         "dat" "meta"))
-    (dired-rainbow-define media "#ce5c00" ("mp3" "mp4" "MP3" "MP4" "wav" "wma"
-                                           "wmv" "mov" "3gp" "avi" "mpg" "mkv"
-                                           "flv" "ogg" "rm" "rmvb"))
-    (dired-rainbow-define picture "purple3" ("bmp" "jpg" "jpeg" "gif" "png" "tiff"
-                                             "ico" "svg" "psd" "pcd" "raw" "exif"
-                                             "BMP" "JPG" "PNG"))
-    (dired-rainbow-define archive "saddle brown" ("zip" "tar" "gz" "tgz" "7z" "rar"
-                                                  "gzip" "xz" "001" "ace" "bz2" "lz"
-                                                  "lzma" "bzip2" "cab" "jar" "iso"))
-
-    ;; boring regexp due to lack of imagination
-    (dired-rainbow-define log (:inherit default :italic t) ".*\\.log")
-
-    ;; highlight executable files, but not directories
-    (dired-rainbow-define-chmod executable-unix "green" "-[rw-]+x.*"))
-#+END_SRC
-
-*** dired+
-
-#+BEGIN_SRC sh
-yaourt -S unzip unrar
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (use-package highlight
-    :quelpa (:fetcher url :url "https://www.emacswiki.org/emacs/download/highlight.el")
-    )
-
-  (use-package dired+
-    :quelpa (:fetcher github :repo "emacsmirror/dired-plus")
-    :init
-    (diredp-toggle-find-file-reuse-dir 1)
-    (setq dired-recursive-deletes 'always)
-
-    (dolist (file `(("unrar x" "rar")
-                    ("aegisub-3.2" "ass" "srt")
-                    ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
-                    ("mpv -playlist" "list" "pls")
-                    ("kindlegen" "epub")
-                    ("kmail" "mobi")
-                    ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
-                    ("google-chrome-stable" "xml" "xhtml" "html" "htm" "mht")
-                    ))
-      (add-to-list 'dired-guess-shell-alist-default
-                   (list (concat "\\." (regexp-opt (cdr file) t) "$")
-                         (car file)))))
-#+END_SRC
-
-*** openwith
-
-[[https://github.com/emacsmirror/openwith][GitHub - emacsmirror/openwith: Open files with external programs]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package openwith
-    :init
-    (openwith-mode t)
-    (setq openwith-associations
-          (list
-           (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
-                 "mpv" '(file))
-           (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts" "webm"
-                                                   "mpeg" "mpg" "ogg" "wmv" "mkv"))
-                 "mpv" '(file)))
-          ))
-#+END_SRC
-
-*** dired-async
-
-[[https://github.com/jwiegley/emacs-async][GitHub - jwiegley/emacs-async: Simple library for asynchronous processing in Emacs]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package async
-    :init
-    (autoload 'dired-async-mode "dired-async.el" nil t)
-    (dired-async-mode 1)
-    (async-bytecomp-package-mode 1)
-    (setq async-bytecomp-allowed-packages '(all)))
-#+END_SRC
-
-*** peep-dired
-
-dired preview on other window
-
-#+BEGIN_SRC emacs-lisp
-  (use-package peep-dired
-    :bind (:map dired-mode-map
-                ("P" . peep-dired))
-    :config
-    (setq peep-dired-enable-on-directories t)
-    (add-to-list 'peep-dired-ignored-extensions "m2ts"))
-#+END_SRC
-
-*** Making directories on the fly
-
-SOURCE: http://mbork.pl/2016-07-25_Making_directories_on_the_fly
-
-#+BEGIN_SRC emacs-lisp
-  (defun make-parent-directory ()
-    "Make sure the directory of `buffer-file-name' exists."
-    (make-directory (file-name-directory buffer-file-name) t))
-
-  (add-hook 'find-file-not-found-functions #'make-parent-directory)
-#+END_SRC
-
-*** narrow dired to match filter binding to "/"
-
-SOURCE: http://pragmaticemacs.com/emacs/dynamically-filter-directory-listing-with-dired-narrow/
-
-/: enter filter mode
-q: exit filter mode
-
-#+BEGIN_SRC emacs-lisp
-(use-package dired-narrow
-  :bind (:map dired-mode-map
-              ("/" . dired-narrow)))
-#+END_SRC
-
-*** Edit current buffer as root
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fR" 'edit-current-file-as-root)
-  (defun edit-current-file-as-root ()
-    "Edit the file that is associated with the current buffer as root"
-    (interactive)
-    (if (buffer-file-name)
-        (progn
-          (setq file (concat "/sudo:root@localhost:" (buffer-file-name)))
-          (find-file file))
-      (message "Current buffer does not have an associated file.")))
-#+END_SRC
-
-*** Delete current buffer file
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fD" 'delete-current-buffer-file)
-  (defun delete-current-buffer-file ()
-    "Removes file connected to current buffer and kills buffer."
-    (interactive)
-    (let ((filename (buffer-file-name))
-          (buffer (current-buffer))
-          (name (buffer-name)))
-      (if (not (and filename (file-exists-p filename)))
-          (ido-kill-buffer)
-        (when (yes-or-no-p "Are you sure you want to remove this file? ")
-          (delete-file filename)
-          (kill-buffer buffer)
-          (message "File '%s' successfully removed" filename)))))
-#+END_SRC
-
-*** Rename current Buffer and file
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fr"  'rename-current-buffer-file)
-  (defun rename-current-buffer-file ()
-    "Renames current buffer and file it is visiting."
-    (interactive)
-    (let ((name (buffer-name))
-          (filename (buffer-file-name)))
-      (if (not (and filename (file-exists-p filename)))
-          (error "Buffer '%s' is not visiting a file!" name)
-        (let ((new-name (read-file-name "New name: " filename)))
-          (if (get-buffer new-name)
-              (error "A buffer named '%s' already exists!" new-name)
-            (rename-file filename new-name 1)
-            (rename-buffer new-name)
-            (set-visited-file-name new-name)
-            (set-buffer-modified-p nil)
-            (message "File '%s' successfully renamed to '%s'"
-                     name (file-name-nondirectory new-name)))))))
-#+END_SRC
-
-*** Clone current Buffer and file
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fc"  'clone-file-and-open)
-  (defun clone-file-and-open (filename)
-    "Clone the current buffer writing it into FILENAME and open it"
-    (interactive "FClone to file: ")
-    (save-restriction
-      (widen)
-      (write-region (point-min) (point-max) filename nil nil nil 'confirm))
-    (find-file filename))
-#+END_SRC
-
-*** Add executable attribute to file
-
-Actually this command is the same as =chmod +x= but it doesn't use any shell
-command, it use emacs's logior function to change file attribute.
-
-I only make =owener= can has executable permission, not change it for gourp or
-others user.
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fx" 'set-file-executable)
-  (defun set-file-executable()
-    "Add executable permissions on current file."
-
-    (interactive)
-    (when (buffer-file-name)
-      (set-file-modes buffer-file-name
-                      (logior (file-modes buffer-file-name) #o100))
-      (message (concat "Made " buffer-file-name " executable"))))
-#+END_SRC
-
-*** Open recent directory with dired by ivy
-
-Use fasd to open directory in current window.
-
-#+BEGIN_SRC emacs-lisp
-  (defun counsel-goto-recent-directory ()
-    "Open recent directory with dired"
-    (interactive)
-    (unless recentf-mode (recentf-mode 1))
-    (let ((collection
-           (delete-dups
-            (append (mapcar 'file-name-directory recentf-list)
-                    ;; fasd history
-                    (if (executable-find "fasd")
-                        (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
-      (ivy-read "directories:" collection :action 'dired)))
-
-  (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
-#+END_SRC
-
-*** Open recent directory with dired in other window
-
-Use fasd to open directory in another window and switch cursor to new
-window.
-
-if there are two panel already, then don't open the other window.
-Just switch to another window and open target directory.
-
-#+BEGIN_SRC emacs-lisp
-  (defun counsel-goto-recent-directory-other-window ()
-    "goto recnet directory other window."
-    (interactive)
-    (let ((old-buffer-name (buffer-name))
-          (new-directory-name (counsel-goto-recent-directory)))
-      (message "open recent dir old:%s new:%s" old-buffer-name new-directory-name)
-      (if (eq (count-windows) 1)
-          (split-window-right))
-
-      (switch-to-buffer old-buffer-name)
-      (other-window 1)
-      (find-file new-directory-name)))
-#+END_SRC
-
-*** open usually files by hotkey
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fs" 'switch-to-scratch-buffer)
-  (bind-key "C-c fi" 'find-file-init-org)
-  (bind-key "C-c fm" 'find-file-message)
-
-  (defun find-file-message ()
-    (interactive)
-    (find-file-or-buffer "*Messages*"))
-
-  (defun find-file-init-org ()
-    (interactive)
-    (find-file user-emacs-init-org))
-#+END_SRC
-
-*** find-file usually files by ivy
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c ff" 'find-file-usually-files)
-  (defun find-file-usually-files ()
-    "open usually using files."
-    (interactive)
-    ;; (require 'org)
-    (require 'elfeed-org)
-    (let ((usually-files (list user-emacs-init-org
-                               org-default-inbox-file
-                               ;; org-default-notes-file
-                               "*Messages*"
-                               "*scratch*")))
-
-      (ivy-read "find file:" usually-files
-                :action #'find-file-or-buffer)))
-
-  (defun find-file-or-buffer (file-or-buffer-name)
-    (cond
-     ((string= file-or-buffer-name "*scratch*")
-      (switch-to-scratch-buffer))
-     ((get-buffer file-or-buffer-name)
-      (switch-to-buffer file-or-buffer-name))
-     ((file-exists-p file-or-buffer-name)
-      (find-file file-or-buffer-name))
-     (t
-      (message "Not found %s" file-or-buffer-name))))
-#+END_SRC
-
-*** save-place
-
-自動記錄每一個檔案，cursor 所在的位置。
-下次再開啟這個檔案時，cursor 會自動回到上次的地方。
-
-#+BEGIN_SRC emacs-lisp
-  (use-package saveplace
-    :init
-    (progn
-      (setq save-place-file (expand-file-name "places" user-cache-directory))
-      (save-place-mode 1)))
-#+end_src
-
-*** recentf
-
-Recentf is a minor mode that builds a list of recently opened files.
-
-#+BEGIN_SRC emacs-lisp
-(use-package recentf
-  :init
-  (progn
-    (setq recentf-save-file (expand-file-name "recentf" user-cache-directory))
-    (recentf-mode 1)
-  :config
-    (setq recentf-max-saved-items 500
-          recentf-max-menu-items 10)))
-#+end_src
-
-*** dired
-**** TODO Dired bookmarks
-
-are especially handy if you use Bookmark+
-<2016-12-01 Thu 18:16>
-
-**** TODO dired hacks                                            :READING:
-
-ranger copy/paste files
-
-https://github.com/Fuco1/dired-hacks
-<2017-08-02 三 09:51>
-
-**** TODO ibuffer/dired binding consistent
-
-<2017-08-11 Fri 20:26:37>
-
-**** TODO dired color theme monika?
-
-**** TODO Using Emacs 38 - dired http://cestlaz.github.io/posts/using-emacs-38-dired/
-
-** Buffer Management                                                :buffer:
-*** ibuffer
-
-#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
-  (use-package ibuffer
-    :bind (("C-x C-b" . ibuffer)
-           :map ibuffer-mode-map
-           ("c" . kill-all-buffer-but-ibuffer))
-    :config
-    <<ibuffer-config>>)
-#+END_SRC
-
-**** turn off ibuffer-show-empty-filter-groups
-
-ref: [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
-
-Turning off ibuffer-show-empty-filter-groups is particularly useful,
-because the empty filter groups can really clutter things up.
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ibuffer-config
-  (setq ibuffer-show-empty-filter-groups nil)
-#+END_SRC
-
-**** ibuffer-auto-mode
-
-ref: [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
-
-ibuffer-auto-mode is a minor mode that automatically keeps the buffer
-list up to date. I turn it on in my ibuffer-mode-hook:
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ibuffer-config
-  (add-hook 'ibuffer-mode-hook
-            '(lambda ()
-               (ibuffer-auto-mode 1)))
-#+END_SRC
-
-*** ibuffer-vc
-
-[[https://github.com/purcell/ibuffer-vc][GitHub - purcell/ibuffer-vc: Let Emacs' ibuffer-mode group files by git project etc., and show file state]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package ibuffer-vc
-    :init
-    (add-hook 'ibuffer-hook
-              (lambda ()
-                (ibuffer-vc-set-filter-groups-by-vc-root)
-                (unless (eq ibuffer-sorting-mode
-                            'alphabetic)
-                  (ibuffer-do-sort-by-alphabetic))))
-
-    (setq ibuffer-formats
-          '((mark modified read-only vc-status-mini " "
-                  (name 18 18 :left :elide)
-                  " "
-                  (size 9 -1 :right)
-                  " "
-                  (mode 16 16 :left :elide)
-                  " "
-                  (vc-status 16 16 :left)
-                  " "
-                  filename-and-process))))
-#+END_SRC
-
-*** persistent-scratch
-
-ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
-
-#+BEGIN_SRC emacs-lisp
-(use-package persistent-scratch
-  :init
-  (persistent-scratch-setup-default))
-#+END_SRC
-
-*** Show current buffer-file information
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fn" 'my/file-info)
-
-  (defun my/file-info ()
-    "Show current buffer information."
-    (interactive)
-    (if (buffer-file-name (current-buffer))
-        (progn
-          (let* ((file-name (buffer-file-name (current-buffer)))
-                 (f-attr (file-attributes file-name))
-                 (f-size (nth 7 f-attr))
-                 (f-mode (nth 8 f-attr))
-                 (mes1 (format "file path: %s\n" file-name))
-                 (mes2 (format "file size: %s byte\n" f-size))
-                 (mes3 (format "file type: %s\n" f-mode))
-                 (mes4 (count-words--message "this file" (point-min) (point-max)))
-                 (mess (concat mes1 mes2 mes3 mes4)))
-            (message "%s" mess)))
-      nil))
-#+END_SRC
-
-*** set buffer to utf-8-unix
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fu" 'buffer-to-utf-8-unix)
-
-  (defun buffer-to-utf-8-unix()
-    (interactive)
-    (set-buffer-file-coding-system 'utf-8-unix))
-#+END_SRC
-
-*** cycle revert buffer decoding
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fa" 'my/cycle-revert-buffer-decoding)
-
-  (defun my/cycle-revert-buffer-decoding ()
-    (interactive)
-
-    (let* ((decoders [utf-8 gb18030 big5 gbk])
-	   (index-before
-	    (if (get 'my/cycle-revert-buffer-decoding 'state)
-		(get 'my/cycle-revert-buffer-decoding 'state)
-	      0))
-	   (index-after (% (+ index-before 1) (length decoders)))
-	   (next-decoder (aref decoders index-after)))
-      (message "%s %s" decoders next-decoder)
-      (put 'my/cycle-revert-buffer-decoding 'state index-after)
-      (revert-buffer-with-coding-system next-decoder)))
-#+END_SRC
-
-*** revert-buffer
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fv" 'revert-buffer)
-
-  (global-auto-revert-mode 1)
-  (setq global-auto-revert-non-file-buffers t)
-  (setq auto-revert-verbose nil)
-  (setq revert-without-query '(".*"))
-#+END_SRC
-
-*** Switch to previous buffer
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "M-o" 'mode-line-other-buffer)
-#+END_SRC
-
-*** set unique buffer name
-
-Add parts of each file's directory to the buffer name if not unique
-
-#+BEGIN_SRC emacs-lisp
-(use-package uniquify
-  :ensure nil
-  :init
-    (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
-#+END_SRC
-
-*** TODO Next/Previous User Buffer
-:PROPERTIES:
-:ID:       1e989736-66cc-4e99-897d-a8b915a6113a
-:END:
-
-http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
-<2016-06-19 日 16:23>
-
-**** TODO cycle switch buffer in current project/directory or user buffer.
-
-<2017-02-04 六 18:10>
-
-*** TODO kill all buffer except some buffer name
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (bind-key "C-x C-c s" 'kill-all-buffer-except-scratch-messages)
-
-  (defun kill-all-buffer-but-ibuffer ()
-    "kill all buffer except message and scratch in ibuffer."
-    (interactive)
-    (call-interactively 'kill-all-buffer-except-scratch-messages)
-    )
-
-  (defun kill-all-buffer-except-scratch-messages ()
-    "clean opened buffer"
-    (interactive)
-    (mapc 'kill-buffer
-          (kb/get-buffer-list-except-some (list "*scratch*" "*Messages*" "*Ibuffer*")))
-    (delete-other-windows))
-
-  (defun kb/get-buffer-list-except-some (buf-names)
-    (remove-if (lambda (x) (member (buffer-name x) buf-names))
-               (buffer-list)))
-#+END_SRC
-
-*** TODO kill all buffer except current buffer
-
-http://stackoverflow.com/questions/3417438/closing-all-other-buffers-in-emacs
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (bind-key "C-x C-c c" 'kill-other-buffers)
-
-  (defun kill-other-buffers ()
-    (interactive)
-    (mapc 'kill-buffer (cdr (buffer-list (current-buffer))))
-    (delete-other-windows))
-#+END_SRC
-
-*** Save files and exit (current file)
-
-- =C-x C-c= save-buffers-kill-emacs
-- rebind =C-x C-c= to (kill-other-buffers) as below
-
-#+begin_src emacs-lisp
-  (bind-key "C-x k" 'kill-this-buffer)
-#+END_SRC
-
-*** exit emacs nd kill-emacs to "C-x C-c C-c"
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (unbind-key "C-x C-c")
-  (bind-key "C-x C-c C-c" 'kill-emacs)
-#+END_SRC
-
-*** Create and switch to *scratch*
-
-#+BEGIN_SRC emacs-lisp
-  (defun switch-to-scratch-buffer ()
-    "switch buffer to scratch if not exist then create new one"
-    (interactive)
-    (unless (get-buffer "*scratch*")
-      (with-current-buffer (get-buffer-create "*scratch*")
-        (insert initial-scratch-message)
-        (lisp-interaction-mode)))
-    (switch-to-buffer "*scratch*"))
-#+END_SRC
-
-** Window Management                                                :window:
-*** eyebrowse
-
-default keybindings
-
-+ M-x eyebrowse-mode  -- toggle eyebrowse mode
-+ C-x C-w 0..9 -- switch to workspace 0..9
-+ C-x C-w '    -- switch to last workspace
-+ C-x C-w "    -- close current workspace
-+ C-x C-w .    -- switch to workspace N via ivy
-+ C-x C-w ,    -- rename workspace
-+ C-x C-w </>  -- switch to previous/next workspace
-
-#+BEGIN_SRC emacs-lisp
-(use-package eyebrowse
-:bind ("C-x C-w" . eyebrowse-mode))
-#+END_SRC
-
-*** winner-mode
-
-Undo/redo window configuration with C-c <left>/<right>
-
-#+BEGIN_SRC emacs-lisp
-(use-package winner)
-#+END_SRC
-
-*** ace-window
-
-[[https://github.com/abo-abo/ace-window][GitHub - abo-abo/ace-window: Quickly switch windows in Emacs]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package ace-window
-    :bind ("C-x o" . ace-window)
-    :init
-    (custom-set-faces
-       '(aw-leading-char-face
-         ((t (:inherit ace-jump-face-foreground :height 2.0))))))
-#+END_SRC
-
-*** swap-windows
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x x" 'z/swap-windows)
-  (defun z/swap-windows ()
-    "swap windows"
-    (interactive)
-    (ace-swap-window)
-    (aw-flip-window))
-#+END_SRC
-
-*** Minibuffer                                                 :minibuffer:
-
-#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
-  (use-package minibuffer
-  :ensure nil
-  :config
-  <<minibuffer-config>>)
-#+END_SRC
-
-**** Make cursor in minibufer use bar shape
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
-  (add-hook 'minibuffer-setup-hook '(lambda () (setq cursor-type 'bar)))
-#+END_SRC
-
-**** Some helper function to let me insert quick in minibuffer
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
-
-  (defun my/minibuffer-insert (p)
-    (kill-line 0) (insert p))
-
-  (defun my/minibuffer-switch-to-ramdisk ()
-    "Insert ramdisk path according to system type"
-    (interactive)
-    (my/minibuffer-insert user-ramdisk-directory))
-
-  (defun my/minibuffer-switch-to-home ()
-    "Insert $HOME path."
-    (interactive)
-    (my/minibuffer-insert (file-name-as-directory (getenv "HOME"))))
-
-  (defun my/minibuffer-switch-to-rootdir ()
-    "Insert / path."
-    (interactive)
-    (my/minibuffer-insert "/"))
-
-  (defun my/minibuffer-switch-to-tramp ()
-    "Insert /ssh:."
-    (interactive)
-    (my/minibuffer-insert "/ssh:"))
-
-  (defun my/minibuffer-switch-to-vm ()
-    "Insert /ssh:vm:."
-    (interactive)
-    (my/minibuffer-insert "/ssh:vm:"))
-
-  (defun my/minibuffer-switch-to-cluster ()
-    "Insert /ssh:cluster:."
-    (interactive)
-    (my/minibuffer-insert "/ssh:cluster:"))
-#+END_SRC
-
-**** Save history of minibuffer :tangle no :noweb-ref minibuffer-config
-
-When Savehist mode is enabled, minibuffer history is saved
-periodically and when exiting Emacs.  When Savehist mode is enabled
-for the first time in an Emacs session, it loads the previous
-minibuffer history from ‘savehist-file’.
-
-#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref minibuffer-config
-  (use-package savehist
-    :init
-    (setq savehist-file (expand-file-name "savehist.dat" user-cache-directory))
-    (savehist-mode 1))
-#+END_SRC
-
-**** Setup Keybindings                                        :keybinding:
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
-  (bind-keys :map minibuffer-local-map
-             ("C-w" . backward-kill-word)
-             ("M-p" . previous-history-element)
-             ("M-n" . next-history-element)
-             ("C-g" . minibuffer-keyboard-quit)
-             ("M-t" . my/minibuffer-switch-to-ramdisk)
-             ("M-h" . my/minibuffer-switch-to-home)
-             ("M-/" . my/minibuffer-switch-to-rootdir)
-             ("M-s" . my/minibuffer-switch-to-tramp)
-             ("M-v" . my/minibuffer-switch-to-vm)
-             ("M-c" . my/minibuffer-switch-to-cluster))
-#+END_SRC
-
-**** Save minibuffer history
-
-When Savehist mode is enabled, minibuffer history is saved
-periodically and when exiting Emacs.
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
-  (savehist-mode 1)
-  (setq history-length 1000)
-#+END_SRC
-
-*** popwin
-
-popwin for undo-tree and multi-term only
-
-#+BEGIN_SRC emacs-lisp
-  (use-package popwin
-    ;; :init
-    ;; (setq helm-popwin
-    ;; '(("*Flycheck errors*" :height 10)
-    ;; ("*Helm Find Files*" :height 0.3)
-    ;; ("^\*helm.+\*$" :regexp t :height 15)))
-    :config
-    (popwin-mode 1)
-    (push '(" *undo-tree*" :width 0.2 :position right) popwin:special-display-config))
-#+END_SRC
-
-** call external terminal
-
-call external terminal and cd to working directory of current buffer.
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x t" '(lambda()
-                       (interactive)
-                       (call-process "xterm" nil 0 nil
-                                     "-e"
-                                     "export SHELL=/usr/bin/fish; export XTERM_SHELL=$SHELL; fish")))
-#+END_SRC
-
-** reload emacs' "init.el"
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fR" 'reload-emacs)
-
-  (defun reload-emacs ()
-    "reload my emacs settings"
-    (interactive)
-    (load-file emacs-init-el)
-    (delete-other-windows))
-#+END_SRC
-
-** Evaluate buffer until error occured
-
-#+BEGIN_SRC emacs-lisp
-  (defun eval-buffer-until-error ()
-    "Evaluate emacs buffer until error occured."
-    (interactive)
-    (goto-char (point-min))
-    (while t (eval (read (current-buffer)))))
-#+END_SRC
-
-** keybinding of delete frame
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-x w" 'delete-frame)
-#+END_SRC
 * Internet navigation
 ** eww (Emacs Web broWser)
 
@@ -4111,7 +4061,7 @@ ref: http://stackoverflow.com/questions/6997387/how-to-archive-all-the-done-task
                status 'file)))
 #+END_SRC
 
-** Org sync with Google Calendar
+** TODO Org sync with Google Calendar
 
 ref: https://github.com/myuhe/org-gcal.el
 ref: [[http://cestlaz.github.io/posts/using-emacs-26-gcal/#.WaQM4nUjHRY][Using Emacs - 26 - Google Calendar, Org Agenda | C'est la Z]]
@@ -4135,9 +4085,9 @@ ref: [[http://www.iperiusbackup.net/en/how-to-enable-google-drive-api-and-get-cl
 
 #+END_SRC
 
-** super-agneda
+** TODO super-agneda
 
-ref: [[https://github.com/alphapapa/org-super-agenda][GitHub - alphapapa/org-super-agenda: Supercharge your Org daily/weekly agenda by grouping items]]
+[[https://github.com/alphapapa/org-super-agenda][GitHub - alphapapa/org-super-agenda: Supercharge your Org daily/weekly agenda by grouping items]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package org-super-agenda
@@ -4263,7 +4213,9 @@ https://github.com/skuro/plantuml-mode
 ** TODO graphviz
 
 ** TODO ditaa
+
 http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
+
 * Finalization
 ** diminish some mode
 
