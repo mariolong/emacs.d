@@ -2647,14 +2647,15 @@ useful keybindings
 
 #+BEGIN_SRC emacs-lisp
   (use-package web-mode
+    :mode "\\.tmpl\\'" "\\.html?\\'" "\\.mako\\'"
     :init
-    (add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
+    ;; (add-to-list 'auto-mode-alist '("\\.tmpl\\'" . web-mode))
     (setq web-mode-engines-alist  '(("mako" . "\\.tmpl\\'")))
-    (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
+    ;; (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode))
 
     (setq web-mode-ac-sources-alist
-	  '(("css" . (ac-source-css-property))
-	    ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
+      '(("css" . (ac-source-css-property))
+        ("html" . (ac-source-words-in-buffer ac-source-abbrev))))
 
     (setq web-mode-enable-current-element-highlight t)
     (setq web-mode-enable-auto-closing t)
@@ -2685,11 +2686,12 @@ ref: https://github.com/mooz/js2-mode
 
 #+BEGIN_SRC emacs-lisp
   (use-package js2-mode
+    :mode "\\.js$"
     :init
     (progn
-      (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+      ;; (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
       (add-hook 'js2-mode-hook
-		(lambda () (setq js2-basic-offset 4)))
+        (lambda () (setq js2-basic-offset 4)))
       (add-hook 'js2-mode-hook 'flycheck-mode)))
 #+END_SRC
 ** company-tern
@@ -2708,8 +2710,9 @@ ref: https://github.com/mooz/js2-mode
 ref: https://github.com/joshwnj/json-mode
 
 #+BEGIN_SRC emacs-lisp
-(use-package json-mode
-  :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
+  (use-package json-mode
+    :mode "\\.json\\'")
+    ;; :init (add-to-list 'auto-mode-alist '("\\.json\\'" . json-mode)))
 #+END_SRC
 
 ** hexo mode
