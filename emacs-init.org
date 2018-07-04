@@ -206,6 +206,24 @@ With package ratings, usage statistics, customizability, and more.
       (setq paradox-execute-asynchronously t))
 #+END_SRC
 
+** Tangle init.org when it saved
+
+#+BEGIN_SRC emacs-lisp
+  (defun tangle-init ()
+    "If the current buffer is 'init.org' the code-blocks are tangled."
+    (interactive)
+    (require 'async)
+    (let ((buffer-name "async-make-init.el"))
+      (when (equal (buffer-file-name) user-emacs-init-org)
+        (message "Begin re-generate init.el")
+        (async-start-process buffer-name "sh"
+                             '(lambda (result)
+                                (message "Re-Generate init.el finish." result))
+                             (expand-file-name "makeinit.sh" user-emacs-directory)))))
+
+  (add-hook 'after-save-hook 'tangle-init)
+#+END_SRC
+
 * Configurations
 ** Appearance
 *** Theme
@@ -481,25 +499,6 @@ http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
   (bind-key "C-+" 'text-scale-adjust)
 #+END_SRC
 
-*** string/starts-with and ends-with
-
-EmacsWiki: Elisp Cookbook
-https://www.emacswiki.org/emacs/ElispCookbook
-
-#+BEGIN_SRC emacs-lisp
-  (defun string/starts-with (string prefix)
-    "Return t if STRING starts with prefix."
-    (and (string-match (rx-to-string `(: bos ,prefix) t)
-               string)
-     t))
-
-  (defun string/ends-with (string suffix)
-    "Return t if STRING ends with SUFFIX."
-    (and (string-match (rx-to-string `(: ,suffix eos) t)
-               string)
-     t))
-#+END_SRC
-
 *** opencc-buffer
 
 #+BEGIN_SRC emacs-lisp
@@ -508,7 +507,7 @@ https://www.emacswiki.org/emacs/ElispCookbook
     (interactive)
     (set-buffer-file-coding-system 'utf-8-unix)
 
-    (let ((opencc-conv-temp-file (expand-file-name "opencc.tmp" temporary-file-directory)))
+    (let ((opencc-conv-temp-file (temporary-file-name "opencc.tmp" )))
       (let ((str-for-opencc (buffer-substring-no-properties (point-max) 1)))
         (with-temp-file opencc-conv-temp-file
           (insert str-for-opencc "\n")))
@@ -522,6 +521,7 @@ https://www.emacswiki.org/emacs/ElispCookbook
         (goto-char current-point))))
 
   (bind-key "C-c fo" 'opencc-buffer)
+
 #+END_SRC
 
 *** TODO opencc-region
@@ -602,7 +602,6 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 	  (moedict-get-candidates-list string))
 	(list nil)))
 #+END_SRC
-
 *** epub reader
 
 [[https://github.com/wasamasa/nov.el][GitHub - wasamasa/nov.el: Major mode for reading EPUBs in Emacs]]
@@ -647,7 +646,7 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
       ))
 #+END_SRC
 
-*** Send file to kindle by wpub
+*** TODO Send file to kindle by wpub
 **** utility for async send file by wpub
 
 #+BEGIN_SRC emacs-lisp
@@ -673,14 +672,14 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
     (interactive)
 
     (if (eq (current-buffer-mode) 'org-mode)
-	(progn
-	  (let ((wpub-temp-file (expand-file-name (buffer-name) temporary-file-directory))
-		(str (buffer-substring-no-properties (point-max) 1)))
+        (progn
+          (let ((wpub-temp-file (temporary-file-name (buffer-name)))
+                (str (buffer-substring-no-properties (point-max) 1)))
 
-	    (with-temp-file wpub-temp-file
-	      (insert str "\n"))
+            (with-temp-file wpub-temp-file
+              (insert str "\n"))
 
-	    (async-wpub wpub-temp-file "org")))
+            (async-wpub wpub-temp-file "org")))
 
       (message "Current buffer must be 'org-mode'!")))
 #+END_SRC
@@ -728,13 +727,12 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
 #+BEGIN_SRC emacs-lisp
   (defun eww-temp-file-name-html (fname)
-    (expand-file-name (concat (md5 fname) ".html")
-		      temporary-file-directory))
+    (temporary-file-name  (concat (md5 fname) ".html")))
 
   (defun eww-make-temp-file-source (temp-file-name)
     (let ((source (eww-current-source)))
       (with-temp-file temp-file-name
-	(insert (string-as-multibyte source)))))
+    (insert (string-as-multibyte source)))))
 #+END_SRC
 
 **** elfeed send page to kindle
@@ -785,8 +783,7 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
         (message "%s" url)
         )))
 #+END_SRC
-
-*** Using pandoc to convert org, markdown file
+*** TODO Using pandoc to convert org, markdown file
 **** get major mode of current buffer
 
 #+BEGIN_SRC emacs-lisp
@@ -870,6 +867,31 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
      ((eq (current-buffer-mode) 'eww-mode) (eww-to-org))
      (t (message "Current mode must be markdown or eww"))))
 #+END_SRC
+*** string/starts-with and ends-with
+
+EmacsWiki: Elisp Cookbook
+https://www.emacswiki.org/emacs/ElispCookbook
+
+#+BEGIN_SRC emacs-lisp
+  (defun string/starts-with (string prefix)
+    "Return t if STRING starts with prefix."
+    (and (string-match (rx-to-string `(: bos ,prefix) t)
+               string)
+     t))
+
+  (defun string/ends-with (string suffix)
+    "Return t if STRING ends with SUFFIX."
+    (and (string-match (rx-to-string `(: ,suffix eos) t)
+               string)
+     t))
+#+END_SRC
+
+*** return temporary file name
+#+BEGIN_SRC emacs-lisp
+  (defun temporary-file-name (fname)
+    (expand-file-name fname temporary-file-directory))
+#+END_SRC
+
 * Text editing
 ** Bindings
 
@@ -1976,6 +1998,7 @@ stack install hindent
     :diminish "lispy"
     :hook (emacs-lisp-mode . lispy-mode))
 #+END_SRC
+
 ** systemd-mode
 
 會自動以 company 補全，不必再設定。
@@ -2703,21 +2726,26 @@ Recentf is a minor mode that builds a list of recently opened files.
           recentf-max-menu-items 10)))
 #+end_src
 
-*** Save files and exit (current file)
+*** dired
+**** TODO Dired bookmarks
 
-- =C-x C-c= save-buffers-kill-emacs
-- rebind =C-x C-c= to (kill-other-buffers) as below
+are especially handy if you use Bookmark+
+<2016-12-01 Thu 18:16>
 
-#+begin_src emacs-lisp
-  (bind-key "C-x k" 'kill-this-buffer)
-#+END_SRC
+**** TODO dired hacks                                            :READING:
 
-*** exit emacs nd kill-emacs to "C-x C-c C-c"
+ranger copy/paste files
 
-#+BEGIN_SRC emacs-lisp
-  (unbind-key "C-x C-c")
-  (bind-key "C-x C-c C-c" 'kill-emacs)
-#+END_SRC
+https://github.com/Fuco1/dired-hacks
+<2017-08-02 三 09:51>
+
+**** TODO ibuffer/dired binding consistent
+
+<2017-08-11 Fri 20:26:37>
+
+**** TODO dired color theme monika?
+
+**** TODO Using Emacs 38 - dired http://cestlaz.github.io/posts/using-emacs-38-dired/
 
 ** Buffer Management                                                :buffer:
 *** ibuffer
@@ -2755,7 +2783,7 @@ list up to date. I turn it on in my ibuffer-mode-hook:
                (ibuffer-auto-mode 1)))
 #+END_SRC
 
-*** TODO ibuffer-vc
+*** ibuffer-vc
 
 [[https://github.com/purcell/ibuffer-vc][GitHub - purcell/ibuffer-vc: Let Emacs' ibuffer-mode group files by git project etc., and show file state]]
 
@@ -2885,9 +2913,9 @@ http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
 
 <2017-02-04 六 18:10>
 
-*** kill all buffer except some buffer name
+*** TODO kill all buffer except some buffer name
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (bind-key "C-x C-c s" 'kill-all-buffer-except-scratch-messages)
 
   (defun kill-all-buffer-but-ibuffer ()
@@ -2908,17 +2936,33 @@ http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
                (buffer-list)))
 #+END_SRC
 
-*** kill all buffer except current buffer
+*** TODO kill all buffer except current buffer
 
 http://stackoverflow.com/questions/3417438/closing-all-other-buffers-in-emacs
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (bind-key "C-x C-c c" 'kill-other-buffers)
 
   (defun kill-other-buffers ()
     (interactive)
     (mapc 'kill-buffer (cdr (buffer-list (current-buffer))))
     (delete-other-windows))
+#+END_SRC
+
+*** Save files and exit (current file)
+
+- =C-x C-c= save-buffers-kill-emacs
+- rebind =C-x C-c= to (kill-other-buffers) as below
+
+#+begin_src emacs-lisp
+  (bind-key "C-x k" 'kill-this-buffer)
+#+END_SRC
+
+*** exit emacs nd kill-emacs to "C-x C-c C-c"
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (unbind-key "C-x C-c")
+  (bind-key "C-x C-c C-c" 'kill-emacs)
 #+END_SRC
 
 *** Create and switch to *scratch*
@@ -3105,71 +3149,6 @@ call external terminal and cd to working directory of current buffer.
                                      "export SHELL=/usr/bin/fish; export XTERM_SHELL=$SHELL; fish")))
 #+END_SRC
 
-** TODO popup multi-term
-
-ref:
-1. http://blog.jobbole.com/51598/
-2. https://www.emacswiki.org/emacs/MultiTerm
-3. http://rawsyntax.com/blog/learn-emacs-zsh-and-multi-term/
-4. http://paralambda.org/2012/07/02/using-gnu-emacs-as-a-terminal-emulator/
-5. http://emacs-fu.blogspot.tw/2010/06/console-apps-in-emacs-with-multi-term.html
-
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb no-export :exports code
-  (use-package multi-term
-    :ensure popwin
-    :bind (("C-!" . popwin-term:multi-term))
-    :init
-    (setq multi-term-program "/usr/bin/fish")
-    :config
-    <<term-config>>)
-  #+END_SRC
-
-*** term-mode-hook
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
-  (add-hook 'term-mode-hook
-        (lambda ()
-          ;; (add-to-list 'term-bind-key-alist '("M-[" . multi-term-prev))
-          ;; (add-to-list 'term-bind-key-alist '("M-]" . multi-term-next))
-          (setq term-buffer-maximum-size 10000)
-          (define-key term-raw-map (kbd "C-y") 'term-paste)
-          ))
-#+END_SRC
-
-*** popup multi-term
-
-C-! 以 popup window 的方式在下方開一個 term 視窗
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref term-config
-  (defun popwin-term:multi-term ()
-    "popup-term window under current buffer."
-    (interactive)
-    (popwin:display-buffer-1
-     (or (get-buffer "*terminal*")
-         (save-window-excursion
-           (call-interactively 'multi-term)))
-     :default-config-keywords '(:position :bottom :height 12 :stick t)))
-#+END_SRC
-
-** Tangle init.org when it saved
-
-#+BEGIN_SRC emacs-lisp
-  (defun tangle-init ()
-    "If the current buffer is 'init.org' the code-blocks are tangled."
-    (interactive)
-    (require 'async)
-    (let ((buffer-name "async-make-init.el"))
-      (when (equal (buffer-file-name) user-emacs-init-org)
-    (message "Begin re-generate init.el")
-	(async-start-process buffer-name "sh"
-			     '(lambda (result)
-				(message "Re-Generate init.el finish." result))
-			     (expand-file-name "makeinit.sh" user-emacs-directory)))))
-
-(add-hook 'after-save-hook 'tangle-init)
-#+END_SRC
-
 ** reload emacs' "init.el"
 
 #+BEGIN_SRC emacs-lisp
@@ -3197,28 +3176,6 @@ C-! 以 popup window 的方式在下方開一個 term 視窗
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-x w" 'delete-frame)
 #+END_SRC
-
-** dired
-
-*** TODO Dired bookmarks
-
-are especially handy if you use Bookmark+
-<2016-12-01 Thu 18:16>
-
-*** TODO dired hacks                                              :READING:
-
-ranger copy/paste files
-
-https://github.com/Fuco1/dired-hacks
-<2017-08-02 三 09:51>
-
-*** TODO ibuffer/dired binding consistent
-
-<2017-08-11 Fri 20:26:37>
-
-*** TODO dired color theme monika?
-
-*** TODO Using Emacs 38 - dired http://cestlaz.github.io/posts/using-emacs-38-dired/
 * Internet navigation
 ** eww (Emacs Web broWser)
 
@@ -4283,10 +4240,11 @@ push file.org to my kindle via htmlize, pandoc, kindlegen, kmail
     (interactive)
 
     (let* ((fname (buffer-file-name))
-           (fn-html (expand-file-name (concat fname ".html") temporary-file-directory))
-           (fn-epub (expand-file-name (concat fname ".epub") temporary-file-directory))
-           (fn-mobi (expand-file-name (concat fname ".mobi") temporary-file-directory)))
-      (save-excursion
+           (fn-html (temporary-file-name (concat fname ".html")))
+           (fn-epub (temporary-file-name (concat fname ".epub")))
+           (fn-mobi (temporary-file-name (concat fname ".mobi"))))
+
+      (save-window-excursion
         (org-kindle-export-as-html)
         (write-file fn-html)
         (kill-buffer)
@@ -4341,13 +4299,6 @@ http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
   (eval-after-load 'org-indent
     '(diminish 'org-indent-mode))
 #+END_SRC
-* The Final note
-
-使用 emacs 會上癮，尤其是 lisp 這種語言，真的迷人。
-
-只要花時間熟悉這套工具、語言，真的就不想用其它的編輯器，也無法用其它的編輯器了。
-
-因為，已經習慣自己一手打造出來，獨一無二，順手的工具。
 
 * Difficulties
 
@@ -4375,23 +4326,15 @@ find /. -name "ditaa*"
 ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
 #+END_SRC
 
-* Reference
+* The Final note
 
-[1] https://github.com/coldnew/coldnew-emacs
+使用 emacs 會上癮，尤其是 lisp 這種語言，真的迷人。
 
-[2] https://github.com/syl20bnr/spacemacs/blob/master/layers/%2Bdistribution/spacemacs/packages.el
+只要花時間熟悉這套工具、語言，真的就不想用其它的編輯器，也無法用其它的編輯器了。
 
-[3] https://github.com/tjarvstrand/config-files/blob/master/.emacs
+因為，已經習慣自己一手打造出來，獨一無二，順手的工具。
 
-[4] https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-spell.el
-
-[5] https://github.com/zamansky/using-emacs/blob/master/myinit.org
-
-[6] http://pages.sachachua.com/.emacs.d/Sacha.html
-
-[7] https://github.com/itsjeyd/.emacs.d/blob/emacs24/init.el
-
-[8] https://github.com/aculich/.emacs.d/blob/master/init.el
+* Maybe or reading
 ** TODO oremacs/README.md at github · abo-abo/oremacs             :READING:
 
 https://github.com/abo-abo/oremacs/blob/github/README.md
@@ -4415,8 +4358,6 @@ https://github.com/lunaryorn/old-emacs-configuration?files=1
 ** TODO .emacs.d/setup-diff.el at master · kaushalmodi/.emacs.d  :READING:
 
 https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-diff.el
-
-* Maybe or reading
 
 ** TODO emacs-init.org refector [75%]
 
