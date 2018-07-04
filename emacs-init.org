@@ -981,7 +981,18 @@ GitHub: https://github.com/steckerhalter/discover-my-major
   (bind-key "C-S-d" 'delete-pair)
 #+END_SRC
 
-*** TODO move cursor to Corresponding brackets.
+** smartparens
+
+[[https://github.com/Fuco1/smartparens][GitHub - Fuco1/smartparens: Minor mode for Emacs that deals with parens pairs and tries to be smart about it.]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package smartparens
+    :diminish "⒫"
+    :init
+    (require 'smartparens-config)
+    (smartparens-global-mode 1))
+#+END_SRC
+
 ** TODO copying lines without selecting them
 
 [[http://emacs-fu.blogspot.com/2009/11/copying-lines-without-selecting-them.html?m=1][emacs-fu: copying lines without selecting them]]
@@ -1470,6 +1481,7 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
 #+BEGIN_SRC emacs-lisp
   (use-package unfill)
 #+END_SRC
+
 * Programming
 ** comment/uncomment a line or region
 
@@ -4350,8 +4362,6 @@ http://emacs.stackexchange.com/questions/2655/hierarchy-of-modes
 
 current is black background is not easy to read.
 
-** MAYBE 萌典改用 ivy
-
 ** MAYBE Emacs-BPR (Background Process Runner)                     :READING:
 
 ilya-babanov/emacs-bpr
@@ -4483,10 +4493,6 @@ https://www.amazon.com/gp/feature.html?ie=UTF8&docId=1000765211
 
 ** MAYBE [[https://coldnew.github.io/4e70786/][在任何 mode 下都可以使用像 org-mode 的 easy-template 進行補全 | coldnew's blog]]
 
-** TODO for nov.el to install: tali713/esxml: An elisp library for working with xml, esxml and sxml.
-
-https://github.com/tali713/esxml
-
 ** MAYBE latex 中文字形，解決𤸔
 ** TODO 簡繁互換 in eww buffer
 
@@ -4574,20 +4580,6 @@ https://github.com/bmag/emacs-purpose
     :init
     (purpose-mode))
 
-#+END_SRC
-
-** TODO smartparens
-
-ref: https://github.com/Fuco1/smartparens
-ref: https://ebzzry.github.io/emacs-pairs.html
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package smartparens
-    :diminish "⒫"
-    :init
-    (require 'smartparens-config)
-    (smartparens-global-mode 1)
-    )
 #+END_SRC
 
 ** TODO auto revert ibuffer
