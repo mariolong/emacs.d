@@ -2852,16 +2852,6 @@ stack install hindent
                  (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
 #+END_SRC
 
-** TODO lispy
-
-[[https://github.com/abo-abo/lispy][GitHub - abo-abo/lispy: Short and sweet LISP editing]]
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package lispy
-    :diminish "lispy"
-    :hook (emacs-lisp-mode . lispy-mode))
-#+END_SRC
-
 ** systemd-mode
 
 會自動以 company 補全，不必再設定。
