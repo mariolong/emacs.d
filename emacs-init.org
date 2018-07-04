@@ -1015,57 +1015,17 @@ GitHub: https://github.com/steckerhalter/discover-my-major
     (global-hungry-delete-mode 1))
 #+END_SRC
 
-** TODO move-text
+** move-text
 
 用 M-up, M-down 移動當行或 region
 
-ref: http://emacs.stackexchange.com/questions/4238/moving-line-with-move-text-up-doesnt-move-point
+[[https://github.com/emacsfodder/move-text][GitHub - emacsfodder/move-text: move current line or region up or down]]
 
 #+BEGIN_SRC emacs-lisp
-  ;move line up down
-  (defun move-text-internal (arg)
-    (cond
-     ((and mark-active transient-mark-mode)
-      (let ((column (current-column))
-            (pos (< (point) (mark)))
-            (text (delete-and-extract-region (point) (mark))))
-        (forward-line arg)
-        (move-to-column column t)
-        (set-mark (point))
-        (insert text)
-        (and pos (exchange-point-and-mark))
-        (setq deactivate-mark nil)))
-     (t
-      (let ((column (current-column)))
-        (beginning-of-line)
-        (when (or (> arg 0) (not (bobp)))
-          (forward-line)
-          (when (or (< arg 0) (not (eobp)))
-            (transpose-lines arg)
-            ;; Account for changes to transpose-lines in Emacs 24.3
-            (when (and (eval-when-compile
-                         (not (version-list-<
-                               (version-to-list emacs-version)
-                               '(24 3 50 0))))
-                       (< arg 0))
-              (forward-line -1)))
-          (forward-line -1))
-        (move-to-column column t)))))
-
-  (defun move-text-down (arg)
-    "Move region (transient-mark-mode active) or current line
-    arg lines down."
-    (interactive "*p")
-    (move-text-internal arg))
-
-  (defun move-text-up (arg)
-    "Move region (transient-mark-mode active) or current line
-    arg lines up."
-    (interactive "*p")
-    (move-text-internal (- arg)))
-
-  (bind-key "M-<up>" 'move-text-up)
-  (bind-key "M-<down>" 'move-text-down)
+  (use-package move-text
+    :commands (move-text-default-bindings)
+    :init
+    (move-text-default-bindings))
 #+END_SRC
 
 ** shift region left/right
