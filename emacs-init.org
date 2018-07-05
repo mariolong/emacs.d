@@ -4156,7 +4156,7 @@ push file.org to my kindle via htmlize, pandoc, kindlegen, kmail
   (defun org-kindle-export-to-html ()
     (interactive)
 
-    (let* ((fname (buffer-file-name))
+    (let* ((fname (file-name-nondirectory (buffer-file-name)))
            (fn-html (temporary-file-name (concat fname ".html")))
            (fn-epub (temporary-file-name (concat fname ".epub")))
            (fn-mobi (temporary-file-name (concat fname ".mobi"))))
