@@ -1887,7 +1887,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 ** turn on electric-pair-mode
 
 #+BEGIN_SRC emacs-lisp
-  (electric-pair-mode 1)
+  (electric-pair-mode t)
 
   (defmacro epm/add-mode-pairs (hook pairs)
     `(add-hook ,hook
@@ -2074,8 +2074,8 @@ important keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package iedit
-    :defer 0
-    :init
+    :bind ("C-;" . iedit-mode)
+    :config
     (custom-set-faces
      '(iedit-occurrence ((t (:inherit isearch))))))
 #+END_SRC
@@ -3793,7 +3793,7 @@ for nikola blogger generator
   (add-to-list 'org-structure-template-alist
                (list "T" (concat "#+TITLE:?\n#+AUTHOR:\n#+DATE: "
                              (current-date-time-nikola)
-                             "\n#+UID: mario-long-epub-uid-for-kindle")))
+                             "\n#+LANGUAGE: zh-TW\n")))
 
   (add-to-list 'org-structure-template-alist
                (list "N" (concat "#+BEGIN_COMMENT\n"
@@ -3830,38 +3830,9 @@ ref: https://orgmode.org/worg/org-contrib/babel/languages.html
 
 對 pandoc 無效。
 
-SOURCE: https://github.com/emacs-china/emacs-china.github.io/blob/master/blog/FengShu/org-remove-useless-space-between-chinese.org
-
-#+BEGIN_SRC emacs-lisp :tangle no :exports no
-(require 'ox-html)
-  (defun eh-org-clean-space (text backend info)
-    "在 export 為 HTML 時，刪除中文之間不必要的空格"
-    (when (org-export-derived-backend-p backend 'html)
-      (let ((regexp "[[:multibyte:]]")
-            (string text))
-        ;; org 預設將一個換行符轉換為空格，但中文不需要這個空格，刪除。
-        (setq string
-              (replace-regexp-in-string
-               (format "\\(%s\\) *\n *\\(%s\\)" regexp regexp)
-               "\\1\\2" string))
-        ;; 刪除粗體之前的空格
-        (setq string
-              (replace-regexp-in-string
-               (format "\\(%s\\) +\\(<\\)" regexp)
-               "\\1\\2" string))
-        ;; 刪除粗體之後的空格
-        (setq string
-              (replace-regexp-in-string
-               (format "\\(>\\) +\\(%s\\)" regexp)
-               "\\1\\2" string))
-        string)))
-
-  (add-to-list 'org-export-filter-paragraph-functions
-               'eh-org-clean-space)
-#+END_SRC
+[[https://coldnew.github.io/a1ed40e3/][去除 org-mode 輸出 HTML 時產生多餘的空格 | coldnew's blog]]
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
-;; https://coldnew.github.io/a1ed40e3/
 (defadvice org-html-paragraph (before org-html-paragraph-advice
                                       (paragraph contents info) activate)
   "Join consecutive Chinese lines into a single long line without
@@ -3903,8 +3874,8 @@ an*emphasis*word
 an *emphasis* word
 
 #+BEGIN_SRC emacs-lisp
-  (setcar org-emphasis-regexp-components (concat " \t('\"{[:multibyte:]"))
-  (setcar (nthcdr 1 org-emphasis-regexp-components) (concat "[:multibyte:]- \t.,:!?;'\")}\\"))
+  (setcar org-emphasis-regexp-components "- \t('\"{[:multibyte:]")
+  (setcar (nthcdr 1 org-emphasis-regexp-components) "[:multibyte:]- \t.,:!?;'\")}\\[")
   (org-set-emph-re 'org-emphasis-regexp-components org-emphasis-regexp-components)
 #+END_SRC
 
