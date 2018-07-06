@@ -2363,11 +2363,7 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
     )
 #+END_SRC
 
-** unfill
 
-#+BEGIN_SRC emacs-lisp
-  (use-package unfill)
-#+END_SRC
 * Programming
 ** comment/uncomment a line or region
 
