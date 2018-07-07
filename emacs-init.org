@@ -2113,12 +2113,11 @@ useful keybindings:
      :map ivy-minibuffer-map
      ("M-." . ivy-next-history-element))
     :init
-    (progn
       (ivy-mode 1)
     :config
       (setq ivy-use-virtual-buffers t)
       (setq ivy-display-style 'fancy)
-      (setq completion-in-region-function 'ivy-completion-in-region)))
+      (setq completion-in-region-function 'ivy-completion-in-region))
 #+END_SRC
 
 ** swiper
@@ -2146,9 +2145,6 @@ yaourt -S ripgrep
 
 #+BEGIN_SRC emacs-lisp
   (use-package counsel
-    :ensure
-    :ensure wgrep
-    :ensure rg
     :bind (("M-y" . counsel-yank-pop)
            ("M-x" . counsel-M-x)
            ("C-x f" . counsel-recentf)
@@ -2161,7 +2157,6 @@ yaourt -S ripgrep
            ("M-y" . ivy-next-line))
     :config
     (setq counsel-grep-base-command "rg -i -M 120 --no-heading --line-number --color never '%s' %s"))
-
 #+END_SRC
 
 ** Company mode
@@ -2169,9 +2164,7 @@ yaourt -S ripgrep
 #+BEGIN_SRC emacs-lisp
   (use-package company
     :diminish " ⓐ"
-    :init
-    (add-hook 'after-init-hook 'global-company-mode)
-    ;; (global-company-mode t)
+    :hook (after-init . global-company-mode)
     :config
     (progn
       (setq company-idle-delay 0.1)
@@ -2362,7 +2355,6 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
     (require 'vlf-setup)
     )
 #+END_SRC
-
 
 * Programming
 ** comment/uncomment a line or region
