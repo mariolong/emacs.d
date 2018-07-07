@@ -1731,14 +1731,10 @@ popwin for undo-tree and multi-term only
 
 #+BEGIN_SRC emacs-lisp
   (use-package popwin
-    ;; :init
-    ;; (setq helm-popwin
-    ;; '(("*Flycheck errors*" :height 10)
-    ;; ("*Helm Find Files*" :height 0.3)
-    ;; ("^\*helm.+\*$" :regexp t :height 15)))
-    :config
+    :commands popwin-mode
+    :init
     (popwin-mode 1)
-    (push '(" *undo-tree*" :width 0.2 :position right) popwin:special-display-config))
+    (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config))
 #+END_SRC
 
 ** call external terminal
@@ -2434,7 +2430,7 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
-    :hook (after-init . global-flycheck-mode))
+    :hook (after-init . global-flycheck-mode)
     :diminish (flycheck-mode . " ⓢ")
     :init
     (setq flycheck-keymap-prefix (kbd "C-c v"))
@@ -2468,7 +2464,7 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
       (setq flycheck-indication-mode 'right-fringe)
       (define-key flycheck-mode-map flycheck-keymap-prefix nil)
-      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map))
+      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
 #+END_SRC
 
 ** Magit (setup)
@@ -2743,6 +2739,7 @@ sudo npm install pug-cli -g
 #+BEGIN_SRC emacs-lisp
   (use-package haskell-mode
     :mode "\\.hs$" "\\.l?hs$"
+    :hook (haskell-mode . my/haskell-hook)
     :bind (:map haskell-mode-map
                 ([f5] . my/haskell-stack-build)
                 ("M-g i" . haskell-navigate-imports)
@@ -2756,27 +2753,16 @@ sudo npm install pug-cli -g
       (setq mode-name "λ")
       (turn-on-haskell-doc-mode)
       (turn-on-haskell-indent)
-      (turn-on-eldoc-mode))
-
-    (add-hook 'haskell-mode-hook 'my/haskell-hook))
-#+END_SRC
-
-** intero-mode
-
-http://commercialhaskell.github.io/intero/
-
-#+BEGIN_SRC emacs-lisp
-  (use-package intero
-    :requires (haskell-mode)
-    :hook (haskell-mode . intero-mode)
-    ;; :init
-    ;; (add-hook 'haskell-mode-hook 'intero-mode)
-    :config
-    (setq flycheck-check-syntax-automatically '(save mode-enabled))
-    :diminish "λ")
+      (turn-on-eldoc-mode)))
 #+END_SRC
 
 ** stylish-haskell
+
+install stylish-haskell under OS
+
+#+BEGIN_SRC sh
+stack install stylish-haskell
+#+END_SRC
 
 #+BEGIN_SRC sh
 cabal update
@@ -2784,13 +2770,60 @@ cabal install happy alex
 cabal install stylish-haskell
 #+END_SRC
 
-~M-x haskell-mode-stylish-buffer~
+#+BEGIN_SRC emacs-lisp
+(setq haskell-stylish-on-save t)
+#+END_SRC
+
+using ~M-x haskell-mode-stylish-buffer~ to sort and align imports.
+
+** Haskell Tags
+
+#+BEGIN_SRC sh
+cabal update
+cabal install hasktags
+#+END_SRC
+
+or
+
+#+BEGIN_SRC sh
+stack install hasktags
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables '(haskell-tags-on-save t))
+#+END_SRC
+
+用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
+~M-.~ 跳到定義
+~M-*~ 跳回上一次位置
+
+** haskell completion support
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'haskell-mode-hook
+          (lambda ()
+            (set (make-local-variable 'company-backends)
+                 (append '((company-capf company-dabbrev-code))
+                         company-backends))))
+#+END_SRC
 
 ** flycheck-haskell
 
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck-haskell
     :hook (flycheck-mode . flycheck-haskell-setup))
+#+END_SRC
+
+** intero-mode
+
+http://commercialhaskell.github.io/intero/
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  (use-package intero
+    :hook (haskell-mode . intero-mode)
+    :diminish "λ"
+    :config
+    (setq flycheck-check-syntax-automatically '(save mode-enabled)))
 #+END_SRC
 
 ** hindent
@@ -2811,7 +2844,7 @@ stack install hindent
 #+END_SRC
 
 ** haskell-snippets
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp  :tangle no
    (use-package haskell-snippets)
 #+END_SRC
 
