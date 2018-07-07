@@ -2434,11 +2434,10 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
+    :hook (after-init . global-flycheck-mode))
     :diminish (flycheck-mode . " ⓢ")
     :init
-    (add-hook 'after-init-hook #'global-flycheck-mode)
     (setq flycheck-keymap-prefix (kbd "C-c v"))
-
     :config
     (progn
       ;; disable jshint since we prefer eslint checking
@@ -2469,8 +2468,7 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
       (setq flycheck-indication-mode 'right-fringe)
       (define-key flycheck-mode-map flycheck-keymap-prefix nil)
-
-      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map)))
+      (define-key flycheck-mode-map flycheck-keymap-prefix flycheck-command-map))
 #+END_SRC
 
 ** Magit (setup)
@@ -2493,7 +2491,7 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
 #+BEGIN_SRC emacs-lisp
     (use-package magit-filenotify
-      :hook ('magit-status-mode . magit-filenotify-mode))
+      :hook (magit-status-mode . magit-filenotify-mode))
 #+END_SRC
 
 ** meld
@@ -2675,12 +2673,10 @@ ref: https://github.com/mooz/js2-mode
 #+BEGIN_SRC emacs-lisp
   (use-package js2-mode
     :mode "\\.js$"
+    :hook (js2-mode . flycheck-mode)
     :init
-    (progn
-      ;; (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
       (add-hook 'js2-mode-hook
-        (lambda () (setq js2-basic-offset 4)))
-      (add-hook 'js2-mode-hook 'flycheck-mode)))
+        (lambda () (setq js2-basic-offset 4))))
 #+END_SRC
 ** company-tern
 
@@ -2834,10 +2830,8 @@ stack install hindent
 #+BEGIN_SRC emacs-lisp
   (use-package yaml-mode
     :mode "\\.yaml\\'" "\\.yml\\'"
-    :config
-    (add-hook 'yaml-mode-hook
-              '(lambda ()
-                 (define-key yaml-mode-map "\C-m" 'newline-and-indent))))
+    :bind (:map yaml-mode
+                ("C-m" . newline-and-indent)))
 #+END_SRC
 
 ** systemd-mode
