@@ -1926,37 +1926,9 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
 ** shift region left/right
 
-ref: http://stackoverflow.com/questions/3156450/shift-a-region-or-line-in-emacs
-
-#+BEGIN_SRC emacs-lisp
-  (defun shift-text (distance)
-    (if (use-region-p)
-	(let ((mark (mark)))
-          (save-excursion
-            (indent-rigidly (region-beginning)
-                            (region-end)
-                            distance)
-            (push-mark mark t t)
-            (setq deactivate-mark nil)))
-      (indent-rigidly (line-beginning-position)
-		      (line-end-position)
-		      distance)))
-
-  (defun shift-right (count)
-    "Shift text or region right."
-
-    (interactive "p")
-    (shift-text count))
-
-  (defun shift-left (count)
-    "shift text or region left."
-
-    (interactive "p")
-    (shift-text (- count)))
-
-  (bind-key "C-x r <right>" 'shift-right)
-  (bind-key "C-x r <left>" 'shift-left)
-#+END_SRC
+1. mark lines
+2. ~C-x TAB~ (indent-rigidly)
+3. left, right S-left, S-right to move region
 
 ** undo-tree
 
