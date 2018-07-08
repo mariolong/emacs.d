@@ -527,7 +527,15 @@ http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
 *** TODO opencc-region
 
 #+BEGIN_SRC emacs-lisp :tangle no
-(defun opencc-region ())
+  (defun opencc-region ()
+    (interactive)
+    (let ((words (if mark-active
+                     (buffer-substring-no-properties (region-beginning) (region-end))
+                   (current-word nil t))))
+
+      (message "%s" words)
+      (goto-char (region-beginning))
+      (insert words)))
 #+END_SRC
 
 *** TODO sdcv
