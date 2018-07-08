@@ -2715,6 +2715,8 @@ sudo npm install pug-cli -g
 
 ** haskell-mode
 
+[[https://github.com/serras/emacs-haskell-tutorial][GitHub - serras/emacs-haskell-tutorial: Tutorial on setting up Emacs to do Haskell programming]]
+
 ~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
 
 #+BEGIN_SRC emacs-lisp
@@ -2770,11 +2772,12 @@ or
 stack install hasktags
 #+END_SRC
 
+用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
+
 #+BEGIN_SRC emacs-lisp
 (custom-set-variables '(haskell-tags-on-save t))
 #+END_SRC
 
-用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
 ~M-.~ 跳到定義
 ~M-*~ 跳回上一次位置
 
@@ -2790,21 +2793,11 @@ stack install hasktags
 
 ** flycheck-haskell
 
+[[https://github.com/flycheck/flycheck-haskell][GitHub - flycheck/flycheck-haskell: Improved Haskell support for Flycheck]]
+
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck-haskell
     :hook (flycheck-mode . flycheck-haskell-setup))
-#+END_SRC
-
-** intero-mode
-
-http://commercialhaskell.github.io/intero/
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package intero
-    :hook (haskell-mode . intero-mode)
-    :diminish "λ"
-    :config
-    (setq flycheck-check-syntax-automatically '(save mode-enabled)))
 #+END_SRC
 
 ** hindent
@@ -2824,7 +2817,29 @@ stack install hindent
       (setq hindent-reformat-buffer-on-save t)))
 #+END_SRC
 
-** haskell-snippets
+** interactive commands
+
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+  '(haskell-process-suggest-remove-import-lines t)
+  '(haskell-process-auto-import-loaded-modules t)
+  '(haskell-process-log t)
+  '(haskell-process-type 'stack-ghci))
+(eval-after-load 'haskell-mode '(progn
+  (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
+  (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+  (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
+  (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
+  (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
+  (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)))
+(eval-after-load 'haskell-cabal '(progn
+  (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+  (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+  (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+  (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
+#+END_SRC
+
+** TODO haskell-snippets
 #+BEGIN_SRC emacs-lisp  :tangle no
    (use-package haskell-snippets)
 #+END_SRC
