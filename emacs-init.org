@@ -1405,6 +1405,7 @@ https://github.com/Fuco1/dired-hacks
 
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package ibuffer
+    :hook (ibuffer-mode . ibuffer-auto-mode)
     :bind (("C-x C-b" . ibuffer)
            :map ibuffer-mode-map
            ("c" . kill-all-buffer-but-ibuffer))
@@ -1423,17 +1424,24 @@ because the empty filter groups can really clutter things up.
   (setq ibuffer-show-empty-filter-groups nil)
 #+END_SRC
 
-**** ibuffer-auto-mode
+**** kill all buffer but ibuffer
 
-ref: [[http://martinowen.net/blog/2010/02/03/tips-for-emacs-ibuffer.html][Tips for using Emacs Ibuffer]]
+#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref ibuffer-config
+  (defun kill-all-buffer-but-ibuffer ()
+    "kill all buffer except message and scratch in ibuffer."
+    (interactive)
+    (call-interactively 'kill-all-buffer-except-scratch-messages))
 
-ibuffer-auto-mode is a minor mode that automatically keeps the buffer
-list up to date. I turn it on in my ibuffer-mode-hook:
+  (defun kill-all-buffer-except-scratch-messages ()
+    "clean opened buffer"
+    (interactive)
+    (mapc 'kill-buffer
+          (kb/get-buffer-list-except-some (list "*scratch*" "*Messages*" "*Ibuffer*")))
+    (delete-other-windows))
 
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ibuffer-config
-  (add-hook 'ibuffer-mode-hook
-            '(lambda ()
-               (ibuffer-auto-mode 1)))
+  (defun kb/get-buffer-list-except-some (buf-names)
+    (remove-if (lambda (x) (member (buffer-name x) buf-names))
+               (buffer-list)))
 #+END_SRC
 
 *** ibuffer-vc
@@ -1556,6 +1564,7 @@ http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
 **** TODO cycle switch buffer in current project/directory or user buffer.
 
 <2017-02-04 六 18:10>
+
 *** Switch to previous buffer
 
 #+BEGIN_SRC emacs-lisp
@@ -4178,7 +4187,6 @@ http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
 #+END_SRC
 
 * Difficulties
-
 ** ~C-M-p~ don't work
 
 原因：fcitx 按鍵衝突
@@ -4484,23 +4492,28 @@ https://github.com/bmag/emacs-purpose
     (purpose-mode))
 
 #+END_SRC
+** TODO Make emacs next-buffer skip *Messages* buffer - Stack Overflow
 
-** TODO auto revert ibuffer
+https://stackoverflow.com/questions/14323516/make-emacs-next-buffer-skip-messages-buffer
 
-[[https://emacs.stackexchange.com/questions/2177/how-can-i-make-ibuffer-auto-refresh-the-list-of-buffers][ref: How can I make ibuffer auto-refresh the list of buffers? - Emacs Stack Exchange]]
-
+** TODO This way you can avoid the infinite loop:
 #+BEGIN_SRC emacs-lisp :tangle no
- :noweb-ref ibuffer-config
-  (setq auto-revert-verbose nil)
-
-  (defun my-ibuffer-stale-p (&optional noconfirm)
-    (frame-or-buffer-changed-p 'ibuffer-auto-buffers-changed))
-
-  (defun my-ibuffer-auto-revert-setup ()
-    (set (make-local-variable 'buffer-stale-function)
-         'my-ibuffer-stale-p)
-    (set (make-local-variable 'auto-revert-verbose) nil)
-    (auto-revert-mode 1))
-
-  (add-hook 'ibuffer-mode-hook 'my-ibuffer-auto-revert-setup)
+  (defun next-code-buffer ()
+    (interactive)
+    (let (( bread-crumb (buffer-name) ))
+      (next-buffer)
+      (while (and (string-match-p "^\*" (buffer-name))
+                  (not (equal bread-crumb (buffer-name) )) )
+        (next-buffer))))
+  (global-set-key [remap next-buffer] 'next-code-buffer)
 #+END_SRC
+
+** TODO Emacs: Next/Previous User Buffer
+
+http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
+
+** TODO How to Present Code Listings on Kindle Devices: 3 Solutions — SitePoint
+
+https://www.sitepoint.com/code-listings-kindle-devices/
+
+Two media queries are introduced next. The amzn-mobi media query applies to devices that don’t support KF8 (such as the original Kindle e-ink device). This ensures that elements belonging to the mobicontent class are displayed while elements belonging to the kf8content class are hidden.
