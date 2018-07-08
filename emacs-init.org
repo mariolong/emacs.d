@@ -495,6 +495,25 @@ http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
     (expand-file-name fname temporary-file-directory))
 #+END_SRC
 
+*** string/starts-with and ends-with
+
+EmacsWiki: Elisp Cookbook
+https://www.emacswiki.org/emacs/ElispCookbook
+
+#+BEGIN_SRC emacs-lisp
+  (defun string/starts-with (string prefix)
+    "Return t if STRING starts with prefix."
+    (and (string-match (rx-to-string `(: bos ,prefix) t)
+		       string)
+	 t))
+
+  (defun string/ends-with (string suffix)
+    "Return t if STRING ends with SUFFIX."
+    (and (string-match (rx-to-string `(: ,suffix eos) t)
+		       string)
+	 t))
+#+END_SRC
+
 *** text scale adjust
 
 ~C-+~ 進入文字大小調整模式
@@ -616,7 +635,8 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
 #+BEGIN_SRC emacs-lisp
   (use-package moedict
-    :quelpa (moedict :fetcher github :repo "kuanyui/moedict.el")
+    ;; :quelpa (moedict :fetcher github :repo "kuanyui/moedict.el")
+    :load-path "lisp/"
     :ensure helm
     :ensure esqlite
     :bind ("C-c m" . moedict)
@@ -2817,9 +2837,10 @@ for stock project to use mySQL.
 
 #+BEGIN_SRC emacs-lisp
   (defun opened-edbi-frame-p ()
-    (dolist (f (frame-list))
-      (if (e2wm:managed-p f)
-          (return t))))
+    (when (fboundp 'e2wm:managed-p)
+      (dolist (f (frame-list))
+        (if (e2wm:managed-p f)
+            (return t)))))
 
   (defun edbi-open-stock-mysql ()
     (interactive)
@@ -2836,12 +2857,14 @@ for stock project to use mySQL.
 
   (defun edbi-close-stock-mysql ()
     (interactive)
-    (if (e2wm:managed-p)
-        (progn
-          (e2wm:stop-management)
-          (delete-frame)
-          (kill-edbi-buffers))
-      (message "%s" "Please switch to edbi frame!")))
+
+    (when (fboundp 'e2wm:managed-p)
+      (if (e2wm:managed-p)
+          (progn
+            (e2wm:stop-management)
+            (delete-frame)
+            (kill-edbi-buffers))
+        (message "%s" "Please switch to edbi frame!"))))
 
   (bind-key "C-c so" 'edbi-open-stock-mysql)
   (bind-key "C-c sk" 'edbi-close-stock-mysql)
@@ -3814,28 +3837,26 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
 - =C-c ]= 將目前檔案從 agenda file list 中移出
 
 ** Capture and Agenda
-
-**** basic settings
+*** basic settings
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
   (setq org-agenda-window-setup 'current-window)
   (add-hook 'org-agenda-mode-hook 'hl-line-mode)
 #+END_SRC
 
-**** binding
-
-***** capture
+*** binding
+**** capture
 
 - C-c C-c: save eand exit
 - C-c C-q: tagged
 - C-c C-s: schedule
 - C-c C-d: deadline
 
-***** agenda
+**** agenda
 
 - s: save all files of agenda
 
-**** files for agenda/inbox/gtd
+*** files for agenda/inbox/gtd
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
   (setq org-capture-templates
@@ -3864,7 +3885,7 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
                (local-set-key (kbd "C-g") 'org-agenda-exit)))
 #+END_SRC
 
-**** show dropbox status of GTD directory
+*** show dropbox status of GTD directory
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
   (bind-key "C-c fg" 'my/GTD-dropbox-status)
@@ -3873,7 +3894,7 @@ ref: [[http://endlessparentheses.com/use-org-mode-links-for-absolutely-anything.
     (message "%s" (shell-command-to-string "cd ~/Dropbox/GTD&&dropbox-cli filestatus")))
 #+END_SRC
 
-**** pop up a new frame to do a capture
+*** pop up a new frame to do a capture
 
 #+BEGIN_SRC sh
   $ emacsclient -ne "(make-capture-frame)"
@@ -3904,7 +3925,7 @@ press =C-x w= to close this frame
       (org-capture)))
 #+END_SRC
 
-**** archive all the DONE/CNACELED tasks by one command
+*** archive all the DONE/CNACELED tasks by one command
 
 ref: http://stackoverflow.com/questions/6997387/how-to-archive-all-the-done-tasks-using-a-single-command
 
