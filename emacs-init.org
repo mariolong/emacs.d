@@ -4070,9 +4070,35 @@ https://github.com/skuro/plantuml-mode
 
 ** TODO graphviz
 
-** TODO ditaa
+** ditaa
 
 http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
+
+步驟：
+1. linux 中安裝 ditaa, 也會先安裝 java
+2. 建立目錄：=~/.emacs.d/elpa/contrib/scripts=
+3. 用 ~find /. -name "ditaa*"~ 找 ditaa.jar 在哪？
+4. 建 ~ditaa.jar~ 的連結到 =~/.emacs.d/elpa/contrib/scripts= 中
+
+#+BEGIN_SRC sh
+yaourt -S ditaa
+mkdir -p ~/.emacs.d/elpa/contrib/scripts
+find /. -name "ditaa*"
+ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
+#+END_SRC
+
+** TODO org to pdf and epub with engine weasyprint
+
+- org export html
+- html to epub via pandoc
+- html to pdf via pandoc with engine weasyprint
+
+** TODO org to nikola post
+
+org htmlize
+- type 'css
+- disable pygments
+- github org.css
 
 * Finalization
 ** diminish some mode
@@ -4093,21 +4119,6 @@ http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
 「配置 Fcitx」這一項，點選彈出輸入法配置視窗，點開「全域性設定」頁籤，
 勾選底下的「顯示高階選項」之後多出來一些內容，往下擼，找到設定有
 「Ctrl+Alt+P」這一項的設定，點這個按鈕，回車，就置為空了。
-
-** install ditaa
-
-步驟：
-1. linux 中安裝 ditaa, 也會先安裝 java
-2. 建立目錄：=~/.emacs.d/elpa/contrib/scripts=
-3. 用 ~find /. -name "ditaa*"~ 找 ditaa.jar 在哪？
-4. 建 ~ditaa.jar~ 的連結到 =~/.emacs.d/elpa/contrib/scripts= 中
-
-#+BEGIN_SRC sh
-yaourt -S ditaa
-mkdir -p ~/.emacs.d/elpa/contrib/scripts
-find /. -name "ditaa*"
-ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
-#+END_SRC
 
 * The Final note
 
