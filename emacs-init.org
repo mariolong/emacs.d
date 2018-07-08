@@ -489,6 +489,12 @@ http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
 #+end_src
 
 ** Utilities
+*** return temporary file name
+#+BEGIN_SRC emacs-lisp
+  (defun temporary-file-name (fname)
+    (expand-file-name fname temporary-file-directory))
+#+END_SRC
+
 *** text scale adjust
 
 ~C-+~ 進入文字大小調整模式
@@ -524,17 +530,47 @@ http://pragmaticemacs.com/emacs/add-the-system-clipboard-to-the-emacs-kill-ring/
 
 #+END_SRC
 
-*** TODO opencc-region
+*** TODO opencc-region or an word
+
+(defun opencc-replace-at-point ()
+  "一个交互命令，转化并替换光标下的文字."
+  (interactive "*")
+  (let* ((config (completing-read
+                  "配置文件: "
+                  opencc-configuration-files))
+         start end
+         (string (if (use-region-p)
+                     (progn (setq start (region-beginning)
+                                  end (region-end))
+                            (buffer-substring start end))
+                   (opencc-awhen (bounds-of-thing-at-point 'word)
+                     (setq start (car it)
+                           end (cdr it))
+                     (buffer-substring start end)))))
+    (unless string
+      (apply (if (fboundp 'user-error)
+                 #'user-error
+               #'error)
+             '("Nothing at point to replace")))
+    (opencc-awhen (opencc-region config start end)
+      (delete-region start end)
+      (insert it))))
+
+(defmacro opencc-awhen (test &rest body)
+  "Anaphoric version of `when'."
+  (declare (indent 1))
+  `(let ((it ,test))
+     (when it ,@body)))
 
 #+BEGIN_SRC emacs-lisp :tangle no
   (defun opencc-region ()
     (interactive)
+
     (let ((words (if mark-active
                      (buffer-substring-no-properties (region-beginning) (region-end))
                    (current-word nil t))))
-
       (message "%s" words)
-      (goto-char (region-beginning))
+      (delete-region start end)
       (insert words)))
 #+END_SRC
 
