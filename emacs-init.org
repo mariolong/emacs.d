@@ -648,45 +648,22 @@ with ~F1 m~.
       ))
 #+END_SRC
 
-*** TODO Send file to kindle by wpub
-**** utility for async send file by wpub
+*** async send file by wpub
 
 #+BEGIN_SRC emacs-lisp
   (defun async-wpub (url &optional file-type opencc)
     (let* ((cmd-opencc (if opencc (if (y-or-n-p "Convert to Traditional Chinese?") "-o" "") ""))
-	   (cmd-type (if file-type (format "-f %s" file-type) ""))
-	   (cmd-wpub (if url (format "wpub %s %s '%s'" cmd-opencc cmd-type url) nil)))
-
+           (cmd-type (if file-type (format "-f %s" file-type) ""))
+           (cmd-wpub (if url (format "wpub %s %s '%s'" cmd-opencc cmd-type url) nil)))
       (if cmd-wpub
-	  (progn
-	    (message "%s" cmd-wpub)
-	    (start-file-process-shell-command "async-wpub"
-					      "*async-wpub*"
-					      cmd-wpub)))))
+          (progn
+            (message "%s" cmd-wpub)
+            (start-file-process-shell-command "async-wpub"
+                                              "*async-wpub*"
+                                              cmd-wpub)))))
 #+END_SRC
 
-**** send org-mode file to kindle via wpub
-
-#+BEGIN_SRC emacs-lisp
-  (defun org-to-kindle ()
-    "Send current buffer to kindle via wpub.py"
-
-    (interactive)
-
-    (if (eq (current-buffer-mode) 'org-mode)
-        (progn
-          (let ((wpub-temp-file (temporary-file-name (buffer-name)))
-                (str (buffer-substring-no-properties (point-max) 1)))
-
-            (with-temp-file wpub-temp-file
-              (insert str "\n"))
-
-            (async-wpub wpub-temp-file "org")))
-
-      (message "Current buffer must be 'org-mode'!")))
-#+END_SRC
-
-**** send html file to kindle via wpub
+**** send html file to kindle by async-wpub
 
 #+BEGIN_SRC emacs-lisp
   (defun html-file-to-kindle (fname)
@@ -694,81 +671,13 @@ with ~F1 m~.
 
 #+END_SRC
 
-**** send url to kindle via wpub
+**** send url to kindle by async-wpub
 
 #+BEGIN_SRC emacs-lisp
   (defun url-to-kindle (url)
     (if url
         (async-wpub url nil t)
       (message "url: %s" url)))
-#+END_SRC
-
-**** eww url to kindle via wpub
-
-#+BEGIN_SRC emacs-lisp
-  (defun eww-to-kindle ()
-    "send the content of current url to kindle via wpub"
-
-    (interactive)
-    (url-to-kindle (eww-current-url))
-    )
-#+END_SRC
-
-**** eww send current page kindle
-
-#+BEGIN_SRC emacs-lisp
-  (defun eww-to-kindle-directly ()
-    (interactive)
-
-    (let ((fname (eww-temp-file-name-html (eww-current-url))))
-      (eww-make-temp-file-source fname)
-      (html-file-to-kindle fname)))
-#+END_SRC
-
-***** write eww source to temp file
-
-#+BEGIN_SRC emacs-lisp
-  (defun eww-temp-file-name-html (fname)
-    (temporary-file-name  (concat (md5 fname) ".html")))
-
-  (defun eww-make-temp-file-source (temp-file-name)
-    (let ((source (eww-current-source)))
-      (with-temp-file temp-file-name
-    (insert (string-as-multibyte source)))))
-#+END_SRC
-
-**** elfeed send page to kindle
-
-#+BEGIN_SRC emacs-lisp
-
-  (defun elfeed-search-to-kindle ()
-    "send current content to kindle"
-
-    (interactive)
-    (url-to-kindle (get-elfeed-search-url)))
-
-  (defun elfeed-show-to-kindle ()
-    "send current content to kindle"
-
-    (interactive)
-    (url-to-kindle (get-elfeed-show-url)))
-
-#+END_SRC
-
-**** send url or org to kindle
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c ok" 'send-url-or-org-to-kindle)
-  (require 'eww)
-  (defun send-url-or-org-to-kindle ()
-    "Send content of current buffer to kindle"
-    (interactive)
-    (cond
-     ((not (eq (eww-current-url) nil)) (eww-to-kindle-directly))
-     ((eq (current-buffer-mode) 'org-mode) (org-to-kindle))
-     ((eq (current-buffer-mode) 'elfeed-search-mode) (elfeed-search-to-kindle))
-     ((eq (current-buffer-mode) 'elfeed-show-mode) (elfeed-show-to-kindle))
-     (t (message "%s" "Can't send this page to kindle."))))
 #+END_SRC
 
 **** send url-at-point to kindle
@@ -785,114 +694,7 @@ with ~F1 m~.
         (message "%s" url)
         )))
 #+END_SRC
-*** TODO Using pandoc to convert org, markdown file
-**** get major mode of current buffer
 
-#+BEGIN_SRC emacs-lisp
-  (defun current-buffer-mode ()
-    "Return the major-mode associated with current buffer."
-
-    (with-current-buffer (buffer-name)
-      major-mode))
-#+END_SRC
-
-**** convert org-mode to pdf via pandoc
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c op" 'org-to-pdf)
-
-  (defun org-to-pdf ()
-    "Conver org to pdf and open the pdf file."
-
-    (interactive)
-    (if (eq (current-buffer-mode) 'org-mode)
-        (progn
-          (let* ((pdf-name (concat (file-name-sans-extension buffer-file-name) ".pdf")))
-
-            (message "convert to %s" (file-name-nondirectory pdf-name))
-
-            (let* ((latex-engin "xelatex")
-                   (template "/home/mario/.pandoc/default.latex")
-                   (result (shell-command
-                            (format "pandoc %s --latex-engine %s --template %s -s -o %s"
-                                    buffer-file-name
-                                    latex-engin
-                                    template
-                                    pdf-name
-                                    ))))
-              (if (eq result 0)
-                  (find-file pdf-name)
-                (message result)))
-            ))
-      (message "Current buffer must be 'org-mode'!")))
-#+END_SRC
-
-**** convert markdown to orgmode via pandoc
-
-#+BEGIN_SRC emacs-lisp
-  (defun md-to-org ()
-    "Convert markdown to org for edit. Especially for evernote/geeknote."
-
-    (interactive)
-    (if (eq (current-buffer-mode) 'markdown-mode)
-        (let* ((default-directory "/mnt/lvm-data/Documents/")
-               (md-buffer-name (buffer-name))
-               (md-file-name (buffer-file-name))
-               (md-org-buffer (find-file (read-file-name "" default-directory)))
-               (md-org-file-name (buffer-file-name)))
-
-          (if (not (file-exists-p md-org-file-name))
-              (progn
-                (shell-command (format "pandoc -f markdown -t org -o %s %s"
-                                       md-org-file-name
-                                       md-file-name))
-                (revert-buffer nil t)
-                (goto-char (point-min))
-                (insert "#+TITLE:\n")
-                (save-buffer)
-                (kill-buffer md-buffer-name))
-            (message "%s is already exist." md-org-file-name)))
-      (message "Current buffer must be 'markdown-mode'!")))
-#+END_SRC
-
-**** save buffer as org-mode and bind key as "C-c oo"
-
- bind key "C-c oo" to write current page of eww as orgmode
- or markdown to org.
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c oo" 'write-buffer-as-orgmode)
-
-  (defun write-buffer-as-orgmode ()
-  (interactive)
-    (cond
-     ((eq (current-buffer-mode) 'markdown-mode) (md-to-org))
-     ((eq (current-buffer-mode) 'eww-mode) (eww-to-org))
-     (t (message "Current mode must be markdown or eww"))))
-#+END_SRC
-*** string/starts-with and ends-with
-
-EmacsWiki: Elisp Cookbook
-https://www.emacswiki.org/emacs/ElispCookbook
-
-#+BEGIN_SRC emacs-lisp
-  (defun string/starts-with (string prefix)
-    "Return t if STRING starts with prefix."
-    (and (string-match (rx-to-string `(: bos ,prefix) t)
-               string)
-     t))
-
-  (defun string/ends-with (string suffix)
-    "Return t if STRING ends with SUFFIX."
-    (and (string-match (rx-to-string `(: ,suffix eos) t)
-               string)
-     t))
-#+END_SRC
-
-*** return temporary file name
-#+BEGIN_SRC emacs-lisp
-  (defun temporary-file-name (fname)
-    (expand-file-name fname temporary-file-directory))
-#+END_SRC
 * Operation system
 ** File System Management
 *** Dired: the most powerfull file management tool
@@ -3302,15 +3104,38 @@ using org-eww to save current web page to org-mode in eww-mode
       ))
 #+END_SRC
 
+*** send current page kindle
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-to-kindle-directly ()
+    (interactive)
+
+    (let ((fname (eww-temp-file-name-html (eww-current-url))))
+      (eww-make-temp-file-source fname)
+      (html-file-to-kindle fname)))
+#+END_SRC
+
+**** write eww source to temp file
+
+#+BEGIN_SRC emacs-lisp
+  (defun eww-temp-file-name-html (fname)
+    (temporary-file-name  (concat (md5 fname) ".html")))
+
+  (defun eww-make-temp-file-source (temp-file-name)
+    (let ((source (eww-current-source)))
+      (with-temp-file temp-file-name
+    (insert (string-as-multibyte source)))))
+#+END_SRC
+
 ** elfeed
 
 [[https://github.com/skeeto/elfeed][GitHub - skeeto/elfeed: An Emacs web feeds client]]
 
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package elfeed
-    :ensure eww
     :bind ("C-c e" . elfeed)
     :config
+    (require 'eww)
     <<elfeed-config>>)
 #+END_SRC
 
@@ -3680,6 +3505,20 @@ there is no new post for a long time.
   (copy-elfeed-show-org)
   (org-capture :goto "t")
   (yank))
+#+END_SRC
+
+*** elfeed send page to kindle
+
+#+BEGIN_SRC emacs-lisp
+  (defun elfeed-search-to-kindle ()
+    "send current content to kindle"
+    (interactive)
+    (url-to-kindle (get-elfeed-search-url)))
+
+  (defun elfeed-show-to-kindle ()
+    "send current content to kindle"
+    (interactive)
+    (url-to-kindle (get-elfeed-show-url)))
 #+END_SRC
 
 *** TODO elfeed-show/search: binding "oo" to converting to org-mode
