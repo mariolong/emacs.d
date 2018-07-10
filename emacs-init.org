@@ -3101,12 +3101,12 @@ ref: http://emacs.stackexchange.com/questions/2955/how-to-customize-background-c
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref eww-config
   (defun browse-at-point (arg)
     "browse at point: selected region or url or single word.
-   if cursor at whitespace then call eww wait for input some thing."
+     if cursor at whitespace then call eww wait for input some thing."
     (interactive "P")
 
     (if (consp arg)
         (call-interactively 'eww)
-      (if (string= "link" (car (org-thing-at-point)))
+      (if (string= "link" (org-element-type (org-element-context)))
           (org-open-at-point)
         (unless (setq-local thing (thing-at-point 'url))
           (unless (setq-local thing (thing-at-point 'symbol))
