@@ -2641,7 +2641,7 @@ stack install hasktags
 用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
 
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables '(haskell-tags-on-save t))
+(setq haskell-tags-on-save t)
 #+END_SRC
 
 ~M-.~ 跳到定義
@@ -2675,34 +2675,37 @@ stack install hindent
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (when (executable-find "hindent")
-    (use-package hindent
-      :diminish hindent-mode " ↹"
-      :hook (haskell-mode . hindent-mode)
-      :config
-      (setq hindent-reformat-buffer-on-save t)))
+  (use-package hindent
+    :if (executable-find "hindent")
+    :diminish hindent-mode " ↹"
+    :hook (haskell-mode . hindent-mode)
+    :config
+    (setq hindent-reformat-buffer-on-save t))
 #+END_SRC
 
 ** interactive commands
 
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables
-  '(haskell-process-suggest-remove-import-lines t)
-  '(haskell-process-auto-import-loaded-modules t)
-  '(haskell-process-log t)
-  '(haskell-process-type 'stack-ghci))
-(eval-after-load 'haskell-mode '(progn
-  (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-or-reload)
-  (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-  (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-  (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-  (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
-  (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)))
-(eval-after-load 'haskell-cabal '(progn
-  (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-  (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
-  (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-  (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
+  (setq haskell-process-suggest-remove-import-lines t
+        haskell-process-auto-import-loaded-modules t
+        haskell-process-log t
+        haskell-process-type 'stack-ghci)
+
+  (eval-after-load 'haskell-mode
+    '(progn
+       (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-file)
+       (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+       (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
+       (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
+       (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
+       (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)))
+
+  (eval-after-load 'haskell-cabal
+    '(progn
+       (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
+       (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
+       (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
+       (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
 #+END_SRC
 
 ** TODO haskell-snippets
@@ -3166,9 +3169,8 @@ using org-eww to save current web page to org-mode in eww-mode
       (switch-to-buffer (get-buffer-create org-file-name))
       (yank)
       (goto-char (point-min))
-      (insert "#+TITLE:\n#+AUTHOR:\n#+DATE:\n\n")
-      (write-file org-file-name)
-      ))
+      (insert (car (cdr (assoc "T" org-structure-template-alist))))
+      (write-file org-file-name)))
 #+END_SRC
 
 *** send current page kindle
