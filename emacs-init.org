@@ -193,11 +193,6 @@ You need to do this for any non-package.el packag
     (require 'quelpa-use-package))
 #+END_SRC
 
-*** delight
-#+BEGIN_SRC emacs-lisp
-  (use-package delight)
-#+END_SRC
-
 *** Paradox
 
 Project for modernizing Emacs' Package Menu.
@@ -289,7 +284,7 @@ With package ratings, usage statistics, customizability, and more.
 
 #+BEGIN_SRC emacs-lisp
   (use-package beacon
-    :delight
+    :diminish
     :init
     (beacon-mode 1))
 #+END_SRC
@@ -346,7 +341,7 @@ from 26.1, using ~(setq display-line-numbers 'relative)~ to display line number.
 
 #+BEGIN_SRC emacs-lisp
   (use-package pangu-spacing
-    :delight
+    :diminish
     :init
     (global-pangu-spacing-mode 1)
 
@@ -1703,7 +1698,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 *** Which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
-    :delight
+    :diminish
     :init
     (progn
       (setq which-key-idle-delay 0.5)
@@ -1792,7 +1787,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
 #+BEGIN_SRC emacs-lisp
   (use-package hungry-delete
-    :delight
+    :diminish
     :init
     (global-hungry-delete-mode 1))
 #+END_SRC
@@ -1961,7 +1956,7 @@ useful keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package ivy
-    :delight
+    :diminish
     :bind
     (("C-c C-r" . ivy-resume)
      :map ivy-minibuffer-map
@@ -2157,7 +2152,7 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
   (use-package ace-pinyin
     :ensure
     :ensure avy
-    :delight
+    :diminish
     :commands ace-pinyin-global-mode
     :init
     (setq ace-pinyin-simplified-chinese-only-p nil)
@@ -2261,7 +2256,7 @@ https://github.com/tsdh/highlight-parentheses.el
 
 #+BEGIN_SRC emacs-lisp
   (use-package  highlight-parentheses
-    :delight
+    :diminish
     :hook (prog-mode . highlight-parentheses-mode)
     :init
     (setq hl-paren-colors '("Springgreen3"
@@ -2394,7 +2389,7 @@ Using =call-meld= to find the differences of current buffer from last commit.
 
 #+BEGIN_SRC emacs-lisp
   (use-package projectile
-    :delight
+    :diminish
     :init
     (progn (projectile-mode)
            (setq projectile-completion-system 'ivy)))
@@ -2729,7 +2724,7 @@ stack install hindent
 #+BEGIN_SRC emacs-lisp :tangle no
    (use-package hlint-refactor
    :hook (haskell-mode . hlint-refactor-mode)
-   :delight)
+   :diminish)
 #+END_SRC
 
 ** yaml mode
@@ -3690,7 +3685,7 @@ for nikola blogger generator
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package org
     :mode ("\\.org\\'" . org-mode)
-    :delight org-src-mode
+    :diminish org-src-mode
     :bind (("C-c l" . org-store-link)
            ("C-c c" . org-capture)
            ("C-c a" . org-agenda)
@@ -3702,7 +3697,9 @@ for nikola blogger generator
 
 *** basic setup
  #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
-   (diminish 'org-indent-mode)
+   (eval-after-load 'org-indent
+     '(diminish 'org-indent-mode))
+
    (setq org-src-fontify-natively t
          org-src-window-setup 'current-window
          org-confirm-babel-evaluate nil
