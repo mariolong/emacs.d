@@ -193,6 +193,11 @@ You need to do this for any non-package.el packag
     (require 'quelpa-use-package))
 #+END_SRC
 
+*** delight
+#+BEGIN_SRC emacs-lisp
+  (use-package delight)
+#+END_SRC
+
 *** Paradox
 
 Project for modernizing Emacs' Package Menu.
@@ -284,7 +289,7 @@ With package ratings, usage statistics, customizability, and more.
 
 #+BEGIN_SRC emacs-lisp
   (use-package beacon
-    :diminish ""
+    :delight
     :init
     (beacon-mode 1))
 #+END_SRC
@@ -341,7 +346,7 @@ from 26.1, using ~(setq display-line-numbers 'relative)~ to display line number.
 
 #+BEGIN_SRC emacs-lisp
   (use-package pangu-spacing
-    :diminish ""
+    :delight
     :init
     (global-pangu-spacing-mode 1)
 
@@ -464,6 +469,12 @@ Takes care of trailing whitespaces (removal, highlighting)
 #+BEGIN_SRC emacs-lisp
   (global-subword-mode 1)
   (diminish 'subword-mode)
+#+END_SRC
+
+*** diminish some mode
+
+#+BEGIN_SRC emacs-lisp
+  (diminish 'overwrite-mode)
 #+END_SRC
 
 *** Clipboard
@@ -1692,7 +1703,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 *** Which-key
 #+BEGIN_SRC emacs-lisp
   (use-package which-key
-    :diminish ""
+    :delight
     :init
     (progn
       (setq which-key-idle-delay 0.5)
@@ -1781,7 +1792,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 
 #+BEGIN_SRC emacs-lisp
   (use-package hungry-delete
-    :diminish ""
+    :delight
     :init
     (global-hungry-delete-mode 1))
 #+END_SRC
@@ -1950,7 +1961,7 @@ useful keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package ivy
-    :diminish ""
+    :delight
     :bind
     (("C-c C-r" . ivy-resume)
      :map ivy-minibuffer-map
@@ -2146,7 +2157,7 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
   (use-package ace-pinyin
     :ensure
     :ensure avy
-    :diminish ""
+    :delight
     :commands ace-pinyin-global-mode
     :init
     (setq ace-pinyin-simplified-chinese-only-p nil)
@@ -2250,7 +2261,7 @@ https://github.com/tsdh/highlight-parentheses.el
 
 #+BEGIN_SRC emacs-lisp
   (use-package  highlight-parentheses
-    :diminish ""
+    :delight
     :hook (prog-mode . highlight-parentheses-mode)
     :init
     (setq hl-paren-colors '("Springgreen3"
@@ -2383,9 +2394,9 @@ Using =call-meld= to find the differences of current buffer from last commit.
 
 #+BEGIN_SRC emacs-lisp
   (use-package projectile
-    :diminish ""
+    :delight
     :init
-    (progn (projectile-global-mode)
+    (progn (projectile-mode)
            (setq projectile-completion-system 'ivy)))
 #+END_SRC
 
@@ -2718,7 +2729,7 @@ stack install hindent
 #+BEGIN_SRC emacs-lisp :tangle no
    (use-package hlint-refactor
    :hook (haskell-mode . hlint-refactor-mode)
-   :diminish "")
+   :delight)
 #+END_SRC
 
 ** yaml mode
@@ -3679,7 +3690,7 @@ for nikola blogger generator
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package org
     :mode ("\\.org\\'" . org-mode)
-    :diminish org-src-mode
+    :delight org-src-mode
     :bind (("C-c l" . org-store-link)
            ("C-c c" . org-capture)
            ("C-c a" . org-agenda)
@@ -3691,12 +3702,13 @@ for nikola blogger generator
 
 *** basic setup
  #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref org-config
+   (diminish 'org-indent-mode)
    (setq org-src-fontify-natively t
          org-src-window-setup 'current-window
          org-confirm-babel-evaluate nil
          org-list-indent-offset 0
          org-blank-before-new-entry '((heading . t)
-					(plain-list-item . t))
+                                      (plain-list-item . t))
          org-startup-indented t)
  #+END_SRC
 
@@ -4122,16 +4134,6 @@ org htmlize
 - type 'css
 - disable pygments
 - github org.css
-
-* Finalization
-** diminish some mode
-
-#+BEGIN_SRC emacs-lisp
-  (diminish 'overwrite-mode)
-
-  (eval-after-load 'org-indent
-    '(diminish 'org-indent-mode))
-#+END_SRC
 
 * Difficulties
 ** ~C-M-p~ don't work
