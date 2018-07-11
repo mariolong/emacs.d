@@ -770,14 +770,9 @@ with ~F1 m~.
 *** Dired: the most powerfull file management tool
 
 Ref:
-- https://github.com/lunaryorn/.emacs.d/blob/master/init.el
-- http://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/
-- http://pragmaticemacs.com/category/dired/
-
-We recently looked at replacing text in buffers.
-Using dired, it is possible to do this in many files in a directory.
-Start dired and mark files as described here.
-Then use Q to run query-replace on all marked files.
+- [[https://kuanyui.github.io/2014/06/21/dired-tutorial-and-essential-configs/][必備的 Dired 設定與簡易教學 | 東北角的小徑]]
+- [[https://github.com/lunaryorn/old-emacs-configuration/blob/master/init.el][old-emacs-configuration/init.el at master · lunaryorn/old-emacs-configuration · GitHub]]
+- [[http://pragmaticemacs.com/category/dired/][dired | Pragmatic Emacs]]
 
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package dired
@@ -789,12 +784,12 @@ Then use Q to run query-replace on all marked files.
     :config
     <<dired-config>>)
 #+END_SRC
+
 **** usefull keybinding
 
-***** copy file name
-
-- w selected file name
-- M-0 w 絶對路徑
+- ~C-x C-j~~ show the current file in a dired buffer. (dired-x)
+- ~w~ copy selected file name
+- ~M-0 w~ copy 絶對路徑
 
 **** Dired tries to guess a default target directory
 
@@ -829,7 +824,7 @@ top: 表示同一批檔案只詢問一次。
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
   (setq dired-recursive-copies  'always
-	dired-recursive-deletes 'top)
+        dired-recursive-deletes 'top)
 #+END_SRC
 
 **** sorting current directoy
@@ -866,85 +861,40 @@ top: 表示同一批檔案只詢問一次。
 
 **** dired omit mode enhancement
 
-;; Dired Omit 加強:
-;; 簡單來說，這個能夠紀錄下目前的「隱藏狀態」，所以當你按
-;; C-x M-o 隱藏以.為開頭的檔案後，即使到了不同目錄下，以.開頭的檔案
-;; 依舊是處於隱藏狀態，直到你重新按 C-x M-o 為止。
+簡單來說，這個能夠紀錄下目前的「隱藏狀態」，到其它目錄仍能保持相同的
+「狀態」
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-(setq dired-omit-files "^\\...+$")
+  (setq dired-omit-files "^\\...+$")
 
-(defvar v-dired-omit t
-  "If dired-omit-mode enabled by default. Don't setq me.")
+  (defvar v-dired-omit t
+    "If dired-omit-mode enabled by default. Don't setq me.")
 
-(defun dired-omit-and-remember ()
-  "This function is a small enhancement for `dired-omit-mode', which will
-        \"remember\" omit state across Dired buffers."
+  (defun dired-omit-and-remember ()
+    "This function is a small enhancement for `dired-omit-mode', which will
+          \"remember\" omit state across Dired buffers."
 
-  (interactive)
-  (setq v-dired-omit (not v-dired-omit))
-  (dired-omit-auto-apply)
-  (revert-buffer))
+    (interactive)
+    (setq v-dired-omit (not v-dired-omit))
+    (dired-omit-auto-apply)
+    (revert-buffer))
 
-(defun dired-omit-auto-apply ()
-  (setq dired-omit-mode v-dired-omit))
+  (defun dired-omit-auto-apply ()
+    (setq dired-omit-mode v-dired-omit))
 
-(add-hook 'dired-mode-hook 'dired-omit-auto-apply)
+  (add-hook 'dired-mode-hook 'dired-omit-auto-apply)
 #+END_SRC
 
 **** recursively find files under current directory
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
-(defun dired-find-name-in-current-directory ()
-  (interactive)
-  (find-name-dired default-directory
-                   (format "*%s*" (read-from-minibuffer "Pattern: ")))
-  (set-buffer-multibyte t))
-(setq find-name-arg "-iname")
-(setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
-#+END_SRC
-
-**** TODO dired-rainbow
-
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref dired-config
-(use-package dired-rainbow
-    :commands dired-rainbow-define dired-rainbow-define-chmod
-    :init
-    (dired-rainbow-define dotfiles "gray" "\\..*")
-
-    (dired-rainbow-define web "#4e9a06" ("htm" "html" "xhtml" "xml" "xaml" "css" "js"
-                                         "json" "asp" "aspx" "haml" "php" "jsp" "ts"
-                                         "coffee" "scss" "less" "phtml"))
-    (dired-rainbow-define prog "yellow3" ("el" "l" "ml" "py" "rb" "pl" "pm" "c"
-                                          "cpp" "cxx" "c++" "h" "hpp" "hxx" "h++"
-                                          "m" "cs" "mk" "make" "swift" "go" "java"
-                                          "asm" "robot" "yml" "yaml" "rake" "lua"))
-    (dired-rainbow-define sh "green yellow" ("sh" "bash" "zsh" "fish" "csh" "ksh"
-                                             "awk" "ps1" "psm1" "psd1" "bat" "cmd"))
-    (dired-rainbow-define text "yellow green" ("txt" "md" "org" "ini" "conf" "rc"
-                                               "vim" "vimrc" "exrc"))
-    (dired-rainbow-define doc "spring green" ("doc" "docx" "ppt" "pptx" "xls" "xlsx"
-                                              "csv" "rtf" "wps" "pdf" "texi" "tex"
-                                              "odt" "ott" "odp" "otp" "ods" "ots"
-                                              "odg" "otg"))
-    (dired-rainbow-define misc "gray50" ("DS_Store" "projectile" "cache" "elc"
-                                         "dat" "meta"))
-    (dired-rainbow-define media "#ce5c00" ("mp3" "mp4" "MP3" "MP4" "wav" "wma"
-                                           "wmv" "mov" "3gp" "avi" "mpg" "mkv"
-                                           "flv" "ogg" "rm" "rmvb"))
-    (dired-rainbow-define picture "purple3" ("bmp" "jpg" "jpeg" "gif" "png" "tiff"
-                                             "ico" "svg" "psd" "pcd" "raw" "exif"
-                                             "BMP" "JPG" "PNG"))
-    (dired-rainbow-define archive "saddle brown" ("zip" "tar" "gz" "tgz" "7z" "rar"
-                                                  "gzip" "xz" "001" "ace" "bz2" "lz"
-                                                  "lzma" "bzip2" "cab" "jar" "iso"))
-
-    ;; boring regexp due to lack of imagination
-    (dired-rainbow-define log (:inherit default :italic t) ".*\\.log")
-
-    ;; highlight executable files, but not directories
-    (dired-rainbow-define-chmod executable-unix "green" "-[rw-]+x.*"))
+  (defun dired-find-name-in-current-directory ()
+    (interactive)
+    (find-name-dired default-directory
+                     (format "*%s*" (read-from-minibuffer "Pattern: ")))
+    (set-buffer-multibyte t))
+  (setq find-name-arg "-iname")
+  (setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
 #+END_SRC
 
 *** dired+
@@ -954,13 +904,11 @@ yaourt -S unzip unrar
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package highlight
-    :quelpa (:fetcher url :url "https://www.emacswiki.org/emacs/download/highlight.el")
-    )
-
   (use-package dired+
-    :quelpa (:fetcher github :repo "emacsmirror/dired-plus")
+    :load-path "lisp/"
     :init
+    (require 'dired+)
+    :config
     (diredp-toggle-find-file-reuse-dir 1)
     (setq dired-recursive-deletes 'always)
 
@@ -1251,27 +1199,6 @@ Recentf is a minor mode that builds a list of recently opened files.
           recentf-max-menu-items 10)))
 #+end_src
 
-*** dired
-**** TODO Dired bookmarks
-
-are especially handy if you use Bookmark+
-<2016-12-01 Thu 18:16>
-
-**** TODO dired hacks                                            :READING:
-
-ranger copy/paste files
-
-https://github.com/Fuco1/dired-hacks
-<2017-08-02 三 09:51>
-
-**** TODO ibuffer/dired binding consistent
-
-<2017-08-11 Fri 20:26:37>
-
-**** TODO dired color theme monika?
-
-**** TODO Using Emacs 38 - dired http://cestlaz.github.io/posts/using-emacs-38-dired/
-
 ** Buffer Management                                                :buffer:
 *** ibuffer
 
@@ -1427,15 +1354,6 @@ Add parts of each file's directory to the buffer name if not unique
   :init
     (setq uniquify-buffer-name-style 'post-forward-angle-brackets))
 #+END_SRC
-
-*** TODO Next/Previous User Buffer
-
-http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
-<2016-06-19 日 16:23>
-
-**** TODO cycle switch buffer in current project/directory or user buffer.
-
-<2017-02-04 六 18:10>
 
 *** Switch to previous buffer
 
@@ -2373,9 +2291,9 @@ Using =call-meld= to find the differences of current buffer from last commit.
 
 #+BEGIN_SRC emacs-lisp
   (use-package diff-hl
+    :hook (dired-mode . diff-hl-dired-mode)
     :init
-    (progn (global-diff-hl-mode +1)
-           (diff-hl-dired-mode 1)))
+    (global-diff-hl-mode))
 #+END_SRC
 
 *** keybinds to navigate
@@ -4169,10 +4087,10 @@ https://github.com/lunaryorn/old-emacs-configuration?files=1
 
 https://github.com/kaushalmodi/.emacs.d/blob/master/setup-files/setup-diff.el
 
-** TODO emacs-init.org refector [75%]
+** DONE TDOO emacs-init.org refector [100%]
 
-- [ ] cleanup no export code block
-- [ ] review all
+- [X] cleanup no export code block
+- [X] review all
 - [X] rearrange headings
 - [X] add todo keywork for wanted functions
 - [X] move to do itme to emacs-init.org
@@ -4241,15 +4159,15 @@ You will need a web browser configured for best results. Here's an example setup
 
 (setq browse-url-browser-function 'browse-url-safari)
 (defun browse-url-safari (url &optional new-window)
- "Open URL in a new Safari window."
- (interactive (browse-url-interactive-arg "URL: "))
- (unless
-     (string= ""
-              (shell-command-to-string
-               (concat "open -a Safari " url)))
-   (message "Starting Safari...")
-   (start-process (concat "open -a Safari " url) nil "open -a Safari " url)
-   (message "Starting Safari... done")))
+"Open URL in a new Safari window."
+(interactive (browse-url-interactive-arg "URL: "))
+(unless
+(string= ""
+(shell-command-to-string
+(concat "open -a Safari " url)))
+(message "Starting Safari...")
+(start-process (concat "open -a Safari " url) nil "open -a Safari " url)
+(message "Starting Safari... done")))
 Alternately, you can build the command-line hoogle (darcs repo below) and uncomment the third line above, then results will appear in a buffer.
 <2018-06-12 二 20:50>
 
@@ -4442,3 +4360,28 @@ http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
 https://www.sitepoint.com/code-listings-kindle-devices/
 
 Two media queries are introduced next. The amzn-mobi media query applies to devices that don’t support KF8 (such as the original Kindle e-ink device). This ensures that elements belonging to the mobicontent class are displayed while elements belonging to the kf8content class are hidden.
+** TODO Dired bookmarks
+
+are especially handy if you use Bookmark+
+<2016-12-01 Thu 18:16>
+
+** TODO dired hacks                                                :READING:
+
+ranger copy/paste files
+
+https://github.com/Fuco1/dired-hacks
+<2017-08-02 三 09:51>
+
+** TODO ibuffer/dired binding consistent
+
+<2017-08-11 Fri 20:26:37>
+
+** TODO dired color theme monika?
+** TODO Next/Previous User Buffer
+
+http://ergoemacs.org/emacs/elisp_next_prev_user_buffer.html
+<2016-06-19 日 16:23>
+
+*** TODO cycle switch buffer in current project/directory or user buffer.
+
+<2017-02-04 六 18:10>
