@@ -183,20 +183,7 @@ You need to do this for any non-package.el packag
   (setq use-package-always-ensure t)
 #+END_SRC
 
-*** Install ~quelpa-use-package~
-
-[[https://github.com/quelpa/quelpa-use-package][GitHub - quelpa/quelpa-use-package]]
-
-#+BEGIN_SRC emacs-lisp
-  (use-package quelpa-use-package
-    :init
-    (require 'quelpa-use-package))
-#+END_SRC
-
 *** Paradox
-
-Project for modernizing Emacs' Package Menu.
-With package ratings, usage statistics, customizability, and more.
 
 [[https://github.com/Malabarba/paradox][GitHub - Malabarba/paradox: Project for modernizing Emacs' Package Menu.]]
 
@@ -641,7 +628,6 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
 #+BEGIN_SRC emacs-lisp
   (use-package moedict
-    ;; :quelpa (moedict :fetcher github :repo "kuanyui/moedict.el")
     :load-path "lisp/"
     :ensure helm
     :ensure esqlite
@@ -2500,7 +2486,7 @@ sudo npm install pug-cli -g
 
 #+BEGIN_SRC emacs-lisp
   (use-package stylus-mode
-    :quelpa (:fetcher github :repo "vladh/stylus-mode"))
+    :load-path "lisp/")
 #+END_SRC
 
 ** haskell-mode
