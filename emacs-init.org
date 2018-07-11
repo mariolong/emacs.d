@@ -3238,6 +3238,7 @@ using org-eww to save current web page to org-mode in eww-mode
              ("yt" . copy-elfeed-search-title)
              ("yu" . copy-elfeed-search-title-url)
              ("yo" . copy-elfeed-search-org)
+             ("oo" . elfeed-search-to-org)
              ("ok" . elfeed-search-to-kindle)
              ("oK" . send-url-to-kindle-at-point))
 
@@ -3258,6 +3259,7 @@ using org-eww to save current web page to org-mode in eww-mode
              ("yt" . copy-elfeed-show-title)
              ("yu" . copy-elfeed-show-title-url)
              ("yo" . copy-elfeed-show-org)
+             ("oo" . elfeed-show-to-org)
              ("ok" . elfeed-show-to-kindle)
              ("oK" . send-url-to-kindle-at-point))
 #+END_SRC
@@ -3596,9 +3598,23 @@ there is no new post for a long time.
     (url-to-kindle (get-elfeed-show-url)))
 #+END_SRC
 
-*** TODO elfeed-show/search: binding "oo" to converting to org-mode
-must know the content
-<2017-08-29 二 11:47>
+*** TODO elfeed-show/search: converting to org-mode
+
+#+BEGIN_SRC emacs-lisp
+  (defun elfeed-show-to-org ()
+    (interactive)
+    (url-to-org (get-elfeed-show-url)))
+
+  (defun elfeed-search-to-org ()
+    (interactive)
+    (url-to-org (get-elfeed-search-url)))
+
+  (defun url-to-org (url)
+    (when url
+      (eww (get-elfeed-show-url))
+      (message "%s" "waiting ... for eww loading")
+      (eww-to-org)))
+#+END_SRC
 
 ** elfeed-goodies
 
