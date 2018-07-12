@@ -538,52 +538,22 @@ https://www.emacswiki.org/emacs/ElispCookbook
         (insert result)
         (goto-char current-point))))
 
-  (bind-key "C-c fo" 'opencc-buffer)
+  (bind-key "C-c ob" 'opencc-buffer)
 
 #+END_SRC
 
-*** TODO opencc-region or current line
+*** opencc, convert region or current sentance
 
-(defun opencc-replace-at-point ()
-  "一个交互命令，转化并替换光标下的文字."
-  (interactive "*")
-  (let* ((config (completing-read
-                  "配置文件: "
-                  opencc-configuration-files))
-         start end
-         (string (if (use-region-p)
-                     (progn (setq start (region-beginning)
-                                  end (region-end))
-                            (buffer-substring start end))
-                   (opencc-awhen (bounds-of-thing-at-point 'word)
-                     (setq start (car it)
-                           end (cdr it))
-                     (buffer-substring start end)))))
-    (unless string
-      (apply (if (fboundp 'user-error)
-                 #'user-error
-               #'error)
-             '("Nothing at point to replace")))
-    (opencc-awhen (opencc-region config start end)
-      (delete-region start end)
-      (insert it))))
+[[https://github.com/xuchunyang/emacs-opencc][GitHub - xuchunyang/emacs-opencc: 中文简繁转换 <-> 中文簡繁轉換]]
 
-(defmacro opencc-awhen (test &rest body)
-  "Anaphoric version of `when'."
-  (declare (indent 1))
-  `(let ((it ,test))
-     (when it ,@body)))
+用 ~M-x opencc-replace-at-point~ 轉換
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (defun opencc-region ()
-    (interactive)
-
-    (let ((words (if mark-active
-                     (buffer-substring-no-properties (region-beginning) (region-end))
-                   (current-word nil t))))
-      (message "%s" words)
-      (delete-region start end)
-      (insert words)))
+#+BEGIN_SRC emacs-lisp
+  (use-package opencc
+    :bind ("C-c op" . opencc-replace-at-point)
+    :custom
+    (opencc-insert-mode-config "s2twp")
+    (opencc-isearch-mode-config "s2twp"))
 #+END_SRC
 
 *** TODO sdcv
