@@ -853,33 +853,26 @@ top: 表示同一批檔案只詢問一次。
   (setq find-ls-option '("-print0 | xargs -0 ls -ald" . ""))
 #+END_SRC
 
-*** dired+
+**** setup dired-guess-shell-alist-default
 
 #+BEGIN_SRC sh
 yaourt -S unzip unrar
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-  (use-package dired+
-    :load-path "lisp/"
-    :init
-    (require 'dired+)
-    :config
-    (diredp-toggle-find-file-reuse-dir 1)
-    (setq dired-recursive-deletes 'always)
-
-    (dolist (file `(("unrar x" "rar")
-                    ("aegisub-3.2" "ass" "srt")
-                    ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
-                    ("mpv -playlist" "list" "pls")
-                    ("kindlegen" "epub")
-                    ("kmail" "mobi")
-                    ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
-                    ("google-chrome-stable" "xml" "xhtml" "html" "htm" "mht")
-                    ))
-      (add-to-list 'dired-guess-shell-alist-default
-                   (list (concat "\\." (regexp-opt (cdr file) t) "$")
-                         (car file)))))
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
+  (require 'dired-x)
+  (dolist (file `(("unrar x" "rar")
+                  ("aegisub-3.2" "ass" "srt")
+                  ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
+                  ("mpv -playlist" "list" "pls")
+                  ("kindlegen" "epub")
+                  ("kmail" "mobi")
+                  ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
+                  ("google-chrome-stable" "xml" "xhtml" "html" "htm" "mht")
+                  ))
+    (add-to-list 'dired-guess-shell-alist-default
+                 (list (concat "\\." (regexp-opt (cdr file) t) "$")
+                       (car file))))
 #+END_SRC
 
 *** diredfl
@@ -890,6 +883,15 @@ yaourt -S unzip unrar
   (use-package diredfl
     :init
     (diredfl-global-mode))
+#+END_SRC
+
+*** dired+
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired+
+    :load-path "lisp/"
+    :init
+    (diredp-toggle-find-file-reuse-dir 1))
 #+END_SRC
 
 *** openwith
