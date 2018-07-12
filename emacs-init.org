@@ -787,7 +787,7 @@ top: 表示同一批檔案只詢問一次。
 
 會先問你要根據什麼屬性排序，而且紀錄下排序狀態，不會跨 buffer 就不見了。
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref dired-config
   (defconst sorting-action '(("name" "")
 			     ("size" "S")
 			     ("extension" "X")
@@ -880,6 +880,16 @@ yaourt -S unzip unrar
       (add-to-list 'dired-guess-shell-alist-default
                    (list (concat "\\." (regexp-opt (cdr file) t) "$")
                          (car file)))))
+#+END_SRC
+
+*** diredfl
+
+[[https://github.com/purcell/diredfl][GitHub - purcell/diredfl: Extra Emacs font lock rules for a more colourful dired]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package diredfl
+    :init
+    (diredfl-global-mode))
 #+END_SRC
 
 *** openwith
