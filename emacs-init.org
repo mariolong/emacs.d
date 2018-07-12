@@ -1387,6 +1387,18 @@ Undo/redo window configuration with C-c <left>/<right>
     (aw-flip-window))
 #+END_SRC
 
+*** popwin
+
+popwin for undo-tree and multi-term only
+
+#+BEGIN_SRC emacs-lisp
+  (use-package popwin
+    :commands popwin-mode
+    :init
+    (popwin-mode 1)
+    (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config))
+#+END_SRC
+
 *** Minibuffer                                                 :minibuffer:
 
 #+BEGIN_SRC emacs-lisp :noweb no-export :exports code
@@ -1402,12 +1414,33 @@ Undo/redo window configuration with C-c <left>/<right>
   (add-hook 'minibuffer-setup-hook '(lambda () (setq cursor-type 'bar)))
 #+END_SRC
 
+**** Save history of minibuffer
+
+When Savehist mode is enabled, minibuffer history is saved
+periodically and when exiting Emacs.  When Savehist mode is enabled
+for the first time in an Emacs session, it loads the previous
+minibuffer history from ‘savehist-file’.
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
+  (use-package savehist
+    :init
+    (setq
+     savehist-file (expand-file-name "savehist.dat" user-cache-directory)
+     history-length 1000)
+    (savehist-mode 1))
+#+END_SRC
+
 **** Some helper function to let me insert quick in minibuffer
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
 
   (defun my/minibuffer-insert (p)
     (kill-line 0) (insert p))
+
+ (defun my/minibuffer-switch-to-posts ()
+    "Insert my posts path"
+    (interactive)
+    (my/minibuffer-insert "/mnt/lvm-data/Documents/blog-2018/posts/"))
 
   (defun my/minibuffer-switch-to-ramdisk ()
     "Insert ramdisk path according to system type"
@@ -1440,20 +1473,6 @@ Undo/redo window configuration with C-c <left>/<right>
     (my/minibuffer-insert "/ssh:cluster:"))
 #+END_SRC
 
-**** Save history of minibuffer :tangle no :noweb-ref minibuffer-config
-
-When Savehist mode is enabled, minibuffer history is saved
-periodically and when exiting Emacs.  When Savehist mode is enabled
-for the first time in an Emacs session, it loads the previous
-minibuffer history from ‘savehist-file’.
-
-#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref minibuffer-config
-  (use-package savehist
-    :init
-    (setq savehist-file (expand-file-name "savehist.dat" user-cache-directory))
-    (savehist-mode 1))
-#+END_SRC
-
 **** Setup Keybindings                                        :keybinding:
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
@@ -1468,28 +1487,6 @@ minibuffer history from ‘savehist-file’.
              ("M-s" . my/minibuffer-switch-to-tramp)
              ("M-v" . my/minibuffer-switch-to-vm)
              ("M-c" . my/minibuffer-switch-to-cluster))
-#+END_SRC
-
-**** Save minibuffer history
-
-When Savehist mode is enabled, minibuffer history is saved
-periodically and when exiting Emacs.
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref minibuffer-config
-  (savehist-mode 1)
-  (setq history-length 1000)
-#+END_SRC
-
-*** popwin
-
-popwin for undo-tree and multi-term only
-
-#+BEGIN_SRC emacs-lisp
-  (use-package popwin
-    :commands popwin-mode
-    :init
-    (popwin-mode 1)
-    (push '(" *undo-tree*" :width 0.3 :position right) popwin:special-display-config))
 #+END_SRC
 
 ** call external terminal
