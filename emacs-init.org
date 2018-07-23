@@ -2226,21 +2226,6 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
       :hook (magit-status-mode . magit-filenotify-mode))
 #+END_SRC
 
-** meld
-
-Using =call-meld= to find the differences of current buffer from last commit.
-
-#+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fd" 'call-meld)
-
-  (defun call-meld ()
-    "Find the differences of current buffer from last commit."
-    (interactive)
-    (save-excursion
-      (shell-command (format "meld %s" (buffer-file-name))))
-    )
-#+END_SRC
-
 ** ediff
 
 *** Basic settings
