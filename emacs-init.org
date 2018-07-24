@@ -865,6 +865,7 @@ yaourt -S unzip unrar
                   ("aegisub-3.2" "ass" "srt")
                   ("mediainfo"  "ogm" "avi" "mpg" "rmvb" "rm" "flv" "wmv" "mkv" "mp4" "m4v" "webm" "mp3")
                   ("mpv -playlist" "list" "pls")
+                  ("flashplayer" "swf")
                   ("kindlegen" "epub")
                   ("kmail" "mobi")
                   ("feh -F --auto-rotate *" "gif" "jpeg" "jpg" "tif" "png")
