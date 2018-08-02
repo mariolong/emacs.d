@@ -1641,9 +1641,24 @@ GitHub: https://github.com/steckerhalter/discover-my-major
     (smartparens-global-mode 1))
 #+END_SRC
 
-** TODO copying lines without selecting them
+** copying lines without selecting them
 
 [[http://emacs-fu.blogspot.com/2009/11/copying-lines-without-selecting-them.html?m=1][emacs-fu: copying lines without selecting them]]
+
+#+BEGIN_SRC emacs-lisp
+(defadvice kill-ring-save (before slick-copy activate compile) "When called
+  interactively with no active region, copy a single line instead."
+  (interactive (if mark-active (list (region-beginning) (region-end)) (message
+  "Copied line") (list (line-beginning-position) (line-beginning-position
+  2)))))
+
+(defadvice kill-region (before slick-cut activate compile)
+  "When called interactively with no active region, kill a single line instead."
+  (interactive
+    (if mark-active (list (region-beginning) (region-end))
+      (list (line-beginning-position)
+        (line-beginning-position 2)))))
+#+END_SRC
 
 ** turn on electric-pair-mode
 
