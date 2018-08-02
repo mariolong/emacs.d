@@ -1896,27 +1896,29 @@ yaourt -S ripgrep
 
 #+BEGIN_SRC emacs-lisp
   (use-package company
-    :diminish " ⓐ"
+    :diminish "ⓐ"
     :hook (after-init . global-company-mode)
     :config
     (progn
-      (setq company-idle-delay 0.1)
-      (setq company-tooltip-limit 10)
-      (setq company-minimum-prefix-length 2)
-      (setq company-echo-delay 0)
+      ;; I don't like the downcase word in company-dabbrev!
+      (setq company-dabbrev-downcase nil
+            ;; make previous/next selection in the popup cycles
+            company-selection-wrap-around t
+            ;; Some languages use camel case naming convention,
+            ;; so company should be case sensitive.
+            company-dabbrev-ignore-case nil
+            ;; press M-number to choose candidate
+            company-show-numbers t
+
+            company-tooltip-limit 10
+            company-minimum-prefix-length 2
+            company-echo-delay 0
+            company-idle-delay 0.1
+            company-clang-insert-arguments nil
+            company-require-match nil
+            company-etags-ignore-case t)
 
       (add-to-list 'company-backends 'company-ispell t)))
-#+END_SRC
-
-*** Add quickhelp in company-mode
-
-ref: https://github.com/expez/company-quickhelp
-
-#+BEGIN_SRC emacs-lisp
-  (use-package company-quickhelp
-    :ensure
-    :commands company-quickhelp-mode
-    :init (company-quickhelp-mode 1))
 #+END_SRC
 
 *** keybindings
@@ -1933,88 +1935,257 @@ When the completion candidates are shown,
 - <f1> to dispaly the documentation
 - <C-w> to see its source
 
-** TODO Spell checking
-*** Ispell
+[[https://github.com/redguardtoo/emacs.d][GitHub - redguardtoo/emacs.d: Efficient Emacs setup.]]
 
-if want to use "hunspell", then must install hunspell and hunspell_en in OS.
+#+BEGIN_SRC emacs-lisp :tangle no
+(add-hook 'after-init-hook 'global-company-mode)
 
-#+BEGIN_SRC emacs-lisp
-  (use-package ispell
-    :config
-    (progn
-      (cond
-       ((executable-find "aspell")
-	(setq ispell-program-name "aspell")
-	(setq ispell-extra-args   '("--sug-mode=slow"
-                                    "--lang=en_US"
-                                    "--ignore=2"
-                                    "--ignore-case"
-                                    "--run-together"
-                                    "--run-together-limit=5"
-                                    "--run-together-min=2")))
-       ;; how to fire 'hunspell'?
-       ((executable-find "hunspell")
-	(setq ispell-program-name "hunspell")
-	(setq ispell-extra-args   '("-d en_US"))
-	(setq ispell-local-dictionary-alist
-              '(("en_US" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)
-		("zh_TW" "[[:alpha:]]" "[^[:alpha:]]" "[']" nil ("-d" "en_US") nil utf-8)))))
+(if (fboundp 'evil-declare-change-repeat)
+    (mapc #'evil-declare-change-repeat
+          '(company-complete-common
+            company-select-next
+            company-select-previous
+            company-complete-selection
+            company-complete-number
+            )))
 
-      (setq ispell-local-dictionary "en_US")
-      (setq ispell-silently-savep t)))
+(eval-after-load 'company
+  '(progn
+     ;; @see https://github.com/company-mode/company-mode/issues/348
+     (company-statistics-mode)
+
+     (add-to-list 'company-backends 'company-cmake)
+     (add-to-list 'company-backends 'company-c-headers)
+     ;; can't work with TRAMP
+     (setq company-backends (delete 'company-ropemacs company-backends))
+     ;; (setq company-backends (delete 'company-capf company-backends))
+
+     ;; I don't like the downcase word in company-dabbrev!
+     (setq company-dabbrev-downcase nil
+           ;; make previous/next selection in the popup cycles
+           company-selection-wrap-around t
+           ;; Some languages use camel case naming convention,
+           ;; so company should be case sensitive.
+           company-dabbrev-ignore-case nil
+           ;; press M-number to choose candidate
+           company-show-numbers t
+           company-idle-delay 0.2
+           company-clang-insert-arguments nil
+           company-require-match nil
+           company-etags-ignore-case t)
+
+     ;; @see https://github.com/redguardtoo/emacs.d/commit/2ff305c1ddd7faff6dc9fa0869e39f1e9ed1182d
+     (defadvice company-in-string-or-comment (around company-in-string-or-comment-hack activate)
+       ;; you can use (ad-get-arg 0) and (ad-set-arg 0) to tweak the arguments
+       (if (memq major-mode '(php-mode html-mode web-mode nxml-mode))
+           (setq ad-return-value nil)
+         ad-do-it))
+
+     ;; press SPACE will accept the highlighted candidate and insert a space
+     ;; `M-x describe-variable company-auto-complete-chars` for details
+     ;; That's BAD idea.
+     (setq company-auto-complete nil)
+
+     ;; NOT to load company-mode for certain major modes.
+     ;; Ironic that I suggested this feature but I totally forgot it
+     ;; until two years later.
+     ;; https://github.com/company-mode/company-mode/issues/29
+     (setq company-global-modes
+           '(not
+             eshell-mode comint-mode erc-mode gud-mode rcirc-mode
+             minibuffer-inactive-mode))))
+
+;; {{ setup company-ispell
+(defun toggle-company-ispell ()
+  (interactive)
+  (cond
+   ((memq 'company-ispell company-backends)
+    (setq company-backends (delete 'company-ispell company-backends))
+    (message "company-ispell disabled"))
+   (t
+    (add-to-list 'company-backends 'company-ispell)
+    (message "company-ispell enabled!"))))
+
+(defun company-ispell-setup ()
+  ;; @see https://github.com/company-mode/company-mode/issues/50
+  (when (boundp 'company-backends)
+    (make-local-variable 'company-backends)
+    (add-to-list 'company-backends 'company-ispell)
+    ;; https://github.com/redguardtoo/emacs.d/issues/473
+    (cond
+     ((and (boundp 'ispell-alternate-dictionary)
+           ispell-alternate-dictionary)
+      (setq company-ispell-dictionary ispell-alternate-dictionary))
+     (t
+       (setq company-ispell-dictionary (file-truename "~/.emacs.d/misc/english-words.txt"))))))
+
+;; message-mode use company-bbdb.
+;; So we should NOT turn on company-ispell
+(add-hook 'org-mode-hook 'company-ispell-setup)
+;; }}
+
+(eval-after-load 'company-etags
+  '(progn
+     ;; insert major-mode not inherited from prog-mode
+     ;; to make company-etags work
+     (add-to-list 'company-etags-modes 'web-mode)
+     (add-to-list 'company-etags-modes 'lua-mode)))
 #+END_SRC
 
-*** TODO flyspell
+*** Add quickhelp in company-mode
+
+[[https://github.com/expez/company-quickhelp][GitHub - expez/company-quickhelp: Documentation popup for Company]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-quickhelp
+    :commands company-quickhelp-mode
+    :init (company-quickhelp-mode 1))
+#+END_SRC
+
+*** company-statistics
+
+[[https://github.com/company-mode/company-statistics][GitHub - company-mode/company-statistics: Sort completion candidates by previous completion choices]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package company-statistics
+    :hook (after-init . company-statistics-mode))
+#+END_SRC
+
+** Spell checking
 
 =C-.= corrects word at point.
 =C-,​= to jump to next misspelled word.
 =M-$= correct word at point
 
-#+BEGIN_SRC emacs-lisp :tangle no
+*** Ispell
+
+**** install aspell and its dictionary in OS
+
+#+BEGIN_SRC sh
+yaourt -S aspell aspell-en
+#+END_SRC
+
+**** configuration
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
+  (use-package ispell
+    :ensure nil
+    :config
+    <<ispell-config>>)
+#+END_SRC
+
+**** using aspell
+
+#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref ispell-config
+    (setq ispell-program-name "aspell")
+    (setq ispell-local-dictionary "en_US")
+    (setq ispell-extra-args (list "--sug-mode=ultra"
+                                  "--lang=en_US"
+                                  "--run-together"
+                                  "--run-together-limit=16"))
+#+END_SRC
+
+**** save personal dictionary without asking for confirmation
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref ispell-config
+    (setq ispell-silently-savep t)
+#+END_SRC
+
+**** Make spell-checking tool ignore some org-mode section
+
+see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-org-mode
+
+#+BEGIN_SRC emacs-lisp  :tangle no :noweb-ref ispell-config
+    (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+#+END_SRC
+
+*** flyspell
+
+=C-.= corrects word at point.
+=C-,​= to jump to next misspelled word.
+=M-$= correct word at point
+
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package flyspell
-    :ensure ispell
-    :diminish " Ⓢ"
+    :diminish "Ⓢ"
+    :hook ((prog-mode text-mode) . turn-on-flyspell)
     :init
-    (progn
-      (add-hook 'prog-mode-hook #'turn-on-flyspell)
-      (add-hook 'text-mode-hook #'turn-on-flyspell)
+    <<flyspell-config>>)
+#+END_SRC
 
-      (dolist (hook '(elfeed-search-mode-hook change-log-mode-hook log-edit-mode-hook))
-	(add-hook hook (lambda () (flyspell-mode -1)))))
+**** better performance
 
-    :config (unbind-key "C-;" flyspell-mode-map))
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref flyspell-config
+(setq flyspell-issue-message-flag nil)
+#+END_SRC
+
+**** using wucuo
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref flyspell-config
+  (require 'wucuo)
+  (put 'js2-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
+  (put 'rjsx-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
+  (wucuo-start)
+#+END_SRC
+
+**** flyspell setup for web-mode
+
+[[https://github.com/redguardtoo/emacs.d][GitHub - redguardtoo/emacs.d: Efficient Emacs setup.]]
+
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref flyspell-config
+  (defun web-mode-flyspell-verify ()
+    (let* ((f (get-text-property (- (point) 1) 'face))
+           rlt)
+      (cond
+       ;; Check the words with these font faces, possibly.
+       ;; This *blacklist* will be tweaked in next condition
+       ((not (memq f '(web-mode-html-attr-value-face
+                       web-mode-html-tag-face
+                       web-mode-html-attr-name-face
+                       web-mode-constant-face
+                       web-mode-doctype-face
+                       web-mode-keyword-face
+                       web-mode-comment-face ;; focus on get html label right
+                       web-mode-function-name-face
+                       web-mode-variable-name-face
+                       web-mode-css-property-name-face
+                       web-mode-css-selector-face
+                       web-mode-css-color-face
+                       web-mode-type-face
+                       web-mode-block-control-face)))
+        (setq rlt t))
+        ;; check attribute value under certain conditions
+       ((memq f '(web-mode-html-attr-value-face))
+        (save-excursion
+          (search-backward-regexp "=['\"]" (line-beginning-position) t)
+          (backward-char)
+          (setq rlt (string-match "^\\(value\\|class\\|ng[A-Za-z0-9-]*\\)$"
+                                  (thing-at-point 'symbol)))))
+       ;; finalize the blacklist
+       (t
+        (setq rlt nil)))
+      rlt))
+  (put 'web-mode 'flyspell-mode-predicate 'web-mode-flyspell-verify)
 #+END_SRC
 
 *** flyspell-correct-ivy
 
 #+BEGIN_SRC emacs-lisp
-  (use-package flyspell-correct-ivy
-    :ensure flyspell
-    :ensure flyspell-correct
-    :ensure ivy
-    :bind (:map flyspell-mode-map
-                ("M-$" . flyspell-correct-word-generic))
-    :init
-    (progn
-      (setq flyspell-correct-interface 'flyspell-correct-ivy)
-      ;; (bind-keys :map flyspell-mode-map
-      ;; ("M-$" . flyspell-correct-word-generic))
-      ;; bind flyspell-correct-word-generic
-      ;; (define-key flyspell-mode-map (kbd "C-;") 'flyspell-correct-word-generic)
-      ;; (define-key flyspell-mode-map (kbd "C-;") #'flyspell-correct-previous-word-generic)
-      ))
+(use-package flyspell-correct-ivy
+  :after flyspell
+  :bind (:map flyspell-mode-map
+              ("M-$" . flyspell-correct-word-generic)))
 #+END_SRC
 
-*** Make spell-checking tool ignore some org-mode section
+*** flyspell-lazy
 
-see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-org-mode
+[[https://github.com/rolandwalker/flyspell-lazy][GitHub - rolandwalker/flyspell-lazy: Improve Emacs flyspell responsiveness using idle timers]]
 
 #+BEGIN_SRC emacs-lisp
-  (eval-after-load 'ispell
-    '(progn
-       (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
-       (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
-       ))
+  (use-package flyspell-lazy
+    :init
+    (flyspell-lazy-mode 1))
 #+END_SRC
 
 ** avy keybindings
