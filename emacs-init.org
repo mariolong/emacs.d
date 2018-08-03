@@ -3791,7 +3791,9 @@ for nikola blogger generator
     "insert current date time at point"
     (interactive)
     (insert (current-date-time-nikola)))
-#+END_SRC
+
+  (bind-key "C-c nt" 'insert-current-date-time)
+  #+END_SRC
 
 * Org and GTD system
 ** Org
@@ -3833,15 +3835,16 @@ for nikola blogger generator
                '("S" "#+BEGIN_SRC sh\n?\n#+END_SRC"))
 
   (add-to-list 'org-structure-template-alist
-               (list "T" (concat "#+TITLE:?\n#+AUTHOR:\n#+DATE: "
-                             (current-date-time-nikola)
-                             "\n#+LANGUAGE: zh-TW\n")))
+               (list "T" (concat "#+TITLE: \n"
+                                 "#+AUTHOR: \n"
+                                 "#+DATE: ?\n"
+                                 "#+LANGUAGE: zh-TW\n")))
 
   (add-to-list 'org-structure-template-alist
                (list "N" (concat "#+BEGIN_COMMENT\n"
-                                 ".. title:\n"
-                                 ".. slug:\n"
-                                 ".. date: " (current-date-time-nikola) "\n"
+                                 ".. title: \n"
+                                 ".. slug: \n"
+                                 ".. date: ?\n"
                                  ".. status: draft\n"      ;;published | draft
                                  ".. tags:\n"
                                  ".. category:\n"
@@ -4230,7 +4233,7 @@ http://www.cnblogs.com/chenfanyu/archive/2013/01/27/2878845.html
 yaourt -S ditaa
 mkdir -p ~/.emacs.d/elpa/contrib/scripts
 find /. -name "ditaa*"
-ln -s /usr/share/java/ditaa/ditaa-0_10.jar ditaa.jar
+ln -s /usr/share/java/ditaa/ditaa-0_11.jar ditaa.jar
 #+END_SRC
 
 ** TODO org to pdf and epub with engine weasyprint
