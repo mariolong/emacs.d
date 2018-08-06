@@ -596,9 +596,8 @@ ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
 *** moedict 萌典
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package moedict
-    :load-path "lisp/"
     :ensure helm
     :ensure esqlite
     :bind ("C-c m" . moedict)
@@ -1641,6 +1640,27 @@ GitHub: https://github.com/steckerhalter/discover-my-major
     (smartparens-global-mode 1))
 #+END_SRC
 
+** turn on electric-pair-mode
+
+#+BEGIN_SRC emacs-lisp
+(electric-pair-mode t)
+#+END_SRC
+
+** turn off electric-quote-~ in emacs 25.1 and newer
+
+#+BEGIN_SRC emacs-lisp
+  (electric-quote-mode -1)
+#+END_SRC
+
+** hungry-delete
+
+#+BEGIN_SRC emacs-lisp
+  (use-package hungry-delete
+    :diminish
+    :init
+    (global-hungry-delete-mode 1))
+#+END_SRC
+
 ** copying lines without selecting them
 
 [[http://emacs-fu.blogspot.com/2009/11/copying-lines-without-selecting-them.html?m=1][emacs-fu: copying lines without selecting them]]
@@ -1658,37 +1678,6 @@ GitHub: https://github.com/steckerhalter/discover-my-major
     (if mark-active (list (region-beginning) (region-end))
       (list (line-beginning-position)
         (line-beginning-position 2)))))
-#+END_SRC
-
-** turn on electric-pair-mode
-
-#+BEGIN_SRC emacs-lisp
-  (electric-pair-mode t)
-
-  (defmacro epm/add-mode-pairs (hook pairs)
-    `(add-hook ,hook
-               (lambda ()
-                 (setq-local electric-pair-pairs (append electric-pair-pairs ,pairs))
-                 (setq-local electric-pair-text-pairs electric-pair-pairs))))
-
-  (epm/add-mode-pairs 'python-mode-hook '((?\' . ?\')))
-  (epm/add-mode-pairs 'web-mode-hook '((?\' . ?\')))
-  (epm/add-mode-pairs 'org-mode-hook '((?/ . ?/) (?= . ?=) (?~ . ?~) (?* . ?*) (?+ . ?+) (?_ . ?_)))
-#+END_SRC
-
-** turn off electric-quote-~ in emacs 25.1 and newer
-
-#+BEGIN_SRC emacs-lisp
-  (electric-quote-mode -1)
-#+END_SRC
-
-** hungry-delete
-
-#+BEGIN_SRC emacs-lisp
-  (use-package hungry-delete
-    :diminish
-    :init
-    (global-hungry-delete-mode 1))
 #+END_SRC
 
 ** move-text
@@ -1823,7 +1812,7 @@ important keybindings:
 #+BEGIN_SRC emacs-lisp
   (use-package iedit
     :bind ("C-;" . iedit-mode)
-    :config
+    :init
     (custom-set-faces
      '(iedit-occurrence ((t (:inherit isearch))))))
 #+END_SRC
