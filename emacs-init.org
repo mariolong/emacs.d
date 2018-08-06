@@ -1811,8 +1811,8 @@ important keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package iedit
-    :bind ("C-;" . iedit-mode)
-    :init
+    :bind ("C-S-c C-S-e" . iedit-mode)
+    :config
     (custom-set-faces
      '(iedit-occurrence ((t (:inherit isearch))))))
 #+END_SRC
@@ -2174,6 +2174,8 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
 #+END_SRC
 
 *** flyspell-correct-ivy
+
+[[https://github.com/d12frosted/flyspell-correct/blob/master/flyspell-correct-ivy.el][flyspell-correct/flyspell-correct-ivy.el at master · d12frosted/flyspell-correct · GitHub]]
 
 #+BEGIN_SRC emacs-lisp
 (use-package flyspell-correct-ivy
