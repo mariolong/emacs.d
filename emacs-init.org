@@ -3829,7 +3829,8 @@ for nikola blogger generator
                (list "T" (concat "#+TITLE: \n"
                                  "#+AUTHOR: \n"
                                  "#+DATE: ?\n"
-                                 "#+LANGUAGE: zh-TW\n")))
+                                 "#+LANGUAGE: zh-TW\n"
+                                 "#+OPTIONS: num:nil toc:nil ^:{}\n")))
 
   (add-to-list 'org-structure-template-alist
                (list "N" (concat "#+BEGIN_COMMENT\n"
@@ -3843,7 +3844,7 @@ for nikola blogger generator
                                  ".. description:\n"
                                  ".. type: text\n"         ;;text | micro
                                  "#+END_COMMENT\n"
-                                 "#+OPTIONS: toc:nil ^:{}\n"
+                                 "#+OPTIONS: num:nil toc:nil ^:{}\n"
                                  "#+LANGUAGE: zh-TW\n"
                                  )))
 #+END_SRC
