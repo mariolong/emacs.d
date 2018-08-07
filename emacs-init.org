@@ -2397,13 +2397,6 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
     :bind ("C-c g" . magit-status))
 #+END_SRC
 
-** magit-filenotify
-
-#+BEGIN_SRC emacs-lisp
-    (use-package magit-filenotify
-      :hook (magit-status-mode . magit-filenotify-mode))
-#+END_SRC
-
 ** ediff
 
 *** Basic settings
