@@ -1868,7 +1868,7 @@ useful keybindings:
 
 使用以下流程，可以同時修改 project 中，多個檔案的相同文字。
 
-1. C-x g   : counsel-rg
+1. C-c g   : counsel-rg
 2. C-c C-o : counsel-occur
 3. C-x C-q : edit buffer with wgrep
 4. iedit   : multi edit
@@ -1886,7 +1886,7 @@ yaourt -S ripgrep
            ("M-x" . counsel-M-x)
            ("C-x f" . counsel-recentf)
            ("C-x l" . counsel-locate)
-           ("C-x g" . counsel-rg)
+           ("C-x C-g" . counsel-rg)
            ("C-:" . counsel-company)
            ("C-x C-\\" . counsel-goto-recent-directory)
            ("C-x \\" . counsel-goto-recent-directory-other-window)
@@ -2387,14 +2387,14 @@ http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
   (use-package magit
     :init
     (progn
-      (setq magit-last-seen-setup-instructions "1.4.0")
+      ;; (setq magit-last-seen-setup-instructions "1.4.0")
       (setq magit-auto-revert-mode nil)
       (setq magit-save-some-buffers nil)
       (setq magit-set-upstream-on-push t)
       (setq magit-diff-refine-hunk t)
       (setq magit-completing-read-function 'ivy-completing-read)
       (setq magit-default-tracking-name-function 'magit-default-tracking-name-branch-only))
-    :bind ("C-c g" . magit-status))
+    :bind ("C-x g" . magit-status))
 #+END_SRC
 
 ** ediff
