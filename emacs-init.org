@@ -1781,7 +1781,7 @@ ref: [[http://endlessparentheses.com/emacs-narrow-or-widen-dwim.html][Emacs narr
 
 Normal scenario of Iedit mode is like:
 
-1) Highlight certain contents - by press C-; (The default key binding)
+1) Highlight certain contents - by press C-% (The default key binding)
    All occurrences of a symbol, string or a rectangle in the buffer or
    a region may be highlighted corresponding to current mark, point and
    prefix argument.  Refer to the document of `iedit-mode’ for
@@ -1790,7 +1790,7 @@ Normal scenario of Iedit mode is like:
 2) Edit one of the occurrences The change is applied to other
    occurrences simultaneously.
 
-3) Finish - by pressing C-; again
+3) Finish - by pressing C-% again
 
 co-work with 'narrow or widen dwim' as above.
 
@@ -1811,7 +1811,7 @@ important keybindings:
 
 #+BEGIN_SRC emacs-lisp
   (use-package iedit
-    :bind ("C-S-c C-S-e" . iedit-mode)
+    :bind ("C-%" . iedit-mode)
     :config
     (custom-set-faces
      '(iedit-occurrence ((t (:inherit isearch))))))
