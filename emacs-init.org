@@ -2695,7 +2695,7 @@ sudo npm install pug-cli -g
 
 ~C-c C-,~: haskell-mode can also sort and align your import sections nicely.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :noweb no-export :exports code
   (use-package haskell-mode
     :mode "\\.hs$" "\\.l?hs$"
     :hook (haskell-mode . my/haskell-hook)
@@ -2709,10 +2709,14 @@ sudo npm install pug-cli -g
       (compile "stack build --fast"))
 
     (defun my/haskell-hook ()
-      (setq mode-name "λ")
+      (setq mode-name "λ"
+            haskell-indentation-electric-flag t)
+
       (turn-on-haskell-doc-mode)
-      (turn-on-haskell-indent)
-      (turn-on-eldoc-mode)))
+      (turn-on-eldoc-mode)
+      (haskell-auto-insert-module-template))
+
+    <<haskell-config>>)
 #+END_SRC
 
 ** stylish-haskell
@@ -2729,7 +2733,7 @@ cabal install happy alex
 cabal install stylish-haskell
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
 (setq haskell-stylish-on-save t)
 #+END_SRC
 
@@ -2750,16 +2754,19 @@ stack install hasktags
 
 用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
 (setq haskell-tags-on-save t)
 #+END_SRC
 
 ~M-.~ 跳到定義
 ~M-*~ 跳回上一次位置
 
+** TODO Declaration scanning
+[[http://haskell.github.io/haskell-mode/manual/latest/Declaration-scanning.html#Declaration-scanning][Haskell Mode 16.1-git: Declaration scanning]]
+
 ** haskell completion support
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
 (add-hook 'haskell-mode-hook
           (lambda ()
             (set (make-local-variable 'company-backends)
@@ -2771,14 +2778,24 @@ stack install hasktags
 
 [[https://github.com/flycheck/flycheck-haskell][GitHub - flycheck/flycheck-haskell: Improved Haskell support for Flycheck]]
 
+maybe using hpack
+
+#+BEGIN_SRC sh
+stack install hpack
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck-haskell
-    :hook (flycheck-mode . flycheck-haskell-setup))
+    :hook (haskell-mode . flycheck-haskell-setup))
 #+END_SRC
 
 ** hindent
 
-~M-q~ : reformat the current declaration.
+- ~M-q~ :: reformats the current declaration. When inside a comment,
+           it fills the current paragraph instead, like the standard
+           M-q.
+
+- ~C-M-\~ :: reformats the current region.
 
 #+BEGIN_SRC sh
 stack install hindent
@@ -2793,9 +2810,12 @@ stack install hindent
     (setq hindent-reformat-buffer-on-save t))
 #+END_SRC
 
-** interactive commands
+** TODO interactive commands
 
-#+BEGIN_SRC emacs-lisp
+http://haskell.github.io/haskell-mode/manual/latest/Interactive-Haskell.html#Interactive-Haskell
+
+#+BEGIN_SRC emacs-lisp :tangle no
+:noweb-ref haskell-config
   (setq haskell-process-suggest-remove-import-lines t
         haskell-process-auto-import-loaded-modules t
         haskell-process-log t
@@ -2819,6 +2839,7 @@ stack install hindent
 #+END_SRC
 
 ** TODO haskell-snippets
+
 #+BEGIN_SRC emacs-lisp  :tangle no
    (use-package haskell-snippets)
 #+END_SRC
