@@ -2338,7 +2338,7 @@ ref: [[https://github.com/Fanael/highlight-numbers]]
                                      (highlight-numbers-mode)))))
 #+END_SRC
 
-** TODO Flycheck
+** Flycheck
 
 http://codewinds.com/blog/2015-04-02-emacs-flycheck-eslint-jsx.html
 
@@ -2700,9 +2700,11 @@ sudo npm install pug-cli -g
     :mode "\\.hs$" "\\.l?hs$"
     :hook (haskell-mode . my/haskell-hook)
     :bind (:map haskell-mode-map
-                ([f5] . my/haskell-stack-build)
-                ("M-g i" . haskell-navigate-imports)
-                ("M-g M-i" . haskell-navigate-imports))
+           ([f5] . my/haskell-stack-build)
+           ("M-g i" . haskell-navigate-imports)
+           ("M-g M-i" . haskell-navigate-imports)
+           ("C-c h" . hoogle)
+           )
     :init
     (defun my/haskell-stack-build ()
       (interactive)
@@ -2714,10 +2716,40 @@ sudo npm install pug-cli -g
 
       (turn-on-haskell-doc-mode)
       (turn-on-eldoc-mode)
-      (haskell-auto-insert-module-template))
-
+      (haskell-auto-insert-module-template)
+      )
+    :config
     <<haskell-config>>)
 #+END_SRC
+
+** intero
+
+[[http://commercialhaskell.github.io/intero/][Intero for Emacs]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package intero
+    :diminish "λ"
+    :bind (:map intero-repl-mode-map
+           ("C-c h" . hoogle))
+    :hook (haskell-mode . intero-mode))
+#+END_SRC
+
+*** bindings
+**** intero-mode-map
+- C-c C-t :: intero-type-at
+- M-? :: intero-uses-at
+- C-c C-i :: intero-info
+- M-. :: intero-goto-definition
+- C-c C-l :: intero-repl-load
+- C-c C-c :: intero-repl-eval-region
+- C-c C-z :: intero-repl
+- C-c C-r :: intero-apply-suggestions
+- C-c C-e :: intero-expand-splice-at-point
+
+**** intero-repl-mode-map
+
+- C-c C-k :: intero-repl-clear-buffer
+- C-c C-z :: intero-repl-switch-back
 
 ** stylish-haskell
 
@@ -2727,11 +2759,15 @@ install stylish-haskell under OS
 stack install stylish-haskell
 #+END_SRC
 
+or install by cabal
+
 #+BEGIN_SRC sh
 cabal update
 cabal install happy alex
 cabal install stylish-haskell
 #+END_SRC
+
+using stylish on save file.
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
 (setq haskell-stylish-on-save t)
@@ -2739,103 +2775,15 @@ cabal install stylish-haskell
 
 using ~M-x haskell-mode-stylish-buffer~ to sort and align imports.
 
-** Haskell Tags
+** Declaration scanning
 
-#+BEGIN_SRC sh
-cabal update
-cabal install hasktags
-#+END_SRC
-
-or
-
-#+BEGIN_SRC sh
-stack install hasktags
-#+END_SRC
-
-用 ~M-x haskell-mode-generate-tags~ 可以產生 tags
-
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
-(setq haskell-tags-on-save t)
-#+END_SRC
-
-~M-.~ 跳到定義
-~M-*~ 跳回上一次位置
-
-** TODO Declaration scanning
 [[http://haskell.github.io/haskell-mode/manual/latest/Declaration-scanning.html#Declaration-scanning][Haskell Mode 16.1-git: Declaration scanning]]
 
-** haskell completion support
+=C-M-a= goto begin of function
+=C-M-e= goto end of function
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
-(add-hook 'haskell-mode-hook
-          (lambda ()
-            (set (make-local-variable 'company-backends)
-                 (append '((company-capf company-dabbrev-code))
-                         company-backends))))
-#+END_SRC
-
-** flycheck-haskell
-
-[[https://github.com/flycheck/flycheck-haskell][GitHub - flycheck/flycheck-haskell: Improved Haskell support for Flycheck]]
-
-maybe using hpack
-
-#+BEGIN_SRC sh
-stack install hpack
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (use-package flycheck-haskell
-    :hook (haskell-mode . flycheck-haskell-setup))
-#+END_SRC
-
-** hindent
-
-- ~M-q~ :: reformats the current declaration. When inside a comment,
-           it fills the current paragraph instead, like the standard
-           M-q.
-
-- ~C-M-\~ :: reformats the current region.
-
-#+BEGIN_SRC sh
-stack install hindent
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-  (use-package hindent
-    :if (executable-find "hindent")
-    :diminish hindent-mode " ↹"
-    :hook (haskell-mode . hindent-mode)
-    :config
-    (setq hindent-reformat-buffer-on-save t))
-#+END_SRC
-
-** TODO interactive commands
-
-http://haskell.github.io/haskell-mode/manual/latest/Interactive-Haskell.html#Interactive-Haskell
-
-#+BEGIN_SRC emacs-lisp :tangle no
-:noweb-ref haskell-config
-  (setq haskell-process-suggest-remove-import-lines t
-        haskell-process-auto-import-loaded-modules t
-        haskell-process-log t
-        haskell-process-type 'stack-ghci)
-
-  (eval-after-load 'haskell-mode
-    '(progn
-       (define-key haskell-mode-map (kbd "C-c C-l") 'haskell-process-load-file)
-       (define-key haskell-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-       (define-key haskell-mode-map (kbd "C-c C-n C-t") 'haskell-process-do-type)
-       (define-key haskell-mode-map (kbd "C-c C-n C-i") 'haskell-process-do-info)
-       (define-key haskell-mode-map (kbd "C-c C-n C-c") 'haskell-process-cabal-build)
-       (define-key haskell-mode-map (kbd "C-c C-n c") 'haskell-process-cabal)))
-
-  (eval-after-load 'haskell-cabal
-    '(progn
-       (define-key haskell-cabal-mode-map (kbd "C-c C-z") 'haskell-interactive-switch)
-       (define-key haskell-cabal-mode-map (kbd "C-c C-k") 'haskell-interactive-mode-clear)
-       (define-key haskell-cabal-mode-map (kbd "C-c C-c") 'haskell-process-cabal-build)
-       (define-key haskell-cabal-mode-map (kbd "C-c c") 'haskell-process-cabal)))
+(add-hook 'haskell-mode-hook 'haskell-decl-scan-mode)
 #+END_SRC
 
 ** TODO haskell-snippets
