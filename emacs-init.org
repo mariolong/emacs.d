@@ -1242,7 +1242,7 @@ because the empty filter groups can really clutter things up.
 
 ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package persistent-scratch
   :init
   (persistent-scratch-setup-default))
