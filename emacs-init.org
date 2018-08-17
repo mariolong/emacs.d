@@ -2753,6 +2753,8 @@ sudo npm install pug-cli -g
 
 ** stylish-haskell
 
+[[https://github.com/jaspervdj/stylish-haskell][GitHub - jaspervdj/stylish-haskell: Haskell code prettifier]]
+
 install stylish-haskell under OS
 
 #+BEGIN_SRC sh
@@ -2774,6 +2776,27 @@ using stylish on save file.
 #+END_SRC
 
 using ~M-x haskell-mode-stylish-buffer~ to sort and align imports.
+
+*** Configuration
+The tool is customizable to some extent. It tries to find a config
+file in the following order:
+
+1) A file passed to the tool using the ~-c/--config~ argument
+2) ~.stylish-haskell.yaml~ in the current directory (useful for
+   per-directory settings)
+3) ~.stylish-haskell.yaml~ in the nearest ancestor directory (useful for
+   per-project settings)
+4) ~stylish-haskell/config.yaml~ in the platform’s configuration
+   directory (on Windows, it is ~%APPDATA%~, elsewhere it defaults to
+   ~~/.config~ and can be overridden by the ~XDG_CONFIG_HOME~ environment
+   variable; useful for user-wide settings)
+5) ~.stylish-haskell.yaml~ in your home directory (useful for user-wide
+   settings)
+6) The default settings.
+
+Use ~stylish-haskell --defaults > .stylish-haskell.yaml~ to dump a
+well-documented default configuration to a file, this way you can get
+started quickly.
 
 ** Declaration scanning
 
