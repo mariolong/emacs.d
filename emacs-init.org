@@ -334,7 +334,7 @@ from 26.1, using ~(setq display-line-numbers 'relative)~ to display line number.
 
     :config
     ;; disable pangu-space in some modes
-    (dolist (mm '(wdired-mode dired-mode eww-mode elfeed-search-mode elfeed-show-mode))
+    (dolist (mm '(ctbl:table-mode wdired-mode dired-mode eww-mode elfeed-search-mode elfeed-show-mode))
       (add-to-list 'pangu-spacing-inhibit-mode-alist mm))
 
     ;; Always insert `real' space
