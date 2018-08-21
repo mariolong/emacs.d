@@ -2744,20 +2744,21 @@ sudo npm install pug-cli -g
 
 *** bindings
 **** intero-mode-map
-- C-c C-t :: intero-type-at
-- M-? :: intero-uses-at
-- C-c C-i :: intero-info
-- M-. :: intero-goto-definition
-- C-c C-l :: intero-repl-load
-- C-c C-c :: intero-repl-eval-region
-- C-c C-z :: intero-repl
-- C-c C-r :: intero-apply-suggestions
-- C-c C-e :: intero-expand-splice-at-point
+- M-? :: Highlight where the identifier at point is used.
+- M-. :: Jump to definition
+- C-c C-t :: Show the type of thing at point, or the selection
+- C-u C-c C-t :: Insert a type signature for the thing at point
+- C-c C-i :: Show information of identifier at point
+- C-c C-l :: Load this module in the REPL
+- C-c C-c :: Evaluate the selected region in the REPL
+- C-c C-z :: Switch to and from the REPL
+- C-c C-r :: Apply suggestions from GHC
+- C-c C-e :: Show the expansion of the template haskell splice at point.
 
 **** intero-repl-mode-map
 
-- C-c C-k :: intero-repl-clear-buffer
-- C-c C-z :: intero-repl-switch-back
+- C-c C-k :: Clear REPL
+- C-c C-z :: Switch to and from the REPL
 
 ** stylish-haskell
 
@@ -2777,7 +2778,7 @@ cabal install happy alex
 cabal install stylish-haskell
 #+END_SRC
 
-using stylish on save file.
+using stylish on save file. It will give you a good format of Haskell
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref haskell-config
 (setq haskell-stylish-on-save t)
