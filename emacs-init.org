@@ -2128,6 +2128,7 @@ see: http://emacs.stackexchange.com/questions/450/intelligent-spell-checking-in-
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref flyspell-config
   (require 'wucuo)
+  (put 'haskell-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
   (put 'js2-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
   (put 'rjsx-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
   (wucuo-start)
@@ -2717,6 +2718,8 @@ sudo npm install pug-cli -g
       (turn-on-haskell-doc-mode)
       (turn-on-eldoc-mode)
       (haskell-auto-insert-module-template)
+
+      (setq-local browse-url-browser-function 'browse-url-default-browser)
       )
     :config
     <<haskell-config>>)
@@ -2730,8 +2733,13 @@ sudo npm install pug-cli -g
   (use-package intero
     :diminish "λ"
     :bind (:map intero-repl-mode-map
-           ("C-c h" . hoogle))
-    :hook (haskell-mode . intero-mode))
+                ("C-c h" . hoogle))
+    :hook ((haskell-mode . intero-mode)
+           (intero-repl-mode . my/intero-repl-mode-hook))
+    :init
+    (defun my/intero-repl-mode-hook ()
+      (setq-local browse-url-browser-function 'browse-url-default-browser)
+      ))
 #+END_SRC
 
 *** bindings
