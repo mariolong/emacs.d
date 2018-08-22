@@ -2658,10 +2658,10 @@ emacs 中 Python 的設定有太多的選擇，我的選擇是 =elpy= ，原因�
 
 ref: https://github.com/jorgenschaefer/elpy
 
-1) install ~elpy~ and ~jedi~ and ~virtualenv~ on OS
+1) install ~elpy~, ~jedi~, ~flake8~ and ~virtualenv~ on OS
 
    #+BEGIN_SRC sh
-     pip install elpy jedi virtualenv
+     sudo pip install elpy jedi virtualenv flake8
    #+END_SRC
 
 2) 參考 oh-my-emacs 簡單設定一下就好。
