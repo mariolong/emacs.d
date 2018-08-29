@@ -558,14 +558,14 @@ https://www.emacswiki.org/emacs/ElispCookbook
     (opencc-isearch-mode-config "s2twp"))
 #+END_SRC
 
-*** TODO sdcv
-
-*copyright issue*
+*** sdcv
 
 ref: http://lifegoo.pluskid.org/wiki/EmacsStardict.html
 
-#+BEGIN_SRC emacs-lisp :tangle no
-  (bind-key "C-c s" 'kid-sdcv-to-buffer)
+字典：http://download.huzheng.org/zh_TW/
+
+#+BEGIN_SRC emacs-lisp
+  (bind-key "C-c w" 'kid-sdcv-to-buffer)
 
   (defun kid-sdcv-to-buffer ()
     (interactive)
