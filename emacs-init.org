@@ -678,16 +678,24 @@ with ~F1 m~.
 *** async send file by wpub
 
 #+BEGIN_SRC emacs-lisp
+  (defun is-opencc()
+    (interactive)
+    (let ((key-opencc (read-key "opencc?")))
+      (cond ((= key-opencc ?o) "-o")
+            ((= key-opencc ?k) "")
+            (t nil))))
+
   (defun async-wpub (url &optional file-type opencc)
-    (let* ((cmd-opencc (if opencc (if (y-or-n-p "Convert to Traditional Chinese?") "-o" "") ""))
+    (let* ((cmd-opencc (is-opencc))
            (cmd-type (if file-type (format "-f %s" file-type) ""))
            (cmd-wpub (if url (format "wpub %s %s '%s'" cmd-opencc cmd-type url) nil)))
-      (if cmd-wpub
-          (progn
-            (message "%s" cmd-wpub)
-            (start-file-process-shell-command "async-wpub"
-                                              "*async-wpub*"
-                                              cmd-wpub)))))
+      (if (not(eq cmd-opencc nil))
+          (if cmd-wpub
+              (progn
+                (message "%s" cmd-wpub)
+                (start-file-process-shell-command "async-wpub"
+                                                  "*async-wpub*"
+                                                  cmd-wpub))))))
 #+END_SRC
 
 **** send html file to kindle by async-wpub
