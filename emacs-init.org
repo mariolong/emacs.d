@@ -683,7 +683,7 @@ with ~F1 m~.
 #+BEGIN_SRC emacs-lisp
   (defun is-opencc()
     (interactive)
-    (let ((key-opencc (read-key "opencc?")))
+    (let ((key-opencc (read-key "Kindle or Opencc")))
       (cond ((= key-opencc ?o) "-o")
             ((= key-opencc ?k) "")
             (t nil))))
@@ -1074,13 +1074,14 @@ Use fasd to open directory in current window.
     (unless recentf-mode (recentf-mode 1))
     (let ((collection
            (delete-dups
-            (append (mapcar 'file-name-directory recentf-list)
-                    ;; fasd history
+            (append (mapcar '(lambda (s) (substring (file-name-directory s) 0 -1))
+                            recentf-list)
                     (if (executable-find "fasd")
-                        (split-string (shell-command-to-string "fasd -ld") "\n" t))))))
+                        (split-string (shell-command-to-string "fasd -ld") "\n" t))
+                    ))))
       (ivy-read "directories:" collection :action 'dired)))
 
-  (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
+    (bind-key "C-x C-\\" 'counsel-goto-recent-directory)
 #+END_SRC
 
 *** Open recent directory with dired in other window
