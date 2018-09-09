@@ -1256,7 +1256,7 @@ because the empty filter groups can really clutter things up.
 
 ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package persistent-scratch
   :init
   (persistent-scratch-setup-default))
@@ -2143,11 +2143,13 @@ ref: https://github.com/redguardtoo/emacs.d/blob/master/lisp/init-spelling.el
 **** using wucuo
 
 #+BEGIN_SRC emacs-lisp :tangle no :noweb-ref flyspell-config
-  (require 'wucuo)
-  (put 'haskell-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
-  (put 'js2-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
-  (put 'rjsx-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
-  (wucuo-start)
+  (use-package wucuo
+    :init
+    (put 'haskell-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
+    (put 'js2-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
+    (put 'rjsx-mode 'flyspell-mode-predicate 'wucuo-generic-check-word-predicate)
+    (wucuo-start)
+    )
 #+END_SRC
 
 **** flyspell setup for web-mode
