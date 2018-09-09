@@ -1074,7 +1074,7 @@ Use fasd to open directory in current window.
     (unless recentf-mode (recentf-mode 1))
     (let ((collection
            (delete-dups
-            (append (mapcar '(lambda (s) (substring (file-name-directory s) 0 -1))
+            (append (mapcar #'(lambda (s) (substring (file-name-directory s) 0 -1))
                             recentf-list)
                     (if (executable-find "fasd")
                         (split-string (shell-command-to-string "fasd -ld") "\n" t))
