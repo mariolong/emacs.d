@@ -1672,6 +1672,7 @@ GitHub: https://github.com/steckerhalter/discover-my-major
   (use-package hungry-delete
     :diminish
     :init
+    (setq hungry-delete-chars-to-skip (concat hungry-delete-chars-to-skip "　"))
     (global-hungry-delete-mode 1))
 #+END_SRC
 
