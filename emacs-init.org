@@ -1252,16 +1252,6 @@ because the empty filter groups can really clutter things up.
                   filename-and-process))))
 #+END_SRC
 
-*** persistent-scratch
-
-ref: [[http://pragmaticemacs.com/emacs/a-persistent-scratch-buffer/][A persistent scratch buffer | Pragmatic Emacs]]
-
-#+BEGIN_SRC emacs-lisp
-(use-package persistent-scratch
-  :init
-  (persistent-scratch-setup-default))
-#+END_SRC
-
 *** Show current buffer-file information
 
 #+BEGIN_SRC emacs-lisp
