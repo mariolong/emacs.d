@@ -1512,9 +1512,9 @@ call external terminal and cd to working directory of current buffer.
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-x t" '(lambda()
                        (interactive)
-                       (call-process "xterm" nil 0 nil
+                       (call-process "st" nil 0 nil
                                      "-e"
-                                     "export SHELL=/usr/bin/fish; export XTERM_SHELL=$SHELL; fish")))
+                                     "fish")))
 #+END_SRC
 
 ** reload emacs' "init.el"
