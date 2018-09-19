@@ -683,7 +683,7 @@ with ~F1 m~.
 #+BEGIN_SRC emacs-lisp
   (defun is-opencc()
     (interactive)
-    (let ((key-opencc (read-key "Kindle or Opencc")))
+    (let ((key-opencc (read-key "send Kindle or Opencc first? (k or o)")))
       (cond ((= key-opencc ?o) "-o")
             ((= key-opencc ?k) "")
             (t nil))))
@@ -1503,6 +1503,16 @@ minibuffer history from ‘savehist-file’.
              ("M-s" . my/minibuffer-switch-to-tramp)
              ("M-v" . my/minibuffer-switch-to-vm)
              ("M-c" . my/minibuffer-switch-to-cluster))
+#+END_SRC
+
+** exec-path-from-shell
+
+https://github.com/purcell/exec-path-from-shell
+Make Emacs use the $PATH set up by the user's shell
+
+#+BEGIN_SRC emacs-lisp
+  (use-package exec-path-from-shell
+    :init  (exec-path-from-shell-initialize))
 #+END_SRC
 
 ** call external terminal
@@ -3526,8 +3536,18 @@ using org-eww to save current web page to org-mode in eww-mode
 #+END_SRC
 
 *** set faces
-#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
+      (elfeed-log-debug-level-face (:foreground ,comment))
+      (elfeed-log-error-level-face (:inherit error))
+      (elfeed-log-info-level-face (:inherit success))
+      (elfeed-log-warn-level-face (:inherit warning))
+      (elfeed-search-date-face (:foreground ,blue))
+      (elfeed-search-feed-face (:foreground ,yellow))
+      (elfeed-search-tag-face (:foreground ,comment))
+      (elfeed-search-title-face (:foreground ,comment))
+      (elfeed-search-unread-count-face (:foreground ,yellow))
+      (elfeed-search-unread-title-face (:foreground ,foreground :weight bold))
 
+#+BEGIN_SRC emacs-lisp :tangle no :noweb-ref elfeed-config
   (custom-set-faces
    '(elfeed-search-unread-title-face ((t :inherit default)))
    '(elfeed-search-title-face ((t :inherit font-lock-comment-face)))
