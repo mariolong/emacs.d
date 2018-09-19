@@ -1628,6 +1628,10 @@ GitHub: https://github.com/steckerhalter/discover-my-major
 ** binding of <del>
 
 總是記不住，C-del，M-del 的區別，乾脆用位子記，ctrl 向左刪，Alt 向右刪。
+用下列按鍵會比較好（在 terminal 中可用）
+
+- M-backspace: backward-kill-word
+- M-D: kill-word
 
 #+BEGIN_SRC emacs-lisp
   (bind-key "C-<delete>" 'backward-kill-word)
