@@ -217,11 +217,17 @@ You need to do this for any non-package.el packag
 
 [[https://github.com/purcell/color-theme-sanityinc-tomorrow][GitHub - purcell/color-theme-sanityinc-tomorrow: A set of comprehensive Emacs color themes based on Chris Kempson's 'tomorrow' themes]]
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
   (use-package color-theme-sanityinc-tomorrow
     :init
     (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
+
+#+BEGIN_SRC emacs-lisp
+  (use-package gruvbox-theme
+:init(load-theme 'gruvbox-dark-hard :no-confirm))
+#+END_SRC
+
 
 *** spaceline
 
