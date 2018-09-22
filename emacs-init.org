@@ -217,13 +217,13 @@ You need to do this for any non-package.el packag
 
 [[https://github.com/purcell/color-theme-sanityinc-tomorrow][GitHub - purcell/color-theme-sanityinc-tomorrow: A set of comprehensive Emacs color themes based on Chris Kempson's 'tomorrow' themes]]
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
   (use-package color-theme-sanityinc-tomorrow
     :init
     (load-theme 'sanityinc-tomorrow-night :no-confirm))
 #+end_src
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package gruvbox-theme
 :init(load-theme 'gruvbox-dark-hard :no-confirm))
 #+END_SRC
@@ -2939,7 +2939,6 @@ hoogle generate
 
 - C-c C-k :: Clear REPL
 - C-c C-z :: Switch to and from the REPL
-
 ** stylish-haskell
 
 [[https://github.com/jaspervdj/stylish-haskell][GitHub - jaspervdj/stylish-haskell: Haskell code prettifier]]
@@ -2986,6 +2985,15 @@ file in the following order:
 Use ~stylish-haskell --defaults > .stylish-haskell.yaml~ to dump a
 well-documented default configuration to a file, this way you can get
 started quickly.
+
+** nix-mode
+From: [[https://github.com/NixOS/nix-mode][GitHub - NixOS/nix-mode: An Emacs major mode for editing Nix expressions.]]
+Ref: [[https://matthewbauer.us/bauer/][bauer: an Emacs+Nix IDE]]
+
+#+BEGIN_SRC emacs-lisp
+  (use-package nix-mode
+    :mode "\\.nix\\'")
+#+END_SRC
 
 ** Declaration scanning
 
