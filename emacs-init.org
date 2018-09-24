@@ -923,7 +923,7 @@ yaourt -S unzip unrar
     (openwith-mode t)
     (setq openwith-associations
           (list
-           (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aiff" "m4a" "aac"))
+           (list (openwith-make-extension-regexp '("flac" "mp3" "wav" "aif" "aiff" "m4a" "aac"))
                  "mpv" '(file))
            (list (openwith-make-extension-regexp '("avi" "flv" "mov" "mp4" "rmvb" "m2ts" "webm"
                                                    "mpeg" "mpg" "ogg" "wmv" "mkv"))
@@ -1684,8 +1684,9 @@ GitHub: https://github.com/steckerhalter/discover-my-major
   (use-package hungry-delete
     :diminish
     :init
-    (setq hungry-delete-chars-to-skip (concat hungry-delete-chars-to-skip "　"))
-    (global-hungry-delete-mode 1))
+    (global-hungry-delete-mode 1)
+    :config
+    (setq hungry-delete-chars-to-skip (concat hungry-delete-chars-to-skip "　")))
 #+END_SRC
 
 ** copying lines without selecting them
@@ -2459,13 +2460,14 @@ ref: [[http://endlessparentheses.com/permanent-auto-indentation.html][Aggressive
 
 #+BEGIN_SRC emacs-lisp
   (use-package aggressive-indent
-    :diminish " Ⓘ"
+    :diminish "Ⓘ"
     :init
     (global-aggressive-indent-mode 1)
     :config
-    (dolist (mm '(haskell-mode haskell-cabal-mode haskell-interactive-mode
-                               python-mode
-                               pug-mode stylus-mode))
+    (dolist (mm '(
+                  haskell-mode haskell-cabal-mode haskell-interactive-mode
+                  python-mode
+                  pug-mode stylus-mode))
       (add-to-list 'aggressive-indent-excluded-modes mm)))
 #+END_SRC
 
