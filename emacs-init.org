@@ -1912,6 +1912,7 @@ yaourt -S ripgrep
   (use-package counsel
     :bind (("M-y" . counsel-yank-pop)
            ("M-x" . counsel-M-x)
+           ("C-x C-f" . counsel-find-file)
            ("C-x f" . counsel-recentf)
            ("C-x l" . counsel-locate)
            ("C-x C-g" . counsel-rg)
@@ -1921,7 +1922,8 @@ yaourt -S ripgrep
            :map ivy-minibuffer-map
            ("M-y" . ivy-next-line))
     :config
-    (setq counsel-grep-base-command "rg -i -M 120 --no-heading --line-number --color never '%s' %s"))
+    (setq counsel-grep-base-command "rg -i -M 120 --no-heading --line-number --color never '%s' %s")
+    (setq counsel-find-file-at-point t))
 #+END_SRC
 
 ** Company mode
@@ -2440,6 +2442,15 @@ ref: [[https://emacs.cafe/emacs/package/2017/08/01/beginend.html][beginend.el]]
   (use-package vlf
     :init
     (require 'vlf-setup)
+    )
+#+END_SRC
+
+** replace-semi-toFull-form
+#+BEGIN_SRC emacs-lisp :tangle no
+  (defun replace-semi-to-full-form ()
+    (interactive)
+    (replace-string "“" "「")
+    (replace-string "”" "」")
     )
 #+END_SRC
 
