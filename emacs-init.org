@@ -2666,7 +2666,11 @@ https://github.com/abo-abo/oremacs/blob/github/modes/ora-ediff.el
 
 #+BEGIN_SRC emacs-lisp
   (use-package diff-hl
-    :hook (dired-mode . diff-hl-dired-mode)
+    :hook ((prog-mode . diff-hl-mode)
+           (vc-dir-mode . diff-hl-mode)
+           (dired-mode . diff-hl-dir-mode)
+           (magit-post-refresh . diff-hl-magit-post-refresh)
+           (org-mode . diff-hl-mode))
     :init
     (global-diff-hl-mode))
 #+END_SRC
