@@ -1538,7 +1538,7 @@ call external terminal and cd to working directory of current buffer.
 ** reload emacs' "init.el"
 
 #+BEGIN_SRC emacs-lisp
-  (bind-key "C-c fR" 'reload-emacs)
+  (bind-key "C-c fl" 'reload-emacs)
 
   (defun reload-emacs ()
     "reload my emacs settings"
