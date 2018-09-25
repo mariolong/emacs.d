@@ -3045,10 +3045,12 @@ Ref: [[https://matthewbauer.us/bauer/][bauer: an Emacs+Nix IDE]]
 
 #+BEGIN_SRC emacs-lisp
   (use-package yaml-mode
-    :mode "\\.yaml\\'" "\\.yml\\'"
-    :bind (:map yaml-mode
+    :mode "\\.ya?ml\\'"
+    :bind (:map yaml-mode-map
                 ("C-m" . newline-and-indent)))
+
 #+END_SRC
+
 
 ** systemd-mode
 
